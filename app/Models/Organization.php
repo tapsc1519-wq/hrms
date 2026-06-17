@@ -84,6 +84,11 @@ class Organization extends Model
         return $this->hasMany(OrganizationPayment::class);
     }
 
+    public function ssoSettings(): HasMany
+    {
+        return $this->hasMany(OrganizationSsoSetting::class);
+    }
+
     public function hasModule(string $module): bool
     {
         if ($this->relationLoaded('modules')) {

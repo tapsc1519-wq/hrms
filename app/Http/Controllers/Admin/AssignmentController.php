@@ -75,77 +75,178 @@ class AssignmentController extends Controller
             ->with('success', 'Asset assigned successfully.');
     }
 
-    // ─── BULK ASSIGN ──────────────────────────────────────────────────────────
+    // Bulk CSV assignment
 
-    public function bulk(Request $request)
+    public function bulk()
     {
-        $query = Asset::where('organization_id', $this->orgId())
-            ->where('status', 'available')
-            ->with(['category', 'assetBrand']);
+        return view('admin.assignments.bulk');
+    }
 
-        if ($request->filled('search')) {
-            $query->where(fn($q) => $q
-                ->where('name', 'like', '%'.$request->search.'%')
-                ->orWhere('asset_tag', 'like', '%'.$request->search.'%')
-                ->orWhere('serial_number', 'like', '%'.$request->search.'%')
-            );
-        }
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
+    public function bulkTemplate()
+    {
+        $rows = [
+            ['asset_tag', 'employee_code', 'assigned_date', 'expected_return_date', 'condition_out', 'purpose', 'notes'],
+            ['LAP-001', 'EMP001', now()->format('Y-m-d'), '', 'good', 'Work laptop', 'Optional notes'],
+        ];
 
-        $assets      = $query->orderBy('name')->paginate(50)->withQueryString();
-        $users        = User::where('organization_id', $this->orgId())->where('status', 'active')->orderBy('name')->get();
-        $departments  = \App\Models\Department::where('organization_id', $this->orgId())->where('status', 'active')->orderBy('name')->get();
-        $categories   = \App\Models\AssetCategory::where('organization_id', $this->orgId())->orderBy('name')->get();
-
-        return view('admin.assignments.bulk', compact('assets', 'users', 'departments', 'categories'));
+        return response()->streamDownload(function () use ($rows) {
+            $handle = fopen('php://output', 'w');
+            foreach ($rows as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+        }, 'bulk-asset-assignments-template.csv', [
+            'Content-Type' => 'text/csv',
+        ]);
     }
 
     public function storeBulk(Request $request)
     {
         $request->validate([
-            'asset_ids'            => 'required|array|min:1',
-            'asset_ids.*'          => 'exists:assets,id',
-            'user_id'              => 'nullable|exists:users,id',
-            'department_id'        => 'nullable|exists:departments,id',
-            'assigned_date'        => 'required|date',
-            'expected_return_date' => 'nullable|date',
-            'condition_out'        => 'required|in:excellent,good,fair,poor',
-            'purpose'              => 'nullable|string',
-            'notes'                => 'nullable|string',
+            'csv_file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
         ]);
 
-        if (!$request->user_id && !$request->department_id) {
-            return back()->withErrors(['user_id' => 'Assign to either a user or a department.']);
+        $handle = fopen($request->file('csv_file')->getRealPath(), 'r');
+        if (!$handle) {
+            return back()->withErrors(['csv_file' => 'Unable to read the uploaded CSV file.']);
         }
 
-        $count = 0;
-        foreach ($request->asset_ids as $assetId) {
-            $asset = Asset::find($assetId);
-            if (!$asset || $asset->organization_id !== $this->orgId() || $asset->status !== 'available') continue;
-
-            AssetAssignment::create([
-                'asset_id'             => $asset->id,
-                'user_id'              => $request->user_id,
-                'department_id'        => $request->department_id,
-                'assigned_by'          => auth()->id(),
-                'assigned_date'        => $request->assigned_date,
-                'expected_return_date' => $request->expected_return_date,
-                'condition_out'        => $request->condition_out,
-                'purpose'              => $request->purpose,
-                'notes'                => $request->notes,
-                'status'               => 'active',
-            ]);
-            $asset->update(['status' => 'assigned']);
-            $count++;
+        $header = fgetcsv($handle);
+        if (!$header) {
+            fclose($handle);
+            return back()->withErrors(['csv_file' => 'The CSV file is empty.']);
         }
+
+        $header = array_map(fn($value) => strtolower(trim((string) $value)), $header);
+        $required = ['asset_tag', 'employee_code', 'assigned_date'];
+        $missing = array_diff($required, $header);
+
+        if ($missing) {
+            fclose($handle);
+            return back()->withErrors(['csv_file' => 'Missing required columns: ' . implode(', ', $missing) . '.']);
+        }
+
+        $rows = [];
+        $errors = [];
+        $seenAssets = [];
+        $line = 1;
+        $allowedConditions = ['excellent', 'good', 'fair', 'poor'];
+
+        while (($data = fgetcsv($handle)) !== false) {
+            $line++;
+
+            if (count(array_filter($data, fn($value) => trim((string) $value) !== '')) === 0) {
+                continue;
+            }
+
+            $row = array_combine($header, array_slice(array_pad($data, count($header), ''), 0, count($header)));
+            $assetKey = trim((string) ($row['asset_tag'] ?? ''));
+            $employeeCode = trim((string) ($row['employee_code'] ?? ''));
+            $assignedDate = trim((string) ($row['assigned_date'] ?? ''));
+            $expectedReturnDate = trim((string) ($row['expected_return_date'] ?? ''));
+            $conditionOut = strtolower(trim((string) ($row['condition_out'] ?? 'good')));
+
+            if ($assetKey === '') {
+                $errors[] = "Line {$line}: asset_tag is required.";
+                continue;
+            }
+
+            if (isset($seenAssets[$assetKey])) {
+                $errors[] = "Line {$line}: duplicate asset_tag '{$assetKey}' in this CSV.";
+                continue;
+            }
+            $seenAssets[$assetKey] = true;
+
+            if ($employeeCode === '') {
+                $errors[] = "Line {$line}: employee_code is required.";
+                continue;
+            }
+
+            if ($assignedDate === '' || strtotime($assignedDate) === false) {
+                $errors[] = "Line {$line}: assigned_date must be a valid date.";
+                continue;
+            }
+
+            if ($expectedReturnDate !== '' && strtotime($expectedReturnDate) === false) {
+                $errors[] = "Line {$line}: expected_return_date must be a valid date.";
+                continue;
+            }
+
+            if ($expectedReturnDate !== '' && strtotime($expectedReturnDate) <= strtotime($assignedDate)) {
+                $errors[] = "Line {$line}: expected_return_date must be after assigned_date.";
+                continue;
+            }
+
+            if (!in_array($conditionOut, $allowedConditions, true)) {
+                $errors[] = "Line {$line}: condition_out must be excellent, good, fair, or poor.";
+                continue;
+            }
+
+            $asset = Asset::where('organization_id', $this->orgId())
+                ->where('status', 'available')
+                ->where('asset_tag', $assetKey)
+                ->first();
+
+            if (!$asset) {
+                $errors[] = "Line {$line}: available asset '{$assetKey}' was not found.";
+                continue;
+            }
+
+            $user = User::where('organization_id', $this->orgId())
+                ->where('status', 'active')
+                ->where('employee_id', $employeeCode)
+                ->first();
+
+            if (!$user) {
+                $errors[] = "Line {$line}: active employee code '{$employeeCode}' was not found.";
+                continue;
+            }
+
+            $rows[] = [
+                'asset' => $asset,
+                'user' => $user,
+                'assigned_date' => date('Y-m-d', strtotime($assignedDate)),
+                'expected_return_date' => $expectedReturnDate !== '' ? date('Y-m-d', strtotime($expectedReturnDate)) : null,
+                'condition_out' => $conditionOut,
+                'purpose' => trim((string) ($row['purpose'] ?? '')) ?: null,
+                'notes' => trim((string) ($row['notes'] ?? '')) ?: null,
+            ];
+        }
+
+        fclose($handle);
+
+        if (!$rows && !$errors) {
+            return back()->withErrors(['csv_file' => 'The CSV file does not contain any assignment rows.']);
+        }
+
+        if ($errors) {
+            return back()->withErrors(['csv_file' => implode(' ', array_slice($errors, 0, 8))]);
+        }
+
+        DB::transaction(function () use ($rows) {
+            foreach ($rows as $row) {
+                AssetAssignment::create([
+                    'asset_id' => $row['asset']->id,
+                    'user_id' => $row['user']->id,
+                    'department_id' => $row['user']->department_id,
+                    'assigned_by' => auth()->id(),
+                    'assigned_date' => $row['assigned_date'],
+                    'expected_return_date' => $row['expected_return_date'],
+                    'condition_out' => $row['condition_out'],
+                    'purpose' => $row['purpose'],
+                    'notes' => $row['notes'],
+                    'status' => 'active',
+                ]);
+
+                $row['asset']->update(['status' => 'assigned']);
+            }
+        });
 
         return redirect()->route('admin.assignments.index')
-            ->with('success', "{$count} asset" . ($count !== 1 ? 's' : '') . ' assigned successfully.');
+            ->with('success', count($rows) . ' asset assignment' . (count($rows) !== 1 ? 's' : '') . ' imported successfully.');
     }
 
-    // ─── RETURN ───────────────────────────────────────────────────────────────
+    // RETURN ───────────────────────────────────────────────────────────────
 
     public function returnAsset(Request $request, AssetAssignment $assignment)
     {

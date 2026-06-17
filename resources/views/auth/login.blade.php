@@ -4,6 +4,7 @@
 @php
     $siteTitle = \App\Models\Setting::get('site_title', 'ITAM Suite');
     $siteLogo = \App\Models\Setting::get('site_logo');
+    $activeAuthTab = old('organization') ? 'sso' : 'password';
 @endphp
 
 @section('content')
@@ -15,8 +16,8 @@
             <i class="bi bi-grid-1x2-fill"></i>
         @endif
     </div>
-    <h2>Sign in to your workspace</h2>
-    <p>Access HRMS, IT assets, software licenses, payroll, support and supplier workflows from one secure account.</p>
+    <h2>Welcome back</h2>
+    <p>Choose how you want to access your workspace.</p>
 </div>
 
 @if($errors->any())
@@ -32,96 +33,112 @@
     </div>
 @endif
 
-<form method="POST" action="{{ route('login.post') }}" id="loginForm" novalidate>
-    @csrf
+<div class="auth-tabs" role="tablist" aria-label="Sign in method">
+    <button type="button" class="auth-tab {{ $activeAuthTab === 'password' ? 'active' : '' }}" data-auth-tab="password">
+        <i class="bi bi-lock"></i> Password
+    </button>
+    <button type="button" class="auth-tab {{ $activeAuthTab === 'sso' ? 'active' : '' }}" data-auth-tab="sso">
+        <i class="bi bi-shield-check"></i> SSO
+    </button>
+</div>
 
-    <div class="field-group">
-        <label class="field-label" for="email">Email Address</label>
-        <div class="field-wrap">
-            <i class="bi bi-envelope field-icon"></i>
-            <input type="email"
-                   id="email"
-                   name="email"
-                   value="{{ old('email') }}"
-                   class="field-input {{ $errors->has('email') ? 'is-invalid' : '' }}"
-                   placeholder="you@company.com"
-                   required autofocus autocomplete="email">
+<div class="auth-pane {{ $activeAuthTab === 'password' ? 'active' : '' }}" id="passwordPane">
+    <form method="POST" action="{{ route('login.post') }}" id="loginForm" novalidate>
+        @csrf
+
+        <div class="field-group">
+            <label class="field-label" for="email">Email Address</label>
+            <div class="field-wrap">
+                <i class="bi bi-envelope field-icon"></i>
+                <input type="email"
+                       id="email"
+                       name="email"
+                       value="{{ old('email') }}"
+                       class="field-input {{ $errors->has('email') ? 'is-invalid' : '' }}"
+                       placeholder="you@company.com"
+                       required autofocus autocomplete="email">
+            </div>
         </div>
-    </div>
 
-    <div class="field-group">
-        <label class="field-label" for="password">Password</label>
-        <div class="field-wrap">
-            <i class="bi bi-lock field-icon"></i>
-            <input type="password"
-                   id="password"
-                   name="password"
-                   class="field-input"
-                   placeholder="Enter your password"
-                   required autocomplete="current-password"
-                   style="padding-right:2.8rem">
-            <button type="button" class="field-toggle" id="togglePwd" title="Show or hide password">
-                <i class="bi bi-eye" id="pwdIcon"></i>
+        <div class="field-group">
+            <label class="field-label" for="password">Password</label>
+            <div class="field-wrap">
+                <i class="bi bi-lock field-icon"></i>
+                <input type="password"
+                       id="password"
+                       name="password"
+                       class="field-input"
+                       placeholder="Enter your password"
+                       required autocomplete="current-password"
+                       style="padding-right:2.8rem">
+                <button type="button" class="field-toggle" id="togglePwd" title="Show or hide password">
+                    <i class="bi bi-eye" id="pwdIcon"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="auth-row">
+            <label class="custom-check">
+                <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                Remember me
+            </label>
+        </div>
+
+        <button type="submit" class="btn-signin" id="signinBtn">
+            <i class="bi bi-box-arrow-in-right"></i>
+            <span id="signinLabel">Sign In</span>
+        </button>
+    </form>
+</div>
+
+<div class="auth-pane {{ $activeAuthTab === 'sso' ? 'active' : '' }}" id="ssoPane">
+    <form method="POST" action="{{ route('sso.redirect') }}" class="sso-form">
+        @csrf
+        <div class="field-group">
+            <label class="field-label" for="organization">Organization Name or Domain</label>
+            <div class="field-wrap">
+                <i class="bi bi-building field-icon"></i>
+                <input type="text"
+                       id="organization"
+                       name="organization"
+                       value="{{ old('organization') }}"
+                       class="field-input"
+                       placeholder="TechCorp or techcorp.com"
+                       autocomplete="organization"
+                       required>
+            </div>
+        </div>
+
+        <div class="sso-grid">
+            <button type="submit"
+                    name="provider"
+                    value="google"
+                    data-configured="{{ ($ssoProviders['google'] ?? false) ? '1' : '0' }}"
+                    class="sso-btn google {{ (($ssoProviders['google'] ?? false) && filled(old('organization'))) ? '' : 'disabled' }}"
+                    title="{{ ($ssoProviders['google'] ?? false) ? 'Continue with Google' : 'Google SSO is not configured for any organization yet' }}"
+                    @disabled(!($ssoProviders['google'] ?? false) || !filled(old('organization')))>
+                <i class="bi bi-google"></i>Google
+            </button>
+
+            <button type="submit"
+                    name="provider"
+                    value="microsoft"
+                    data-configured="{{ ($ssoProviders['microsoft'] ?? false) ? '1' : '0' }}"
+                    class="sso-btn microsoft {{ (($ssoProviders['microsoft'] ?? false) && filled(old('organization'))) ? '' : 'disabled' }}"
+                    title="{{ ($ssoProviders['microsoft'] ?? false) ? 'Continue with Microsoft' : 'Microsoft SSO is not configured for any organization yet' }}"
+                    @disabled(!($ssoProviders['microsoft'] ?? false) || !filled(old('organization')))>
+                <i class="bi bi-microsoft"></i>Microsoft
             </button>
         </div>
-    </div>
+    </form>
 
-    <div class="auth-row">
-        <label class="custom-check">
-            <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-            Remember me
-        </label>
-    </div>
+    @if(!($ssoProviders['google'] ?? false) || !($ssoProviders['microsoft'] ?? false))
+    <div class="sso-note">SSO is available after your organization configures Microsoft or Google sign-in.</div>
+    @endif
+</div>
 
-    <button type="submit" class="btn-signin" id="signinBtn">
-        <i class="bi bi-box-arrow-in-right"></i>
-        <span id="signinLabel">Sign In</span>
-    </button>
-</form>
-
-<div class="auth-divider">Demo Accounts</div>
-
-<button class="demo-toggle" id="demoToggle" type="button">
-    <i class="bi bi-chevron-down"></i>
-    View test credentials
-</button>
-
-<div class="demo-box" id="demoBox">
-    <div class="demo-row" onclick="fillDemo('superadmin@itam.com')">
-        <div class="demo-role-dot" style="background:#6366f1"></div>
-        <div class="demo-row-info">
-            <div class="demo-row-role">Super Admin</div>
-            <div class="demo-row-email">superadmin@itam.com</div>
-        </div>
-        <button class="demo-fill-btn" type="button">Use</button>
-    </div>
-    <div class="demo-row" onclick="fillDemo('admin@techcorp.com')">
-        <div class="demo-role-dot" style="background:#2563eb"></div>
-        <div class="demo-row-info">
-            <div class="demo-row-role">Admin</div>
-            <div class="demo-row-email">admin@techcorp.com</div>
-        </div>
-        <button class="demo-fill-btn" type="button">Use</button>
-    </div>
-    <div class="demo-row" onclick="fillDemo('staff@techcorp.com')">
-        <div class="demo-role-dot" style="background:#f59e0b"></div>
-        <div class="demo-row-info">
-            <div class="demo-row-role">Employee</div>
-            <div class="demo-row-email">staff@techcorp.com</div>
-        </div>
-        <button class="demo-fill-btn" type="button">Use</button>
-    </div>
-    <div class="demo-row" onclick="fillDemo('vendor@delltech.com')">
-        <div class="demo-role-dot" style="background:#14b8a6"></div>
-        <div class="demo-row-info">
-            <div class="demo-row-role">Supplier</div>
-            <div class="demo-row-email">vendor@delltech.com</div>
-        </div>
-        <button class="demo-fill-btn" type="button">Use</button>
-    </div>
-    <div class="demo-pass-note">
-        <i class="bi bi-shield-lock me-1"></i>All demo passwords: <strong>password</strong>
-    </div>
+<div class="auth-switch-link">
+    New organization? <a href="{{ route('register') }}">Start a free trial</a>
 </div>
 @endsection
 
@@ -141,20 +158,6 @@ document.getElementById('togglePwd').addEventListener('click', function () {
     }
 });
 
-var demoToggle = document.getElementById('demoToggle');
-var demoBox = document.getElementById('demoBox');
-demoToggle.addEventListener('click', function () {
-    var isOpen = demoBox.classList.toggle('show');
-    demoToggle.classList.toggle('open', isOpen);
-});
-
-function fillDemo(email) {
-    document.getElementById('email').value = email;
-    document.getElementById('password').value = 'password';
-    demoBox.classList.remove('show');
-    demoToggle.classList.remove('open');
-}
-
 document.getElementById('loginForm').addEventListener('submit', function () {
     var btn = document.getElementById('signinBtn');
     var label = document.getElementById('signinLabel');
@@ -162,5 +165,38 @@ document.getElementById('loginForm').addEventListener('submit', function () {
     btn.querySelector('i').className = 'bi bi-arrow-repeat spin';
     label.textContent = 'Signing in...';
 });
+
+var organizationInput = document.getElementById('organization');
+var ssoButtons = document.querySelectorAll('.sso-btn[data-configured]');
+var authTabs = document.querySelectorAll('.auth-tab');
+var passwordPane = document.getElementById('passwordPane');
+var ssoPane = document.getElementById('ssoPane');
+
+authTabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+        var target = tab.dataset.authTab;
+        authTabs.forEach(function (item) {
+            item.classList.toggle('active', item === tab);
+        });
+        passwordPane.classList.toggle('active', target === 'password');
+        ssoPane.classList.toggle('active', target === 'sso');
+
+        if (target === 'sso') {
+            organizationInput.focus();
+        }
+    });
+});
+
+function syncSsoButtons() {
+    var hasOrganization = organizationInput.value.trim().length > 0;
+    ssoButtons.forEach(function (button) {
+        var enabled = button.dataset.configured === '1' && hasOrganization;
+        button.disabled = !enabled;
+        button.classList.toggle('disabled', !enabled);
+    });
+}
+
+organizationInput.addEventListener('input', syncSsoButtons);
+syncSsoButtons();
 </script>
 @endpush

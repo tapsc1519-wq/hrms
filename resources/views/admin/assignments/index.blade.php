@@ -1,4 +1,4 @@
-ï»¿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Asset Assignments')
 
@@ -8,9 +8,16 @@
         <h4 class="page-title mb-0">Asset Assignments</h4>
         <p class="page-subtitle mb-0">{{ $assignments->total() }} total records</p>
     </div>
-    <a href="{{ route('admin.assignments.create') }}" class="btn btn-primary">
-        <i class="bi bi-person-check me-1"></i>Assign Asset
-    </a>
+    <div class="d-flex gap-2">
+        @if(auth()->user()->hasPermission('assignments.create'))
+        <a href="{{ route('admin.assignments.bulk') }}" class="btn btn-outline-primary">
+            <i class="bi bi-filetype-csv me-1"></i>Bulk Assign CSV
+        </a>
+        <a href="{{ route('admin.assignments.create') }}" class="btn btn-primary">
+            <i class="bi bi-person-check me-1"></i>Assign Asset
+        </a>
+        @endif
+    </div>
 </div>
 
 <!-- Filters -->
@@ -59,8 +66,8 @@
                         </a>
                         <br><small class="text-muted">{{ $a->asset->asset_tag }}</small>
                     </td>
-                    <td>{{ $a->user?->name ?? 'â€”' }}</td>
-                    <td>{{ $a->department?->name ?? 'â€”' }}</td>
+                    <td>{{ $a->user?->name ?? '—' }}</td>
+                    <td>{{ $a->department?->name ?? '—' }}</td>
                     <td>{{ $a->assigned_date->format('d-m-Y') }}</td>
                     <td>
                         @if($a->expected_return_date)
@@ -68,7 +75,7 @@
                                 {{ $a->expected_return_date->format('d-m-Y') }}
                             </span>
                         @else
-                            <span class="text-muted">â€”</span>
+                            <span class="text-muted">—</span>
                         @endif
                     </td>
                     <td><span class="badge bg-secondary">{{ ucfirst($a->condition_out) }}</span></td>
@@ -98,12 +105,12 @@
                                 <div class="modal-header">
                                     <div>
                                         <h5 class="modal-title mb-0">Handover Asset</h5>
-                                        <small class="text-muted">{{ $a->asset->name }} Â· {{ $a->asset->asset_tag }}</small>
+                                        <small class="text-muted">{{ $a->asset->name }} · {{ $a->asset->asset_tag }}</small>
                                     </div>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <p class="mb-3">Current assignee: <strong>{{ $a->user?->name ?? 'â€”' }}</strong></p>
+                                    <p class="mb-3">Current assignee: <strong>{{ $a->user?->name ?? '—' }}</strong></p>
 
                                     <div class="row g-3 mb-3">
                                         <div class="col-md-6">
@@ -128,7 +135,7 @@
                                             <option value="">Select staff member</option>
                                             @foreach($staffUsers as $staff)
                                                 @if($staff->id !== $a->user_id)
-                                                <option value="{{ $staff->id }}">{{ $staff->name }}{{ $staff->department?->name ? ' Â· '.$staff->department->name : '' }}</option>
+                                                <option value="{{ $staff->id }}">{{ $staff->name }}{{ $staff->department?->name ? ' · '.$staff->department->name : '' }}</option>
                                                 @endif
                                             @endforeach
                                         </select>

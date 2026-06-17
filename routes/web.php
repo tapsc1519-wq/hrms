@@ -35,6 +35,7 @@ use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController
 use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
 use App\Http\Controllers\Admin\LeaveBalanceController;
 use App\Http\Controllers\Admin\HrmsSettingController;
+use App\Http\Controllers\Admin\SsoSettingController;
 use App\Http\Controllers\Supplier\DashboardController as SupplierDashboard;
 use App\Http\Controllers\Supplier\PurchaseOrderController as SupplierPOController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboard;
@@ -53,6 +54,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn() => redirect()->route('login'));
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::post('/auth/sso/redirect', [AuthController::class, 'redirectToSso'])->name('sso.redirect');
+Route::get('/auth/sso/callback', [AuthController::class, 'handleSsoCallback'])->name('sso.callback');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // ─── Super Admin ──────────────────────────────────────────────────────────────
@@ -79,10 +84,12 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
 // ─── Admin ────────────────────────────────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_admin'])->group(function () {
     Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
+    Route::get('sso-settings', [SsoSettingController::class, 'edit'])->name('sso-settings.edit');
+    Route::put('sso-settings', [SsoSettingController::class, 'update'])->name('sso-settings.update');
 
     Route::middleware('module:itam')->group(function () {
-    Route::resource('assets', AssetController::class)->only(['index', 'show'])->middleware('permission:assets.view');
     Route::resource('assets', AssetController::class)->only(['create', 'store'])->middleware('permission:assets.create');
+    Route::resource('assets', AssetController::class)->only(['index', 'show'])->middleware('permission:assets.view');
     Route::resource('assets', AssetController::class)->only(['edit', 'update'])->middleware('permission:assets.edit');
     Route::resource('assets', AssetController::class)->only(['destroy'])->middleware('permission:assets.delete');
     Route::resource('suppliers', SupplierController::class)->middleware('permission:suppliers.manage');
@@ -100,6 +107,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::patch('assignments/{assignment}/return', [AssignmentController::class, 'returnAsset'])->middleware('permission:assignments.return')->name('assignments.return');
     Route::patch('assignments/{assignment}/handover', [AssignmentController::class, 'handover'])->middleware('permission:assignments.return')->name('assignments.handover');
     Route::get('assignments/bulk', [AssignmentController::class, 'bulk'])->middleware('permission:assignments.create')->name('assignments.bulk');
+    Route::get('assignments/bulk/template', [AssignmentController::class, 'bulkTemplate'])->middleware('permission:assignments.create')->name('assignments.bulk.template');
     Route::post('assignments/bulk', [AssignmentController::class, 'storeBulk'])->middleware('permission:assignments.create')->name('assignments.bulk.store');
 
     // Bulk Import

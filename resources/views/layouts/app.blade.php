@@ -143,6 +143,35 @@
         box-shadow: 0 4px 15px rgba(59,130,246,.38);
         font-weight: 600;
     }
+    .sidebar-group-toggle {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        color: #64748b;
+        cursor: pointer;
+        display: flex;
+        font-size: .61rem;
+        font-weight: 750;
+        justify-content: space-between;
+        letter-spacing: 1.4px;
+        margin: .5rem .75rem .12rem;
+        padding: .42rem .58rem;
+        text-transform: uppercase;
+        width: calc(100% - 1.5rem);
+    }
+    .sidebar-group-toggle:hover { color: #cbd5e1; }
+    .sidebar-group-toggle i {
+        font-size: .72rem;
+        transition: transform .18s ease;
+    }
+    .sidebar-group-toggle.collapsed i { transform: rotate(-90deg); }
+    .sidebar-group-body {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .sidebar-group-body.collapsed { display: none; }
+    .sidebar-group-body .sidebar-link { margin-block: .05rem; }
 
     /* Sidebar user footer */
     .sidebar-footer {
@@ -827,10 +856,7 @@
                class="sidebar-link {{ request()->routeIs('admin.assignments.index') ? 'active' : '' }}">
                 <i class="bi bi-person-check-fill"></i> Assignments
             </a>
-            <a href="{{ route('admin.assignments.bulk') }}"
-               class="sidebar-link {{ request()->routeIs('admin.assignments.bulk*') ? 'active' : '' }}">
-                <i class="bi bi-people-fill"></i> Bulk Assign
-            </a>
+
             <a href="{{ route('admin.requests.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.requests.*') ? 'active' : '' }}">
                 <i class="bi bi-clipboard-check-fill"></i> Requests
@@ -980,6 +1006,10 @@
                class="sidebar-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
                 <i class="bi bi-shield-lock-fill"></i> Roles & Permissions
             </a>
+            <a href="{{ route('admin.sso-settings.edit') }}"
+               class="sidebar-link {{ request()->routeIs('admin.sso-settings.*') ? 'active' : '' }}">
+                <i class="bi bi-key-fill"></i> Organization SSO
+            </a>
 
             @if($hasItam)
             <div class="sidebar-section-title">Reports</div>
@@ -1022,11 +1052,9 @@
                class="sidebar-link {{ request()->routeIs('staff.dashboard') ? 'active' : '' }}">
                 <i class="bi bi-grid-1x2-fill"></i> Dashboard
             </a>
+            @if($hasHrms || $hasPayroll || $hasItam || $hasSam || $hasSupport)
+            <div class="sidebar-section-title">Employee Self Service</div>
             @if($hasHrms)
-            <a href="{{ route('staff.hrms.dashboard') }}"
-               class="sidebar-link {{ request()->routeIs('staff.hrms.dashboard') ? 'active' : '' }}">
-                <i class="bi bi-person-workspace"></i> My HRMS
-            </a>
             <a href="{{ route('staff.profile.show') }}"
                class="sidebar-link {{ request()->routeIs('staff.profile.*') ? 'active' : '' }}">
                 <i class="bi bi-person-vcard-fill"></i> My Profile
@@ -1039,6 +1067,35 @@
                class="sidebar-link {{ request()->routeIs('staff.leaves.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-check-fill"></i> My Leaves
             </a>
+            @endif
+            @if($hasPayroll)
+            <a href="{{ route('staff.payslips.index') }}"
+               class="sidebar-link {{ request()->routeIs('staff.payslips.*') ? 'active' : '' }}">
+                <i class="bi bi-receipt-cutoff"></i> My Payslips
+            </a>
+            @endif
+            @if($hasItam)
+            <a href="{{ route('staff.my-assets.index') }}"
+               class="sidebar-link {{ request()->routeIs('staff.my-assets.*') ? 'active' : '' }}">
+                <i class="bi bi-box-seam-fill"></i> My Assets
+            </a>
+            <a href="{{ route('staff.requests.index') }}"
+               class="sidebar-link {{ request()->routeIs('staff.requests.*') ? 'active' : '' }}">
+                <i class="bi bi-clipboard-plus-fill"></i> My Requests
+            </a>
+            @endif
+            @if($hasSam)
+            <a href="{{ route('staff.my-software.index') }}"
+               class="sidebar-link {{ request()->routeIs('staff.my-software.*') ? 'active' : '' }}">
+                <i class="bi bi-display-fill"></i> My Software
+            </a>
+            @endif
+            @if($hasSupport)
+            <a href="{{ route('staff.tickets.index') }}"
+               class="sidebar-link {{ request()->routeIs('staff.tickets.*') ? 'active' : '' }}">
+                <i class="bi bi-headset"></i> Support Tickets
+            </a>
+            @endif
             @endif
             @if($canManageHrms)
             <div class="sidebar-section-title">HR Management</div>
@@ -1108,24 +1165,8 @@
             </a>
             @endif
             @endif
-            @if($hasPayroll)
-            <a href="{{ route('staff.payslips.index') }}"
-               class="sidebar-link {{ request()->routeIs('staff.payslips.*') ? 'active' : '' }}">
-                <i class="bi bi-receipt-cutoff"></i> My Payslips
-            </a>
-            @endif
 
-            @if($hasItam)
-            <div class="sidebar-section-title">My Assets</div>
-            <a href="{{ route('staff.my-assets.index') }}"
-               class="sidebar-link {{ request()->routeIs('staff.my-assets.*') ? 'active' : '' }}">
-                <i class="bi bi-box-seam-fill"></i> My Assets
-            </a>
-            <a href="{{ route('staff.requests.index') }}"
-               class="sidebar-link {{ request()->routeIs('staff.requests.*') ? 'active' : '' }}">
-                <i class="bi bi-clipboard-plus-fill"></i> My Requests
-            </a>
-            @endif
+
             @if($canManageItam)
             <div class="sidebar-section-title">ITAM Management</div>
             @if($user->hasPermission('assets.view'))
@@ -1153,10 +1194,7 @@
             </a>
             @endif
             @if($user->hasPermission('assignments.create'))
-            <a href="{{ route('admin.assignments.bulk') }}"
-               class="sidebar-link {{ request()->routeIs('admin.assignments.bulk*') ? 'active' : '' }}">
-                <i class="bi bi-people-fill"></i> Bulk Assign
-            </a>
+
             @endif
             @if($user->hasPermission('requests.view'))
             <a href="{{ route('admin.requests.index') }}"
@@ -1220,21 +1258,8 @@
             @endif
             @endif
 
-            @if($hasSam)
-            <div class="sidebar-section-title">Software</div>
-            <a href="{{ route('staff.my-software.index') }}"
-               class="sidebar-link {{ request()->routeIs('staff.my-software.*') ? 'active' : '' }}">
-                <i class="bi bi-display-fill"></i> My Software
-            </a>
-            @endif
 
-            @if($hasSupport)
-            <div class="sidebar-section-title">Support</div>
-            <a href="{{ route('staff.tickets.index') }}"
-               class="sidebar-link {{ request()->routeIs('staff.tickets.*') ? 'active' : '' }}">
-                <i class="bi bi-headset"></i> Support Tickets
-            </a>
-            @endif
+
             @if($canManageSupport)
             <div class="sidebar-section-title">Support Management</div>
             <a href="{{ route('admin.tickets.index') }}"
@@ -1454,6 +1479,54 @@ document.addEventListener('DOMContentLoaded', function () {
 document.getElementById('sidebarToggle')?.addEventListener('click', function() {
     document.getElementById('sidebar').classList.toggle('show');
 });
+
+(function () {
+    var nav = document.querySelector('#sidebar .sidebar-nav');
+    if (!nav || nav.dataset.grouped === '1') return;
+    nav.dataset.grouped = '1';
+
+    Array.from(nav.querySelectorAll('.sidebar-section-title')).forEach(function (title, index) {
+        var label = title.textContent.trim();
+        if (!label) return;
+
+        var body = document.createElement('div');
+        body.className = 'sidebar-group-body';
+        body.id = 'sidebarGroup' + index;
+
+        var node = title.nextElementSibling;
+        while (node && !node.classList.contains('sidebar-section-title')) {
+            var next = node.nextElementSibling;
+            body.appendChild(node);
+            node = next;
+        }
+
+        var toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'sidebar-group-toggle';
+        toggle.setAttribute('aria-controls', body.id);
+        toggle.innerHTML = '<span>' + label + '</span><i class="bi bi-chevron-down"></i>';
+
+        title.replaceWith(toggle);
+        toggle.insertAdjacentElement('afterend', body);
+
+        var storageKey = 'sidebar-group:' + label;
+        var hasActive = !!body.querySelector('.sidebar-link.active');
+        var saved = localStorage.getItem(storageKey);
+        var shouldOpen = hasActive || label.toLowerCase() === 'overview' || saved === 'open';
+
+        function setOpen(open) {
+            body.classList.toggle('collapsed', !open);
+            toggle.classList.toggle('collapsed', !open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            localStorage.setItem(storageKey, open ? 'open' : 'closed');
+        }
+
+        setOpen(shouldOpen);
+        toggle.addEventListener('click', function () {
+            setOpen(body.classList.contains('collapsed'));
+        });
+    });
+})();
 </script>
 
 {{-- ── Attachment drop-zone (global) ── --}}
