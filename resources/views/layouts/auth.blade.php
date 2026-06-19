@@ -48,15 +48,29 @@
         padding: clamp(2rem, 5vw, 4.25rem);
         position: relative;
     }
+    #auth-particles {
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        position: absolute;
+        z-index: 0;
+    }
+    #auth-particles canvas {
+        display: block;
+        height: 100% !important;
+        width: 100% !important;
+    }
     .auth-left::before {
         background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
         background-size: 46px 46px;
         content: "";
         inset: 0;
-        opacity: .55;
+        opacity: .18;
         position: absolute;
+        z-index: 0;
     }
     .auth-left > * { position: relative; z-index: 1; }
+    .auth-left > #auth-particles { position: absolute; z-index: 0; }
 
     .auth-brand {
         align-items: center;
@@ -385,6 +399,7 @@
 
     @media (max-width: 980px) {
         html, body { overflow: auto; }
+        #auth-particles { display: none; }
         .auth-page { padding: 0; }
         .auth-shell { border: 0; border-radius: 0; display: flex; flex-direction: column; min-height: 100vh; }
         .auth-left { min-height: auto; padding: 1.35rem; }
@@ -463,6 +478,8 @@
 <div class="auth-page">
     <div class="auth-shell">
         <section class="auth-left">
+            <div id="auth-particles" aria-hidden="true"></div>
+
             <div class="auth-brand">
                 <div class="brand-icon">
                     @if($siteLogo)
@@ -522,6 +539,74 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script>
+if (
+    window.particlesJS
+    && document.getElementById('auth-particles')
+    && window.matchMedia('(min-width: 981px)').matches
+    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+) {
+    particlesJS('auth-particles', {
+        particles: {
+            number: {
+                value: 118,
+                density: { enable: true, value_area: 760 }
+            },
+            color: { value: ['#ffffff', '#bfdbfe', '#67e8f9', '#c4b5fd', '#f0abfc'] },
+            shape: {
+                type: ['circle', 'star'],
+                stroke: { width: 0, color: '#000000' }
+            },
+            opacity: {
+                value: 0.62,
+                random: true,
+                anim: {
+                    enable: true,
+                    speed: 0.35,
+                    opacity_min: 0.12,
+                    sync: false
+                }
+            },
+            size: {
+                value: 2.8,
+                random: true,
+                anim: {
+                    enable: true,
+                    speed: 0.7,
+                    size_min: 0.35,
+                    sync: false
+                }
+            },
+            line_linked: {
+                enable: true,
+                distance: 105,
+                color: '#93c5fd',
+                opacity: 0.07,
+                width: 0.7
+            },
+            move: {
+                enable: true,
+                speed: 0.28,
+                direction: 'none',
+                random: true,
+                straight: false,
+                out_mode: 'out',
+                bounce: false
+            }
+        },
+        interactivity: {
+            detect_on: 'canvas',
+            events: {
+                onhover: { enable: false },
+                onclick: { enable: false },
+                resize: true
+            }
+        },
+        retina_detect: true
+    });
+}
+</script>
 @stack('scripts')
 </body>
 </html>
