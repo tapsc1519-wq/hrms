@@ -55,10 +55,16 @@
                         ['Used Seats',    $softwareLicense->used_seats],
                         ['Available',     $softwareLicense->available_seats],
                         ['Supplier',        optional($softwareLicense->supplier)->name ?? '—'],
+                        ['Purchase Batch', $softwareLicense->purchase_batch ?? '—'],
                         ['PO Number',     $softwareLicense->po_number ?? '—'],
+                        ['Invoice Number', $softwareLicense->invoice_number ?? '—'],
+                        ['Agreement Number', $softwareLicense->agreement_number ?? '—'],
                         ['Purchase Date', $softwareLicense->purchase_date ? $softwareLicense->purchase_date->format('d-m-Y') : '—'],
                         ['Expiry Date',   $softwareLicense->expiry_date ? $softwareLicense->expiry_date->format('d-m-Y') : '—'],
-                        ['Purchase Price','purchase_price' === 'purchase_price' && $softwareLicense->purchase_price ? '$'.number_format($softwareLicense->purchase_price,2) : '—'],
+                        ['Renewal Date',  $softwareLicense->renewal_date ? $softwareLicense->renewal_date->format('d-m-Y') : '—'],
+                        ['Unit Cost',     $softwareLicense->unit_cost ? 'Rs. '.number_format((float) $softwareLicense->unit_cost, 2) : '—'],
+                        ['Purchase Price', $softwareLicense->total_cost ? 'Rs. '.number_format($softwareLicense->total_cost, 2) : '—'],
+                        ['Renewal Recommendation', $softwareLicense->renewal_recommendation_label],
                     ];
                     @endphp
                     @foreach($details as [$label, $value])
@@ -71,6 +77,14 @@
                     <div class="col-12">
                         <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;margin-bottom:.2rem">License Key</div>
                         <code style="font-size:.82rem;color:#1e293b;background:#f1f5f9;padding:4px 8px;border-radius:6px;display:inline-block">{{ $softwareLicense->license_key }}</code>
+                    </div>
+                    @endif
+                    @if($softwareLicense->evidence_document)
+                    <div class="col-12">
+                        <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;margin-bottom:.2rem">Evidence Document</div>
+                        <a href="{{ Storage::url($softwareLicense->evidence_document) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-paperclip me-1"></i>Open Evidence
+                        </a>
                     </div>
                     @endif
                     @if($softwareLicense->notes)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\AssetAssignment;
 use App\Models\AssetHandoverRequest;
+use App\Models\AssetIssueReport;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +42,14 @@ class AssetController extends Controller
             ->latest()
             ->get();
 
-        return view('staff.assets.index', compact('assignments', 'staffUsers', 'incomingHandovers', 'outgoingHandovers'));
+        $openIssues = AssetIssueReport::where('reported_by', auth()->id())
+            ->whereIn('status', AssetIssueReport::ACTIVE_STATUSES)
+            ->with('asset')
+            ->latest()
+            ->get()
+            ->keyBy('asset_assignment_id');
+
+        return view('staff.assets.index', compact('assignments', 'staffUsers', 'incomingHandovers', 'outgoingHandovers', 'openIssues'));
     }
 
     public function handover(Request $request, AssetAssignment $assignment)
@@ -102,6 +110,38 @@ class AssetController extends Controller
         });
 
         return back()->with('success', 'Asset handed over to IT Support/Admin successfully.');
+    }
+
+    public function reportIssue(Request $request, AssetAssignment $assignment)
+    {
+        abort_if($assignment->user_id !== auth()->id(), 403);
+        abort_if($assignment->status !== 'active', 422, 'Only active assignments can be reported.');
+
+        $data = $request->validate([
+            'issue_type' => ['required', 'in:damaged,lost,stolen,not_working,obsolete,other'],
+            'severity' => ['required', 'in:low,medium,high,critical'],
+            'reported_date' => ['required', 'date'],
+            'description' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $openIssue = AssetIssueReport::where('asset_assignment_id', $assignment->id)
+            ->whereIn('status', AssetIssueReport::ACTIVE_STATUSES)
+            ->exists();
+
+        if ($openIssue) {
+            return back()->with('error', 'An open issue report already exists for this asset.');
+        }
+
+        AssetIssueReport::create([
+            ...$data,
+            'organization_id' => auth()->user()->organization_id,
+            'asset_id' => $assignment->asset_id,
+            'asset_assignment_id' => $assignment->id,
+            'reported_by' => auth()->id(),
+            'status' => 'open',
+        ]);
+
+        return back()->with('success', 'Asset issue reported to Admin/IT for review.');
     }
 
     public function acceptHandover(Request $request, AssetHandoverRequest $handover)

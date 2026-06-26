@@ -121,7 +121,8 @@
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Seats</th>
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Compliance</th>
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Supplier</th>
-                        <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Expiry</th>
+                        <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Renewal</th>
+                        <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Recommendation</th>
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Status</th>
                         <th class="py-3"></th>
                     </tr>
@@ -150,13 +151,18 @@
                         </td>
                         <td class="py-3">{{ optional($lic->supplier)->name ?? '—' }}</td>
                         <td class="py-3">
-                            @if($lic->expiry_date)
+                            @if($lic->renewal_date || $lic->expiry_date)
                                 <span class="{{ $lic->is_expired ? 'text-danger fw-600' : ($lic->is_expiring_soon ? 'text-warning fw-600' : 'text-muted') }}" style="font-size:.82rem">
-                                    {{ $lic->expiry_date->format('d-m-Y') }}
+                                    {{ ($lic->renewal_date ?? $lic->expiry_date)->format('d-m-Y') }}
                                 </span>
                             @else
                                 <span class="text-muted">—</span>
                             @endif
+                        </td>
+                        <td class="py-3">
+                            <span class="badge bg-{{ $lic->renewal_recommendation === 'renew' ? 'success' : ($lic->renewal_recommendation === 'reduce' ? 'info' : 'warning') }}">
+                                {{ $lic->renewal_recommendation_label }}
+                            </span>
                         </td>
                         <td class="py-3">
                             <span class="badge bg-{{ $lic->status_badge }}">{{ $lic->status_label }}</span>

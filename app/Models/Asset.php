@@ -120,6 +120,11 @@ class Asset extends Model
         return $this->hasMany(AssetDisposal::class);
     }
 
+    public function issueReports(): HasMany
+    {
+        return $this->hasMany(AssetIssueReport::class);
+    }
+
     public function activeDisposal(): HasOne
     {
         return $this->hasOne(AssetDisposal::class)->whereIn('status', ['pending', 'approved'])->latestOfMany();

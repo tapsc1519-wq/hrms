@@ -11,8 +11,15 @@ class Software extends Model
     protected $table = 'software';
 
     protected $fillable = [
-        'organization_id', 'name', 'vendor', 'version',
-        'category', 'description', 'publisher_website', 'icon',
+        'organization_id', 'name', 'vendor', 'version', 'edition',
+        'category', 'software_type', 'license_required', 'criticality',
+        'license_metric', 'trusted_publisher',
+        'description', 'publisher_website', 'icon',
+    ];
+
+    protected $casts = [
+        'license_required' => 'boolean',
+        'trusted_publisher' => 'boolean',
     ];
 
     // ── Relationships ───────────────────────────────────────────────────────
@@ -30,6 +37,16 @@ class Software extends Model
     public function activeLicenses(): HasMany
     {
         return $this->hasMany(SoftwareLicense::class)->where('status', 'active');
+    }
+
+    public function discoveries(): HasMany
+    {
+        return $this->hasMany(SoftwareDiscovery::class);
+    }
+
+    public function recognitionRules(): HasMany
+    {
+        return $this->hasMany(SoftwareRecognitionRule::class);
     }
 
     // ── Accessors ───────────────────────────────────────────────────────────
@@ -76,6 +93,39 @@ class Software extends Model
             'erp'              => 'success',
             'operating_system' => 'secondary',
             default            => 'secondary',
+        };
+    }
+
+    public function getSoftwareTypeLabelAttribute(): string
+    {
+        return match($this->software_type) {
+            'saas' => 'SaaS',
+            'open_source' => 'Open Source',
+            'freeware' => 'Freeware',
+            'os' => 'Operating System',
+            default => 'Commercial',
+        };
+    }
+
+    public function getCriticalityBadgeAttribute(): string
+    {
+        return match($this->criticality) {
+            'critical' => 'danger',
+            'high' => 'warning',
+            'low' => 'secondary',
+            default => 'primary',
+        };
+    }
+
+    public function getLicenseMetricLabelAttribute(): string
+    {
+        return match($this->license_metric) {
+            'per_device' => 'Per Device',
+            'concurrent' => 'Concurrent',
+            'site' => 'Site',
+            'enterprise' => 'Enterprise',
+            'usage_based' => 'Usage Based',
+            default => 'Per User',
         };
     }
 

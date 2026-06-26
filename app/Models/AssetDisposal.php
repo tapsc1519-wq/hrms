@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AssetDisposal extends Model
 {
@@ -60,6 +61,11 @@ class AssetDisposal extends Model
     public function completedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function issueReport(): HasOne
+    {
+        return $this->hasOne(AssetIssueReport::class);
     }
 
     public function getMethodLabelAttribute(): string

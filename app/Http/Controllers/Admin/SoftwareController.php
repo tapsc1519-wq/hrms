@@ -26,6 +26,12 @@ class SoftwareController extends Controller
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
+        if ($request->filled('criticality')) {
+            $query->where('criticality', $request->criticality);
+        }
+        if ($request->filled('license_required')) {
+            $query->where('license_required', $request->license_required === 'yes');
+        }
 
         $software = $query->paginate(20)->withQueryString();
 
@@ -58,11 +64,18 @@ class SoftwareController extends Controller
             'name'              => 'required|string|max:255',
             'vendor'            => 'nullable|string|max:255',
             'version'           => 'nullable|string|max:100',
+            'edition'           => 'nullable|string|max:100',
             'category'          => 'required|in:productivity,security,design,development,communication,database,erp,operating_system,other',
+            'software_type'     => 'required|in:commercial,saas,open_source,freeware,os',
+            'license_required'  => 'required|boolean',
+            'criticality'       => 'required|in:low,medium,high,critical',
+            'license_metric'    => 'required|in:per_user,per_device,concurrent,site,enterprise,usage_based',
+            'trusted_publisher' => 'nullable|boolean',
             'description'       => 'nullable|string|max:2000',
             'publisher_website' => 'nullable|url|max:255',
             'icon'              => 'nullable|image|max:2048',
         ]);
+        $validated['trusted_publisher'] = $request->boolean('trusted_publisher');
 
         if ($request->hasFile('icon')) {
             $validated['icon'] = $request->file('icon')->store('software-icons', 'public');
@@ -105,11 +118,18 @@ class SoftwareController extends Controller
             'name'              => 'required|string|max:255',
             'vendor'            => 'nullable|string|max:255',
             'version'           => 'nullable|string|max:100',
+            'edition'           => 'nullable|string|max:100',
             'category'          => 'required|in:productivity,security,design,development,communication,database,erp,operating_system,other',
+            'software_type'     => 'required|in:commercial,saas,open_source,freeware,os',
+            'license_required'  => 'required|boolean',
+            'criticality'       => 'required|in:low,medium,high,critical',
+            'license_metric'    => 'required|in:per_user,per_device,concurrent,site,enterprise,usage_based',
+            'trusted_publisher' => 'nullable|boolean',
             'description'       => 'nullable|string|max:2000',
             'publisher_website' => 'nullable|url|max:255',
             'icon'              => 'nullable|image|max:2048',
         ]);
+        $validated['trusted_publisher'] = $request->boolean('trusted_publisher');
 
         if ($request->hasFile('icon')) {
             if ($software->icon) Storage::disk('public')->delete($software->icon);

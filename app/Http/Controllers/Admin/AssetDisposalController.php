@@ -126,7 +126,7 @@ class AssetDisposalController extends Controller
     {
         $data = $request->validate([
             'asset_id' => ['required', 'exists:assets,id'],
-            'method' => ['required', 'in:scrap,sell,donate,recycle,return_to_supplier,destroy'],
+            'method' => ['required', 'in:scrap,sell,donate,recycle,return_to_supplier,destroy,lost,stolen'],
             'requested_date' => ['required', 'date'],
             'expected_value' => ['nullable', 'numeric', 'min:0'],
             'recipient_name' => ['nullable', 'string', 'max:255'],
@@ -157,7 +157,7 @@ class AssetDisposalController extends Controller
             'asset_ids' => ['nullable', 'array'],
             'asset_ids.*' => ['integer', 'exists:assets,id'],
             'asset_identifiers' => ['nullable', 'string', 'max:10000'],
-            'method' => ['required', 'in:scrap,sell,donate,recycle,return_to_supplier,destroy'],
+            'method' => ['required', 'in:scrap,sell,donate,recycle,return_to_supplier,destroy,lost,stolen'],
             'requested_date' => ['required', 'date'],
             'expected_value' => ['nullable', 'numeric', 'min:0'],
             'recipient_name' => ['nullable', 'string', 'max:255'],
@@ -311,8 +311,10 @@ class AssetDisposalController extends Controller
                     'notes' => 'Auto-closed because asset was disposed.',
                 ]);
 
+            $assetStatus = in_array($disposal->method, ['lost', 'stolen'], true) ? 'lost' : 'disposed';
+
             $disposal->asset()->update([
-                'status' => 'disposed',
+                'status' => $assetStatus,
                 'condition' => 'poor',
                 'notes' => trim(($disposal->asset->notes ? $disposal->asset->notes . PHP_EOL : '') . 'Disposed on ' . $data['disposed_date'] . ' via ' . $disposal->method_label . '.'),
             ]);

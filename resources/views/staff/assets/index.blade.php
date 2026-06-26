@@ -115,7 +115,10 @@
 @else
 <div class="row g-3">
     @foreach($assignments as $assignment)
-    @php $asset = $assignment->asset; @endphp
+    @php
+        $asset = $assignment->asset;
+        $openIssue = $openIssues->get($assignment->id);
+    @endphp
     <div class="col-md-6 col-xl-4">
         <div class="table-card h-100" style="padding:0;overflow:hidden">
 
@@ -191,9 +194,20 @@
                 @endif
 
                 <div class="mt-3 pt-3 border-top">
-                    <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#handoverModal{{ $assignment->id }}">
-                        <i class="bi bi-arrow-left-right me-1"></i>Handover Asset
-                    </button>
+                    @if($openIssue)
+                    <div class="alert alert-warning py-2 px-3 mb-2" style="font-size:.78rem">
+                        <div class="fw-700"><i class="bi bi-exclamation-triangle me-1"></i>Issue reported</div>
+                        <div>{{ $openIssue->issue_type_label }} is {{ str_replace('_', ' ', $openIssue->status) }}.</div>
+                    </div>
+                    @endif
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-danger flex-fill" data-bs-toggle="modal" data-bs-target="#issueModal{{ $assignment->id }}" {{ $openIssue ? 'disabled' : '' }}>
+                            <i class="bi bi-exclamation-circle me-1"></i>Report Issue
+                        </button>
+                        <button type="button" class="btn btn-outline-primary flex-fill" data-bs-toggle="modal" data-bs-target="#handoverModal{{ $assignment->id }}">
+                            <i class="bi bi-arrow-left-right me-1"></i>Handover
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -202,6 +216,64 @@
                 <i class="bi bi-info-circle me-1"></i>{{ $assignment->purpose }}
             </div>
             @endif
+        </div>
+    </div>
+
+    <div class="modal fade" id="issueModal{{ $assignment->id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <form action="{{ route('staff.my-assets.issue-report', $assignment) }}" method="POST">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title mb-0">Report Asset Issue</h5>
+                            <small class="text-muted">{{ $asset->name }} · {{ $asset->asset_tag }}</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-light border rounded-3 mb-3" style="font-size:.82rem">
+                            Report damaged, lost, stolen or unusable assets here. Admin/IT will review the issue and raise a disposal request only if required.
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-700">Issue Type <span class="text-danger">*</span></label>
+                                <select name="issue_type" class="form-select" required>
+                                    <option value="damaged">Damaged</option>
+                                    <option value="not_working">Not Working</option>
+                                    <option value="lost">Lost</option>
+                                    <option value="stolen">Stolen</option>
+                                    <option value="obsolete">Obsolete</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-700">Severity <span class="text-danger">*</span></label>
+                                <select name="severity" class="form-select" required>
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-700">Reported Date <span class="text-danger">*</span></label>
+                                <input type="date" name="reported_date" class="form-control" value="{{ today()->format('Y-m-d') }}" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-700">What happened? <span class="text-danger">*</span></label>
+                                <textarea name="description" class="form-control" rows="4" maxlength="2000" required placeholder="Describe the issue, when it happened and whether the asset is usable."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-send me-1"></i>Submit Issue
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 

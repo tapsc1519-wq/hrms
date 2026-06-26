@@ -24,8 +24,15 @@
                     <span class="badge rounded-pill" style="background:#eff6ff;color:#2563eb;font-size:.72rem">
                         {{ $software->category_label }}
                     </span>
+                    <span class="badge bg-{{ $software->criticality_badge }} ms-1">{{ ucfirst($software->criticality) }}</span>
+                    <span class="badge bg-{{ $software->license_required ? 'success' : 'secondary' }} ms-1">
+                        {{ $software->license_required ? 'License Required' : 'No License Required' }}
+                    </span>
                     @if($software->version)
                         <span class="ms-1 text-muted" style="font-size:.8rem">v{{ $software->version }}</span>
+                    @endif
+                    @if($software->edition)
+                        <span class="ms-1 text-muted" style="font-size:.8rem">{{ $software->edition }}</span>
                     @endif
                 </p>
             </div>
@@ -112,6 +119,32 @@
 </div>
 @endif
 
+<div class="table-card mb-4">
+    <div class="card-header"><i class="bi bi-sliders me-2 text-primary"></i>SAM Governance</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small fw-bold text-uppercase">Type</div>
+                <div class="fw-bold">{{ $software->software_type_label }}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small fw-bold text-uppercase">Metric</div>
+                <div class="fw-bold">{{ $software->license_metric_label }}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small fw-bold text-uppercase">Criticality</div>
+                <span class="badge bg-{{ $software->criticality_badge }}">{{ ucfirst($software->criticality) }}</span>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small fw-bold text-uppercase">Publisher Trust</div>
+                <span class="badge bg-{{ $software->trusted_publisher ? 'success' : 'secondary' }}">
+                    {{ $software->trusted_publisher ? 'Trusted' : 'Not marked' }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Licenses Table --}}
 <div class="table-card">
     <div class="card-header d-flex align-items-center justify-content-between">
@@ -138,7 +171,7 @@
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Supplier</th>
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Seats</th>
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Compliance</th>
-                        <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Expiry</th>
+                        <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Renewal</th>
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Status</th>
                         <th class="py-3"></th>
                     </tr>
@@ -165,10 +198,11 @@
                             </span>
                         </td>
                         <td class="py-3">
-                            @if($lic->expiry_date)
+                            @if($lic->renewal_date || $lic->expiry_date)
                                 <span class="{{ $lic->is_expired ? 'text-danger fw-600' : ($lic->is_expiring_soon ? 'text-warning fw-600' : 'text-muted') }}" style="font-size:.82rem">
-                                    {{ $lic->expiry_date->format('d-m-Y') }}
+                                    {{ ($lic->renewal_date ?? $lic->expiry_date)->format('d-m-Y') }}
                                 </span>
+                                <div class="text-muted small">{{ $lic->renewal_recommendation_label }}</div>
                             @else
                                 <span class="text-muted">—</span>
                             @endif

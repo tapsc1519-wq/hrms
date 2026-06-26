@@ -10,6 +10,7 @@ use App\Http\Controllers\SuperAdmin\UserController as SAUserController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\AssetController;
 use App\Http\Controllers\Admin\AssetDisposalController;
+use App\Http\Controllers\Admin\AssetIssueReportController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\AssignmentController;
@@ -23,6 +24,8 @@ use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\SoftwareController as AdminSoftwareController;
+use App\Http\Controllers\Admin\SoftwareComplianceController;
+use App\Http\Controllers\Admin\SoftwareDiscoveryController;
 use App\Http\Controllers\Admin\SoftwareLicenseController;
 use App\Http\Controllers\Admin\CatalogController;
 use App\Http\Controllers\Admin\BulkImportController;
@@ -126,6 +129,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::patch('requests/{assetRequest}/reject', [AdminRequestController::class, 'reject'])->middleware('permission:requests.review')->name('requests.reject');
     Route::patch('requests/{assetRequest}/fulfill', [AdminRequestController::class, 'fulfill'])->middleware('permission:requests.fulfill')->name('requests.fulfill');
 
+    Route::get('asset-issues', [AssetIssueReportController::class, 'index'])->middleware('permission:assets.disposal.view')->name('asset-issues.index');
+    Route::get('asset-issues/{assetIssue}', [AssetIssueReportController::class, 'show'])->middleware('permission:assets.disposal.view')->name('asset-issues.show');
+    Route::patch('asset-issues/{assetIssue}/review', [AssetIssueReportController::class, 'review'])->middleware('permission:assets.disposal.request')->name('asset-issues.review');
+    Route::post('asset-issues/{assetIssue}/disposal', [AssetIssueReportController::class, 'createDisposal'])->middleware('permission:assets.disposal.request')->name('asset-issues.disposal');
+
     Route::get('disposals', [AssetDisposalController::class, 'index'])->middleware('permission:assets.disposal.view')->name('disposals.index');
     Route::get('disposals/requests', [AssetDisposalController::class, 'requests'])->middleware('permission:assets.disposal.request')->name('disposals.requests');
     Route::get('disposals/approvals', [AssetDisposalController::class, 'approvals'])->middleware('permission:assets.disposal.approve')->name('disposals.approvals');
@@ -179,12 +187,27 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::delete('software/{software}', [AdminSoftwareController::class, 'destroy'])->name('software.destroy');
 
     Route::get('software-licenses', [SoftwareLicenseController::class, 'index'])->name('software-licenses.index');
+    Route::get('software-licenses/renewals', [SoftwareLicenseController::class, 'renewals'])->name('software-licenses.renewals');
     Route::get('software-licenses/create', [SoftwareLicenseController::class, 'create'])->name('software-licenses.create');
     Route::post('software-licenses', [SoftwareLicenseController::class, 'store'])->name('software-licenses.store');
     Route::get('software-licenses/{softwareLicense}', [SoftwareLicenseController::class, 'show'])->name('software-licenses.show');
     Route::post('software-licenses/{softwareLicense}/assign', [SoftwareLicenseController::class, 'assign'])->name('software-licenses.assign');
     Route::patch('software-licenses/{softwareLicense}/assignments/{assignment}/return', [SoftwareLicenseController::class, 'returnLicense'])->name('software-licenses.return');
     Route::delete('software-licenses/{softwareLicense}', [SoftwareLicenseController::class, 'destroy'])->name('software-licenses.destroy');
+
+    Route::get('software-discovery', [SoftwareDiscoveryController::class, 'index'])->name('software-discovery.index');
+    Route::get('software-discovery/import', [SoftwareDiscoveryController::class, 'import'])->name('software-discovery.import');
+    Route::post('software-discovery/import', [SoftwareDiscoveryController::class, 'storeImport'])->name('software-discovery.import.store');
+    Route::get('software-discovery/template', [SoftwareDiscoveryController::class, 'template'])->name('software-discovery.template');
+    Route::get('software-normalization', [SoftwareDiscoveryController::class, 'workbench'])->name('software-normalization.index');
+    Route::patch('software-discovery/{discovery}/normalize', [SoftwareDiscoveryController::class, 'normalize'])->name('software-discovery.normalize');
+    Route::patch('software-discovery/{discovery}/ignore', [SoftwareDiscoveryController::class, 'ignore'])->name('software-discovery.ignore');
+    Route::get('software-compliance', [SoftwareComplianceController::class, 'index'])->name('software-compliance.index');
+    Route::get('software-compliance/{software}', [SoftwareComplianceController::class, 'show'])->name('software-compliance.show');
+    Route::post('software-compliance/{software}/assign-missing-license', [SoftwareComplianceController::class, 'assignMissingLicense'])->name('software-compliance.assign-missing-license');
+    Route::post('software-compliance/{software}/discoveries/{discovery}/uninstall-action', [SoftwareComplianceController::class, 'createUninstallAction'])->name('software-compliance.uninstall-action');
+    Route::post('software-compliance/{software}/actions', [SoftwareComplianceController::class, 'storeAction'])->name('software-compliance.actions.store');
+    Route::patch('software-compliance/{software}/actions/{action}/complete', [SoftwareComplianceController::class, 'completeAction'])->name('software-compliance.actions.complete');
     });
 
     // HRMS
@@ -306,6 +329,7 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'role:staff'])->grou
 
     Route::middleware('module:itam')->group(function () {
     Route::get('my-assets', [StaffAssetController::class, 'index'])->name('my-assets.index');
+    Route::post('my-assets/{assignment}/issue-report', [StaffAssetController::class, 'reportIssue'])->name('my-assets.issue-report');
     Route::patch('my-assets/{assignment}/handover', [StaffAssetController::class, 'handover'])->name('my-assets.handover');
     Route::patch('my-assets/handovers/{handover}/accept', [StaffAssetController::class, 'acceptHandover'])->name('my-assets.handovers.accept');
     Route::patch('my-assets/handovers/{handover}/reject', [StaffAssetController::class, 'rejectHandover'])->name('my-assets.handovers.reject');

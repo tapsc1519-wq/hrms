@@ -9,6 +9,7 @@ use App\Models\SoftwareLicense;
 use App\Models\User;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SoftwareLicenseController extends Controller
 {
@@ -52,6 +53,46 @@ class SoftwareLicenseController extends Controller
         return view('admin.software-licenses.create', compact('software', 'suppliers', 'selectedSoftware'));
     }
 
+    public function renewals(Request $request)
+    {
+        $query = SoftwareLicense::where('organization_id', $this->orgId())
+            ->where('status', 'active')
+            ->with(['software', 'supplier', 'activeAssignments'])
+            ->orderByRaw('COALESCE(renewal_date, expiry_date) IS NULL')
+            ->orderByRaw('COALESCE(renewal_date, expiry_date) ASC');
+
+        if ($request->filled('window')) {
+            $days = (int) $request->window;
+
+            if ($days > 0) {
+                $query->where(function ($q) use ($days) {
+                    $q->whereBetween('renewal_date', [now()->toDateString(), now()->addDays($days)->toDateString()])
+                        ->orWhereBetween('expiry_date', [now()->toDateString(), now()->addDays($days)->toDateString()]);
+                });
+            }
+        }
+
+        $licenses = $query->get();
+
+        if ($request->filled('recommendation')) {
+            $licenses = $licenses->filter(fn ($license) => $license->renewal_recommendation === $request->recommendation)->values();
+        }
+
+        $summary = [
+            'expired' => $licenses->filter(fn ($license) => $license->is_expired)->count(),
+            'expiring_30' => $licenses->filter(fn ($license) => $license->expiry_date && ! $license->is_expired && $license->expiry_date->lte(now()->addDays(30)))->count(),
+            'unused' => $licenses->filter(fn ($license) => $license->used_seats === 0)->count(),
+            'reduce' => $licenses->filter(fn ($license) => $license->renewal_recommendation === 'reduce')->count(),
+        ];
+
+        $licenses = $this->paginateCollection($licenses, 25, 'renewals_page');
+
+        return view('admin.software-licenses.renewals', [
+            'licenses' => $licenses,
+            'summary' => $summary,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -59,16 +100,27 @@ class SoftwareLicenseController extends Controller
             'license_type'   => 'required|in:perpetual,subscription,concurrent,per_seat,per_device,oem,volume,open_source,freeware',
             'seats'          => 'required|integer|min:1|max:99999',
             'license_key'    => 'nullable|string|max:500',
+            'purchase_batch' => 'nullable|string|max:100',
             'purchase_date'  => 'nullable|date',
             'expiry_date'    => 'nullable|date|after_or_equal:purchase_date',
+            'renewal_date'   => 'nullable|date|after_or_equal:purchase_date',
             'purchase_price' => 'nullable|numeric|min:0',
+            'unit_cost'      => 'nullable|numeric|min:0',
             'vendor_id'      => 'nullable|exists:suppliers,id',
             'po_number'      => 'nullable|string|max:100',
+            'invoice_number' => 'nullable|string|max:100',
+            'agreement_number' => 'nullable|string|max:100',
+            'subscription_period' => 'nullable|in:monthly,quarterly,annual,multi_year,perpetual',
+            'evidence_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120',
             'notes'          => 'nullable|string|max:1000',
         ]);
 
         $software = Software::findOrFail($validated['software_id']);
         abort_if($software->organization_id !== $this->orgId(), 403);
+
+        if ($request->hasFile('evidence_document')) {
+            $validated['evidence_document'] = $request->file('evidence_document')->store('license-evidence', 'public');
+        }
 
         SoftwareLicense::create(array_merge($validated, [
             'organization_id' => $this->orgId(),
@@ -140,8 +192,28 @@ class SoftwareLicenseController extends Controller
     public function destroy(SoftwareLicense $softwareLicense)
     {
         abort_if($softwareLicense->organization_id !== $this->orgId(), 403);
+        if ($softwareLicense->evidence_document) {
+            Storage::disk('public')->delete($softwareLicense->evidence_document);
+        }
         $softwareLicense->delete();
         return redirect()->route('admin.software.show', $softwareLicense->software_id)
             ->with('success', 'License record deleted.');
+    }
+
+    private function paginateCollection($items, int $perPage, string $pageName)
+    {
+        $page = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage($pageName);
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $items->forPage($page, $perPage)->values(),
+            $items->count(),
+            $perPage,
+            $page,
+            [
+                'path' => request()->url(),
+                'pageName' => $pageName,
+                'query' => request()->query(),
+            ]
+        );
     }
 }

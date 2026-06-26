@@ -35,10 +35,64 @@
         --card-radius: 16px;
         --card-shadow: 0 2px 12px rgba(15,23,42,.08);
         --card-shadow-hover: 0 8px 30px rgba(15,23,42,.14);
+        --font-xs: .75rem;
+        --font-sm: .83rem;
+        --font-base: .875rem;
+        --font-md: .95rem;
+        --font-lg: 1.08rem;
+        --font-xl: 1.25rem;
+        --font-2xl: 1.35rem;
     }
 
     * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-    body { background: var(--body-bg); overflow-x: hidden; color: #1e293b; }
+    body {
+        background: var(--body-bg);
+        color: #1e293b;
+        font-size: var(--font-base);
+        line-height: 1.45;
+        overflow-x: hidden;
+        text-rendering: geometricPrecision;
+    }
+
+    /* Portal typography contract */
+    #main-content {
+        font-size: var(--font-base);
+        line-height: 1.45;
+    }
+    #main-content h1,
+    #main-content h2,
+    #main-content h3,
+    #main-content h4,
+    #main-content h5,
+    #main-content h6 {
+        letter-spacing: 0;
+        line-height: 1.25;
+    }
+    #main-content h1 { font-size: var(--font-2xl); font-weight: 800; }
+    #main-content h2 { font-size: var(--font-xl); font-weight: 800; }
+    #main-content h3 { font-size: var(--font-lg); font-weight: 750; }
+    #main-content h4 { font-size: var(--font-2xl); font-weight: 800; }
+    #main-content h5 { font-size: var(--font-md); font-weight: 750; }
+    #main-content h6 { font-size: var(--font-base); font-weight: 750; }
+    #main-content p,
+    #main-content li,
+    #main-content dd,
+    #main-content dt {
+        font-size: var(--font-base);
+        line-height: 1.48;
+    }
+    #main-content .small,
+    #main-content small {
+        font-size: var(--font-xs) !important;
+        line-height: 1.42;
+    }
+    #main-content .lead {
+        font-size: var(--font-md);
+        line-height: 1.5;
+    }
+    #main-content code {
+        font-size: var(--font-sm);
+    }
 
     /* ═══════════════════════════════════════════════
        SIDEBAR
@@ -430,7 +484,7 @@
     }
     .stat-card-gradient .stat-number,
     .stat-card-gradient .stat-value {
-        font-size: 1.65rem;
+        font-size: var(--font-xl);
         font-weight: 800;
         line-height: 1.1;
         letter-spacing: 0;
@@ -439,14 +493,14 @@
         margin-top: .75rem;
     }
     .stat-card-gradient .stat-label {
-        font-size: .78rem;
+        font-size: var(--font-xs);
         font-weight: 600;
         opacity: .85;
         text-transform: uppercase;
         letter-spacing: .5px;
     }
     .stat-card-gradient .stat-sub {
-        font-size: .76rem;
+        font-size: var(--font-xs);
         opacity: .75;
         margin-top: .5rem;
     }
@@ -487,7 +541,7 @@
         padding: 1.1rem 1.4rem;
         font-weight: 700;
         color: #1e293b;
-        font-size: .84rem;
+        font-size: var(--font-sm);
         line-height: 1.25;
     }
     .table-card .card-body { padding: 1.25rem; }
@@ -503,7 +557,7 @@
     .form-card-header h4,
     .form-card-header h5,
     .form-card-header h6 {
-        font-size: .88rem;
+        font-size: var(--font-sm);
         line-height: 1.25;
         font-weight: 750;
         margin: 0;
@@ -512,16 +566,16 @@
     }
     .table-card .card-header .small,
     .form-card-header .small {
-        font-size: .74rem;
+        font-size: var(--font-xs);
         line-height: 1.35;
         font-weight: 500;
     }
     .table {
         --bs-table-color: #334155;
-        font-size: .855rem;
+        font-size: var(--font-sm);
     }
     .table thead th {
-        font-size: .71rem;
+        font-size: var(--font-xs);
         font-weight: 750;
         color: #64748b;
         text-transform: uppercase;
@@ -529,8 +583,14 @@
         white-space: nowrap;
     }
     .table tbody td {
-        font-size: .84rem;
+        font-size: var(--font-sm);
         vertical-align: middle;
+    }
+    .table tbody td .fw-bold,
+    .table tbody td .fw-600,
+    .table tbody td .fw-700 {
+        font-size: var(--font-sm);
+        line-height: 1.3;
     }
     .payroll-component-item {
         padding-top: .8rem !important;
@@ -565,15 +625,56 @@
     }
 
     /* Badges */
-    .badge { font-weight: 600; font-size: .72rem; letter-spacing: .2px; }
+    .badge {
+        font-size: var(--font-xs);
+        font-weight: 650;
+        letter-spacing: .15px;
+        line-height: 1.05;
+    }
+    .badge.fs-6 { font-size: var(--font-xs) !important; }
+
+    /* Plain-language help panels */
+    .help-panel {
+        color: #334155;
+        font-size: var(--font-sm);
+        line-height: 1.45;
+    }
+    .help-panel-icon {
+        width: 34px;
+        height: 34px;
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+    .help-panel-title {
+        color: #0f172a;
+        font-size: var(--font-sm);
+        font-weight: 750;
+        line-height: 1.3;
+    }
+    .help-panel-section-title {
+        color: #334155;
+        font-size: var(--font-xs);
+        font-weight: 750;
+        line-height: 1.3;
+        text-transform: uppercase;
+        letter-spacing: .45px;
+    }
+    .help-panel ul {
+        margin-bottom: 0;
+        padding-left: 1.05rem;
+    }
+    .help-panel li {
+        font-size: var(--font-sm);
+        line-height: 1.45;
+    }
 
     /* ═══════════════════════════════════════════════
        PAGE HEADER
     ═══════════════════════════════════════════════ */
-    .page-header { margin-bottom: 1.75rem; }
+    .page-header { margin-bottom: 1.35rem; }
     .page-header .back-link {
         display: inline-flex; align-items: center; gap: .35rem;
-        font-size: .75rem; font-weight: 700;
+        font-size: var(--font-xs); font-weight: 700;
         color: #64748b; text-decoration: none;
         text-transform: uppercase; letter-spacing: .6px;
         margin-bottom: .5rem;
@@ -581,13 +682,18 @@
     }
     .page-header .back-link:hover { color: #3b82f6; }
     .page-header h4 {
-        font-size: 1.35rem;
+        font-size: var(--font-2xl);
         font-weight: 800;
         color: #0f172a;
         margin: 0;
         letter-spacing: 0;
     }
-    .page-header p { color: #64748b; font-size: .875rem; margin: .3rem 0 0; }
+    .page-header p {
+        color: #64748b;
+        font-size: var(--font-base);
+        line-height: 1.45;
+        margin: .25rem 0 0;
+    }
 
     /* ═══════════════════════════════════════════════
        FORM DESIGN SYSTEM
@@ -596,7 +702,7 @@
         border: 1.5px solid #e2e8f0;
         border-radius: 9px;
         padding: .55rem .9rem;
-        font-size: .875rem;
+        font-size: var(--font-base);
         background-color: #f8fafc;
         transition: border-color .18s, box-shadow .18s, background-color .18s;
         color: #1e293b;
@@ -607,7 +713,7 @@
         background-color: #fff;
         outline: none;
     }
-    .form-control::placeholder { color: #a0aec0; font-size: .82rem; }
+    .form-control::placeholder { color: #a0aec0; font-size: var(--font-sm); }
     .form-control.is-invalid, .form-select.is-invalid {
         border-color: #ef4444;
         background-color: #fef2f2;
@@ -618,7 +724,7 @@
     textarea.form-control { resize: vertical; min-height: 80px; }
 
     .form-label {
-        font-size: .72rem;
+        font-size: var(--font-xs);
         font-weight: 700;
         color: #64748b;
         text-transform: uppercase;
@@ -626,8 +732,8 @@
         margin-bottom: .35rem;
     }
     .req { color: #ef4444; margin-left: 2px; }
-    .form-text { font-size: .75rem; color: #94a3b8; margin-top: .3rem; }
-    .invalid-feedback { font-size: .76rem; }
+    .form-text { font-size: var(--font-xs); color: #94a3b8; margin-top: .3rem; }
+    .invalid-feedback { font-size: var(--font-xs); }
 
     /* Form section cards */
     .form-card {
@@ -645,7 +751,7 @@
         padding: .95rem 1.4rem;
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         border-bottom: 1px solid #e9ecef;
-        font-size: .78rem;
+        font-size: var(--font-xs);
         font-weight: 700;
         color: #334155;
         text-transform: uppercase;
@@ -686,7 +792,7 @@
         border: 1.5px solid #e2e8f0;
         border-radius: 9px;
         padding: .5rem 1.2rem;
-        font-size: .875rem;
+        font-size: var(--font-base);
         font-weight: 500;
         text-decoration: none;
         transition: border-color .15s, color .15s;
@@ -695,7 +801,7 @@
     .form-actions .btn-save {
         border-radius: 9px;
         padding: .55rem 1.5rem;
-        font-size: .875rem;
+        font-size: var(--font-base);
         font-weight: 600;
         display: inline-flex;
         align-items: center;
@@ -705,9 +811,18 @@
     /* ═══════════════════════════════════════════════
        BUTTONS
     ═══════════════════════════════════════════════ */
-    .btn { font-weight: 500; border-radius: 9px; font-size: .875rem; }
+    .btn {
+        border-radius: 9px;
+        font-size: var(--font-base);
+        font-weight: 550;
+        line-height: 1.25;
+    }
+    .btn-sm {
+        font-size: var(--font-xs);
+        line-height: 1.2;
+    }
     .modal-title {
-        font-size: 1rem;
+        font-size: var(--font-md);
         line-height: 1.3;
         letter-spacing: 0;
     }
@@ -715,6 +830,80 @@
     .btn-primary:hover { background: linear-gradient(135deg,#2563eb,#1d4ed8); box-shadow:0 4px 14px rgba(59,130,246,.4); }
     .btn-outline-primary { border-color: #3b82f6; color: #3b82f6; }
     .btn-outline-primary:hover { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
+
+    /* Normalize older page-level inline font sizes on common UI controls */
+    #main-content .table[style*="font-size"] {
+        font-size: var(--font-sm) !important;
+    }
+    #main-content .btn[style*="font-size"] {
+        font-size: var(--font-xs) !important;
+    }
+    #main-content .form-label[style*="font-size"] {
+        font-size: var(--font-xs) !important;
+    }
+    #main-content .badge[style*="font-size"],
+    #main-content .badge[class*="fs-"] {
+        font-size: var(--font-xs) !important;
+    }
+    #main-content [style*="font-size:.6"],
+    #main-content [style*="font-size: .6"],
+    #main-content [style*="font-size:.7"],
+    #main-content [style*="font-size: .7"] {
+        font-size: var(--font-xs) !important;
+        line-height: 1.42 !important;
+    }
+    #main-content [style*="font-size:.8"],
+    #main-content [style*="font-size: .8"] {
+        font-size: var(--font-sm) !important;
+        line-height: 1.42 !important;
+    }
+    #main-content [style*="font-size:.9"],
+    #main-content [style*="font-size: .9"] {
+        font-size: var(--font-md) !important;
+        line-height: 1.42 !important;
+    }
+    #main-content [style*="font-size:1rem"],
+    #main-content [style*="font-size: 1rem"] {
+        font-size: var(--font-base) !important;
+        line-height: 1.42 !important;
+    }
+    #main-content :not(i).fs-1,
+    #main-content :not(i).fs-2,
+    #main-content :not(i).fs-3 {
+        font-size: var(--font-xl) !important;
+        line-height: 1.2 !important;
+    }
+    #main-content :not(i).fs-4,
+    #main-content :not(i).fs-5 {
+        font-size: var(--font-lg) !important;
+        line-height: 1.25 !important;
+    }
+    #main-content div:not(.stat-number):not(.stat-value):not(.stat-mini-val)[style*="font-size:1."],
+    #main-content span:not(.stat-number):not(.stat-value):not(.stat-mini-val)[style*="font-size:1."],
+    #main-content h1[style*="font-size:1."],
+    #main-content h2[style*="font-size:1."],
+    #main-content h3[style*="font-size:1."],
+    #main-content h4[style*="font-size:1."],
+    #main-content h5[style*="font-size:1."],
+    #main-content h6[style*="font-size:1."],
+    #main-content td[style*="font-size:1."] {
+        font-size: var(--font-md) !important;
+        line-height: 1.32 !important;
+        letter-spacing: 0 !important;
+    }
+    #main-content .stat-number[style*="font-size:1."],
+    #main-content .stat-value[style*="font-size:1."],
+    #main-content .stat-mini-val[style*="font-size:1."] {
+        font-size: var(--font-xl) !important;
+        line-height: 1.15 !important;
+        letter-spacing: 0 !important;
+    }
+    #main-content dl[style*="font-size"],
+    #main-content ul[style*="font-size"],
+    #main-content .card-body[style*="font-size"] {
+        font-size: var(--font-base) !important;
+        line-height: 1.48;
+    }
 
     /* ═══════════════════════════════════════════════
        RESPONSIVE
@@ -861,6 +1050,12 @@
                class="sidebar-link {{ request()->routeIs('admin.requests.*') ? 'active' : '' }}">
                 <i class="bi bi-clipboard-check-fill"></i> Requests
             </a>
+            @if($user->hasPermission('assets.disposal.view'))
+            <a href="{{ route('admin.asset-issues.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.asset-issues.*') ? 'active' : '' }}">
+                <i class="bi bi-exclamation-triangle-fill"></i> Asset Issues
+            </a>
+            @endif
             @if($user->hasPermission('assets.disposal.request'))
             <a href="{{ route('admin.disposals.requests') }}"
                class="sidebar-link {{ request()->routeIs('admin.disposals.requests') || request()->routeIs('admin.disposals.create') || request()->routeIs('admin.disposals.bulk') ? 'active' : '' }}">
@@ -898,8 +1093,24 @@
                 <i class="bi bi-display-fill"></i> Software Catalog
             </a>
             <a href="{{ route('admin.software-licenses.index') }}"
-               class="sidebar-link {{ request()->routeIs('admin.software-licenses.*') ? 'active' : '' }}">
+               class="sidebar-link {{ request()->routeIs('admin.software-licenses.index', 'admin.software-licenses.create', 'admin.software-licenses.show') ? 'active' : '' }}">
                 <i class="bi bi-key-fill"></i> Licenses
+            </a>
+            <a href="{{ route('admin.software-licenses.renewals') }}"
+               class="sidebar-link {{ request()->routeIs('admin.software-licenses.renewals') ? 'active' : '' }}">
+                <i class="bi bi-calendar2-check-fill"></i> Renewals
+            </a>
+            <a href="{{ route('admin.software-discovery.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.software-discovery.*') ? 'active' : '' }}">
+                <i class="bi bi-hdd-network-fill"></i> Discovery Inventory
+            </a>
+            <a href="{{ route('admin.software-normalization.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.software-normalization.*') ? 'active' : '' }}">
+                <i class="bi bi-diagram-3-fill"></i> Normalization
+            </a>
+            <a href="{{ route('admin.software-compliance.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.software-compliance.*') ? 'active' : '' }}">
+                <i class="bi bi-shield-check"></i> Compliance
             </a>
             @endif
 
@@ -1202,6 +1413,12 @@
                 <i class="bi bi-clipboard-check-fill"></i> Asset Requests
             </a>
             @endif
+            @if($user->hasPermission('assets.disposal.view'))
+            <a href="{{ route('admin.asset-issues.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.asset-issues.*') ? 'active' : '' }}">
+                <i class="bi bi-exclamation-triangle-fill"></i> Asset Issues
+            </a>
+            @endif
             @if($user->hasPermission('assets.disposal.request'))
             <a href="{{ route('admin.disposals.requests') }}"
                class="sidebar-link {{ request()->routeIs('admin.disposals.requests') || request()->routeIs('admin.disposals.create') || request()->routeIs('admin.disposals.bulk') ? 'active' : '' }}">
@@ -1306,7 +1523,12 @@
         <div class="ms-auto d-flex align-items-center gap-2">
             @php
                 $actionNotifications = \App\Support\ActionNotificationService::forUser(auth()->user());
+                $pageHelp = \App\Support\PageHelpRegistry::current();
             @endphp
+            <button type="button" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#globalPageHelpModal">
+                <i class="bi bi-question-circle"></i>
+                <span class="d-none d-md-inline">Page Help</span>
+            </button>
             @if(in_array(auth()->user()->role, ['admin', 'staff'], true))
             <div class="dropdown">
                 <button class="topbar-icon-btn notification-trigger" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Action notifications">
@@ -1448,6 +1670,38 @@
     <!-- Page Content -->
     <div class="content-area">
         @yield('content')
+    </div>
+</div>
+
+<div class="modal fade" id="globalPageHelpModal" tabindex="-1" aria-labelledby="globalPageHelpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="help-panel-icon rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+                        <i class="bi bi-question-circle-fill"></i>
+                    </div>
+                    <h5 class="modal-title" id="globalPageHelpModalLabel">{{ $pageHelp['title'] ?? 'Page Help' }}</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body help-panel">
+                @if(!empty($pageHelp['what']))
+                    <p class="mb-3">{{ $pageHelp['what'] }}</p>
+                @endif
+                @if(!empty($pageHelp['how']))
+                    <div class="help-panel-section-title mb-2">How to use this page</div>
+                    <ul>
+                        @foreach($pageHelp['how'] as $step)
+                            <li>{{ $step }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+                @if(!empty($pageHelp['next']))
+                    <div class="mt-3"><strong>Next:</strong> {{ $pageHelp['next'] }}</div>
+                @endif
+            </div>
+        </div>
     </div>
 </div>
 

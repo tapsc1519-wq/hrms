@@ -37,6 +37,13 @@
                                placeholder="e.g. 2024">
                         @error('version')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Edition / Plan</label>
+                        <input type="text" name="edition" value="{{ old('edition') }}"
+                               class="form-control @error('edition') is-invalid @enderror"
+                               placeholder="e.g. Pro, Enterprise">
+                        @error('edition')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                     <div class="col-md-6">
                         <label class="form-label">Publisher</label>
                         <input type="text" name="vendor" value="{{ old('vendor') }}"
@@ -63,6 +70,47 @@
                             @endforeach
                         </select>
                         @error('category')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Software Type <span class="req">*</span></label>
+                        <select name="software_type" class="form-select @error('software_type') is-invalid @enderror" required>
+                            @foreach(['commercial' => 'Commercial', 'saas' => 'SaaS', 'open_source' => 'Open Source', 'freeware' => 'Freeware', 'os' => 'Operating System'] as $val => $label)
+                                <option value="{{ $val }}" @selected(old('software_type', 'commercial') === $val)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('software_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">License Required <span class="req">*</span></label>
+                        <select name="license_required" class="form-select @error('license_required') is-invalid @enderror" required>
+                            <option value="1" @selected(old('license_required', '1') === '1')>Yes</option>
+                            <option value="0" @selected(old('license_required') === '0')>No</option>
+                        </select>
+                        @error('license_required')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Criticality <span class="req">*</span></label>
+                        <select name="criticality" class="form-select @error('criticality') is-invalid @enderror" required>
+                            @foreach(['low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'critical' => 'Critical'] as $val => $label)
+                                <option value="{{ $val }}" @selected(old('criticality', 'medium') === $val)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('criticality')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">License Metric <span class="req">*</span></label>
+                        <select name="license_metric" class="form-select @error('license_metric') is-invalid @enderror" required>
+                            @foreach(['per_user' => 'Per User', 'per_device' => 'Per Device', 'concurrent' => 'Concurrent', 'site' => 'Site', 'enterprise' => 'Enterprise', 'usage_based' => 'Usage Based'] as $val => $label)
+                                <option value="{{ $val }}" @selected(old('license_metric', 'per_user') === $val)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('license_metric')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <label class="d-flex align-items-center gap-2 border rounded-3 px-3 py-2 w-100" style="cursor:pointer;background:#f8fafc">
+                            <input type="checkbox" name="trusted_publisher" value="1" class="form-check-input m-0" @checked(old('trusted_publisher'))>
+                            <span class="fw-bold">Trusted publisher</span>
+                        </label>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Publisher Website</label>

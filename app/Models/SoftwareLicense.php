@@ -10,14 +10,18 @@ class SoftwareLicense extends Model
 {
     protected $fillable = [
         'software_id', 'organization_id', 'vendor_id',
-        'license_type', 'license_key', 'seats',
-        'purchase_date', 'expiry_date', 'purchase_price',
-        'po_number', 'notes', 'status',
+        'license_type', 'license_key', 'purchase_batch', 'seats',
+        'purchase_date', 'expiry_date', 'renewal_date', 'purchase_price',
+        'unit_cost', 'po_number', 'invoice_number', 'agreement_number',
+        'subscription_period', 'evidence_document', 'notes', 'status',
     ];
 
     protected $casts = [
         'purchase_date' => 'date',
         'expiry_date'   => 'date',
+        'renewal_date'  => 'date',
+        'purchase_price' => 'decimal:2',
+        'unit_cost' => 'decimal:2',
     ];
 
     // ── Relationships ───────────────────────────────────────────────────────
@@ -35,6 +39,11 @@ class SoftwareLicense extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class, 'vendor_id');
+    }
+
+    public function vendor(): BelongsTo
+    {
+        return $this->supplier();
     }
 
     public function assignments(): HasMany
@@ -73,6 +82,47 @@ class SoftwareLicense extends Model
     public function getAvailableSeatsAttribute(): int
     {
         return max(0, $this->seats - $this->used_seats);
+    }
+
+    public function getTotalCostAttribute(): float
+    {
+        if ($this->purchase_price) {
+            return (float) $this->purchase_price;
+        }
+
+        return (float) ($this->unit_cost ?? 0) * (int) $this->seats;
+    }
+
+    public function getUtilizationPercentageAttribute(): int
+    {
+        if ((int) $this->seats === 0) {
+            return 0;
+        }
+
+        return min(100, (int) round(($this->used_seats / $this->seats) * 100));
+    }
+
+    public function getRenewalRecommendationAttribute(): string
+    {
+        if ($this->software?->criticality === 'critical' && $this->utilization_percentage < 80) {
+            return 'manual_review';
+        }
+
+        return match (true) {
+            $this->utilization_percentage >= 80 => 'renew',
+            $this->utilization_percentage >= 30 => 'reduce',
+            default => 'cancel_review',
+        };
+    }
+
+    public function getRenewalRecommendationLabelAttribute(): string
+    {
+        return match($this->renewal_recommendation) {
+            'renew' => 'Renew',
+            'reduce' => 'Reduce',
+            'cancel_review' => 'Cancel Review',
+            default => 'Manual Review',
+        };
     }
 
     public function getIsExpiredAttribute(): bool
