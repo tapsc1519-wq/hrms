@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseOrderItem extends Model
 {
@@ -21,5 +22,20 @@ class PurchaseOrderItem extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(AssetCategory::class, 'category_id');
+    }
+
+    public function receiptItems(): HasMany
+    {
+        return $this->hasMany(GoodsReceiptItem::class);
+    }
+
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
+
+    public function getPendingQuantityAttribute(): int
+    {
+        return max(0, $this->quantity - $this->received_quantity);
     }
 }

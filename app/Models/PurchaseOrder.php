@@ -52,6 +52,16 @@ class PurchaseOrder extends Model
         return $this->hasOne(Invoice::class);
     }
 
+    public function goodsReceipts(): HasMany
+    {
+        return $this->hasMany(GoodsReceipt::class);
+    }
+
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
+
     public function getStatusBadgeAttribute(): string
     {
         return match($this->status) {

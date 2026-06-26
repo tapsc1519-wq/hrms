@@ -191,6 +191,32 @@
                     <div class="dl-value"><code style="background:#f1f5f9;color:#3b82f6;border-radius:5px;padding:.15rem .5rem">{{ $asset->asset_tag }}</code></div></div>
                 <div class="dl-row"><div class="dl-label">Serial Number</div><div class="dl-value">{{ $asset->serial_number ?? '—' }}</div></div>
                 <div class="dl-row">
+                    <div class="dl-label">Acquisition Source</div>
+                    <div class="dl-value">{{ ucwords(str_replace('_', ' ', $asset->acquisition_source ?? 'manual')) }}</div>
+                </div>
+                @if($asset->purchaseOrder)
+                <div class="dl-row">
+                    <div class="dl-label">Purchase Order</div>
+                    <div class="dl-value">
+                        <a href="{{ route('admin.purchase-orders.show', $asset->purchaseOrder) }}" class="text-decoration-none fw-semibold">
+                            {{ $asset->purchaseOrder->po_number }}
+                        </a>
+                        @if($asset->purchaseOrderItem)
+                            <span class="text-muted"> / {{ $asset->purchaseOrderItem->item_name }}</span>
+                        @endif
+                    </div>
+                </div>
+                @endif
+                @if($asset->goodsReceipt)
+                <div class="dl-row">
+                    <div class="dl-label">Goods Receipt</div>
+                    <div class="dl-value">
+                        {{ $asset->goodsReceipt->receipt_number }}
+                        <span class="text-muted">on {{ $asset->goodsReceipt->received_date->format('d-m-Y') }}</span>
+                    </div>
+                </div>
+                @endif
+                <div class="dl-row">
                     <div class="dl-label">Brand</div>
                     <div class="dl-value">
                         @if($asset->assetBrand)

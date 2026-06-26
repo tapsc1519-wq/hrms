@@ -118,6 +118,23 @@
             <div class="form-card-body">
                 <div class="row g-3">
                     <div class="col-md-4">
+                        <label class="form-label">Acquisition Source <span class="req">*</span></label>
+                        <select name="acquisition_source" class="form-select @error('acquisition_source') is-invalid @enderror" required>
+                            <option value="">Select source</option>
+                            @foreach([
+                                'opening_balance' => 'Opening Balance / Legacy Asset',
+                                'donation' => 'Donation',
+                                'transfer' => 'Inter-company Transfer',
+                                'lease' => 'Lease',
+                                'other' => 'Other',
+                            ] as $value => $label)
+                                <option value="{{ $value }}" @selected(old('acquisition_source') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('acquisition_source')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-text">Assets purchased through a PO must be created from Purchase Order > Receive Items.</div>
+                    </div>
+                    <div class="col-md-4">
                         <label class="form-label">Supplier</label>
                         <select name="vendor_id" class="form-select">
                             <option value="">— None —</option>

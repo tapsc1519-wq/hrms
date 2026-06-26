@@ -3,11 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Asset;
 use App\Models\AssetCategory;
+use App\Models\Facility;
+use App\Models\GoodsReceipt;
+use App\Models\GoodsReceiptItem;
+use App\Models\Location;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 
 class PurchaseOrderController extends Controller
@@ -111,14 +118,250 @@ class PurchaseOrderController extends Controller
     public function show(PurchaseOrder $purchaseOrder)
     {
         abort_if($purchaseOrder->organization_id !== $this->orgId(), 403);
-        $purchaseOrder->load(['supplier', 'items.category', 'createdBy', 'approvedBy', 'invoice']);
+        $purchaseOrder->load([
+            'supplier',
+            'items.category',
+            'createdBy',
+            'approvedBy',
+            'invoice',
+            'goodsReceipts.receivedBy',
+            'goodsReceipts.items',
+        ]);
         return view('admin.purchase-orders.show', compact('purchaseOrder'));
+    }
+
+    public function receive(PurchaseOrder $purchaseOrder)
+    {
+        abort_if($purchaseOrder->organization_id !== $this->orgId(), 403);
+        abort_if(!in_array($purchaseOrder->status, ['sent', 'confirmed', 'partially_received'], true), 422, 'This purchase order cannot receive items.');
+
+        $purchaseOrder->load(['supplier', 'items.category']);
+        abort_if($purchaseOrder->items->every(fn($item) => $item->pending_quantity === 0), 422, 'All purchase order items have already been received.');
+
+        $facilities = Facility::where('organization_id', $this->orgId())
+            ->where('status', 'active')
+            ->with('activeLocations')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.purchase-orders.receive', compact('purchaseOrder', 'facilities'));
+    }
+
+    public function storeReceipt(Request $request, PurchaseOrder $purchaseOrder)
+    {
+        abort_if($purchaseOrder->organization_id !== $this->orgId(), 403);
+        abort_if(!in_array($purchaseOrder->status, ['sent', 'confirmed', 'partially_received'], true), 422, 'This purchase order cannot receive items.');
+
+        $validated = $request->validate([
+            'received_date' => ['required', 'date'],
+            'invoice_number' => ['nullable', 'string', 'max:255'],
+            'invoice_date' => ['nullable', 'date'],
+            'delivery_note_number' => ['nullable', 'string', 'max:255'],
+            'location_id' => ['nullable', 'exists:locations,id'],
+            'condition' => ['required', 'in:excellent,good,fair,poor'],
+            'warranty_expiry_date' => ['nullable', 'date'],
+            'warranty_terms' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string'],
+            'items' => ['required', 'array'],
+            'items.*.quantity' => ['nullable', 'integer', 'min:0'],
+            'items.*.rejected_quantity' => ['nullable', 'integer', 'min:0'],
+            'items.*.serial_numbers' => ['nullable', 'string'],
+            'items.*.asset_tags' => ['nullable', 'string'],
+            'items.*.notes' => ['nullable', 'string'],
+        ]);
+
+        if (!empty($validated['location_id']) && !Location::where('organization_id', $this->orgId())->whereKey($validated['location_id'])->exists()) {
+            throw ValidationException::withMessages(['location_id' => 'The selected stock location does not belong to your organization.']);
+        }
+
+        $receipt = DB::transaction(function () use ($validated, $purchaseOrder) {
+            $lockedOrder = PurchaseOrder::whereKey($purchaseOrder->id)
+                ->where('organization_id', $this->orgId())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $items = PurchaseOrderItem::where('purchase_order_id', $lockedOrder->id)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $receiptLines = [];
+            $hasReceivedItems = false;
+            $submittedSerials = [];
+            $submittedTags = [];
+
+            foreach ($validated['items'] as $itemId => $line) {
+                $item = $items->get((int) $itemId);
+                if (!$item) {
+                    throw ValidationException::withMessages(['items' => 'An invalid purchase order item was submitted.']);
+                }
+
+                $quantity = (int) ($line['quantity'] ?? 0);
+                $rejected = (int) ($line['rejected_quantity'] ?? 0);
+                $pending = max(0, $item->quantity - $item->received_quantity);
+
+                if (($quantity + $rejected) > $pending) {
+                    throw ValidationException::withMessages([
+                        "items.{$itemId}.quantity" => "Received and rejected quantity cannot exceed {$pending} pending units for {$item->item_name}.",
+                    ]);
+                }
+
+                if ($quantity === 0 && $rejected === 0) {
+                    continue;
+                }
+
+                $serials = $this->lines($line['serial_numbers'] ?? '');
+                $tags = $this->lines($line['asset_tags'] ?? '');
+
+                if ($quantity > 0 && count($serials) !== $quantity) {
+                    throw ValidationException::withMessages([
+                        "items.{$itemId}.serial_numbers" => "Enter exactly {$quantity} serial number(s), one per received unit.",
+                    ]);
+                }
+
+                if ($tags !== [] && count($tags) !== $quantity) {
+                    throw ValidationException::withMessages([
+                        "items.{$itemId}.asset_tags" => "Enter exactly {$quantity} asset tag(s), or leave the field blank for automatic tags.",
+                    ]);
+                }
+
+                if (count($serials) !== count(array_unique(array_map('strtolower', $serials)))) {
+                    throw ValidationException::withMessages([
+                        "items.{$itemId}.serial_numbers" => "Duplicate serial numbers were entered for {$item->item_name}.",
+                    ]);
+                }
+
+                foreach ($serials as $serial) {
+                    $normalized = strtolower($serial);
+                    if (isset($submittedSerials[$normalized])) {
+                        throw ValidationException::withMessages([
+                            "items.{$itemId}.serial_numbers" => "Serial number {$serial} appears more than once in this receipt.",
+                        ]);
+                    }
+                    if (Asset::where('organization_id', $this->orgId())->whereRaw('LOWER(serial_number) = ?', [$normalized])->exists()) {
+                        throw ValidationException::withMessages([
+                            "items.{$itemId}.serial_numbers" => "Serial number {$serial} already exists in the asset register.",
+                        ]);
+                    }
+                    $submittedSerials[$normalized] = true;
+                }
+
+                foreach ($tags as $tag) {
+                    $normalized = strtolower($tag);
+                    if (isset($submittedTags[$normalized])) {
+                        throw ValidationException::withMessages([
+                            "items.{$itemId}.asset_tags" => "Asset tag {$tag} appears more than once in this receipt.",
+                        ]);
+                    }
+                    if (Asset::whereRaw('LOWER(asset_tag) = ?', [$normalized])->exists()) {
+                        throw ValidationException::withMessages([
+                            "items.{$itemId}.asset_tags" => "Asset tag {$tag} already exists.",
+                        ]);
+                    }
+                    $submittedTags[$normalized] = true;
+                }
+
+                $receiptLines[] = compact('item', 'quantity', 'rejected', 'serials', 'tags') + [
+                    'notes' => $line['notes'] ?? null,
+                ];
+                $hasReceivedItems = $hasReceivedItems || $quantity > 0;
+            }
+
+            if ($receiptLines === []) {
+                throw ValidationException::withMessages(['items' => 'Enter at least one received or rejected quantity.']);
+            }
+
+            $receipt = GoodsReceipt::create([
+                'organization_id' => $this->orgId(),
+                'purchase_order_id' => $lockedOrder->id,
+                'received_by' => auth()->id(),
+                'receipt_number' => $this->nextReceiptNumber(),
+                'received_date' => $validated['received_date'],
+                'invoice_number' => $validated['invoice_number'] ?? null,
+                'invoice_date' => $validated['invoice_date'] ?? null,
+                'delivery_note_number' => $validated['delivery_note_number'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            foreach ($receiptLines as $line) {
+                $item = $line['item'];
+
+                GoodsReceiptItem::create([
+                    'goods_receipt_id' => $receipt->id,
+                    'purchase_order_item_id' => $item->id,
+                    'received_quantity' => $line['quantity'],
+                    'rejected_quantity' => $line['rejected'],
+                    'notes' => $line['notes'],
+                ]);
+
+                for ($index = 0; $index < $line['quantity']; $index++) {
+                    Asset::create([
+                        'organization_id' => $this->orgId(),
+                        'acquisition_source' => 'purchase_order',
+                        'purchase_order_id' => $lockedOrder->id,
+                        'purchase_order_item_id' => $item->id,
+                        'goods_receipt_id' => $receipt->id,
+                        'category_id' => $item->category_id,
+                        'vendor_id' => $lockedOrder->vendor_id,
+                        'location_id' => $validated['location_id'] ?? null,
+                        'name' => $item->item_name,
+                        'asset_tag' => $line['tags'][$index] ?? $this->uniqueAssetTag(),
+                        'serial_number' => $line['serials'][$index],
+                        'model' => $item->model,
+                        'brand' => $item->brand,
+                        'specifications' => $item->specifications,
+                        'description' => $item->description,
+                        'purchase_date' => $validated['invoice_date'] ?? $validated['received_date'],
+                        'purchase_price' => $item->unit_price,
+                        'warranty_expiry_date' => $validated['warranty_expiry_date'] ?? null,
+                        'warranty_terms' => $validated['warranty_terms'] ?? null,
+                        'status' => 'available',
+                        'condition' => $validated['condition'],
+                        'notes' => 'Created from receipt ' . $receipt->receipt_number,
+                    ]);
+                }
+
+                $item->increment('received_quantity', $line['quantity']);
+            }
+
+            $allReceived = !PurchaseOrderItem::where('purchase_order_id', $lockedOrder->id)
+                ->whereColumn('received_quantity', '<', 'quantity')
+                ->exists();
+
+            $lockedOrder->update([
+                'status' => $allReceived
+                    ? 'received'
+                    : ($hasReceivedItems ? 'partially_received' : $lockedOrder->status),
+                'actual_delivery_date' => $allReceived ? $validated['received_date'] : $lockedOrder->actual_delivery_date,
+            ]);
+
+            return $receipt;
+        });
+
+        return redirect()->route('admin.purchase-orders.show', $purchaseOrder)
+            ->with('success', "Receipt {$receipt->receipt_number} recorded and linked assets created.");
     }
 
     public function updateStatus(Request $request, PurchaseOrder $purchaseOrder)
     {
         abort_if($purchaseOrder->organization_id !== $this->orgId(), 403);
-        $request->validate(['status' => 'required|in:draft,sent,confirmed,partially_received,received,cancelled']);
+        $request->validate(['status' => 'required|in:draft,sent,confirmed,cancelled']);
+
+        $allowedTransitions = [
+            'draft' => ['sent', 'confirmed', 'cancelled'],
+            'sent' => ['confirmed', 'cancelled'],
+            'confirmed' => ['cancelled'],
+            'partially_received' => [],
+            'received' => [],
+            'cancelled' => [],
+        ];
+
+        abort_unless(
+            in_array($request->status, $allowedTransitions[$purchaseOrder->status] ?? [], true),
+            422,
+            'This purchase order status transition is not allowed.'
+        );
+
         $purchaseOrder->update(['status' => $request->status]);
         return back()->with('success', 'Purchase order status updated.');
     }
@@ -130,5 +373,38 @@ class PurchaseOrderController extends Controller
         $purchaseOrder->delete();
         return redirect()->route('admin.purchase-orders.index')
             ->with('success', 'Purchase order deleted.');
+    }
+
+    private function lines(string $value): array
+    {
+        return collect(preg_split('/[\r\n,]+/', $value) ?: [])
+            ->map(fn($line) => trim($line))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    private function nextReceiptNumber(): string
+    {
+        $prefix = 'GRN-' . now()->format('Y') . '-';
+        $number = GoodsReceipt::where('organization_id', $this->orgId())
+            ->where('receipt_number', 'like', $prefix . '%')
+            ->count() + 1;
+
+        do {
+            $receiptNumber = $prefix . str_pad((string) $number, 4, '0', STR_PAD_LEFT);
+            $number++;
+        } while (GoodsReceipt::where('organization_id', $this->orgId())->where('receipt_number', $receiptNumber)->exists());
+
+        return $receiptNumber;
+    }
+
+    private function uniqueAssetTag(): string
+    {
+        do {
+            $tag = 'ASSET-' . strtoupper(Str::random(8));
+        } while (Asset::where('asset_tag', $tag)->exists());
+
+        return $tag;
     }
 }

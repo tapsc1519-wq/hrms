@@ -70,6 +70,7 @@ class AssetController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'acquisition_source'     => 'required|in:opening_balance,donation,transfer,lease,other',
             'category_id'          => 'nullable|exists:asset_categories,id',
             'vendor_id'            => 'nullable|exists:suppliers,id',
             'location_id'          => 'nullable|exists:locations,id',
@@ -129,7 +130,19 @@ class AssetController extends Controller
     public function show(Asset $asset)
     {
         $this->authorizeAsset($asset);
-        $asset->load(['category', 'supplier', 'location', 'assignments.user', 'maintenanceRecords', 'depreciationRecord', 'disposals.requestedBy', 'activeDisposal']);
+        $asset->load([
+            'category',
+            'supplier',
+            'location',
+            'purchaseOrder',
+            'purchaseOrderItem',
+            'goodsReceipt',
+            'assignments.user',
+            'maintenanceRecords',
+            'depreciationRecord',
+            'disposals.requestedBy',
+            'activeDisposal',
+        ]);
         return view('admin.assets.show', compact('asset'));
     }
 

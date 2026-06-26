@@ -10,7 +10,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Asset extends Model
 {
     protected $fillable = [
-        'organization_id', 'category_id', 'vendor_id', 'location_id',
+        'organization_id', 'acquisition_source', 'purchase_order_id',
+        'purchase_order_item_id', 'goods_receipt_id',
+        'category_id', 'vendor_id', 'location_id',
         'asset_brand_id', 'asset_model_id',
         'name', 'asset_tag', 'serial_number', 'model', 'brand',
         'specifications', 'specs', 'description', 'purchase_date', 'purchase_price',
@@ -28,6 +30,21 @@ class Asset extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    public function purchaseOrderItem(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrderItem::class);
+    }
+
+    public function goodsReceipt(): BelongsTo
+    {
+        return $this->belongsTo(GoodsReceipt::class);
     }
 
     public function category(): BelongsTo
