@@ -17,8 +17,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Installs the OpsBridge Windows Device Agent")]
 [assembly: AssemblyCompany("OpsBridge")]
 [assembly: AssemblyProduct("OpsBridge Device Agent")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
+[assembly: AssemblyVersion("0.1.2.0")]
+[assembly: AssemblyFileVersion("0.1.2.0")]
 
 namespace OpsBridge.Agent.Setup
 {
@@ -35,7 +35,7 @@ namespace OpsBridge.Agent.Setup
     internal static class AgentInstaller
     {
         private const string TaskName = "OpsBridge Device Agent";
-        private const string Version = "0.1.0";
+        private const string Version = "0.1.2";
 
         public static string Install(InstallOptions options)
         {
@@ -123,10 +123,16 @@ namespace OpsBridge.Agent.Setup
         private static void RegisterScheduledTask(string root, int intervalMinutes)
         {
             string script = Path.Combine(root, "OpsBridge.Agent.ps1");
-            string taskCommand = "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \\\"" + script + "\\\"";
-            string schedule = intervalMinutes == 1440 ? "/SC DAILY /ST 00:00" : "/SC MINUTE /MO " + intervalMinutes;
-            string arguments = "/Create /TN \"" + TaskName + "\" /TR \"" + taskCommand + "\" " + schedule + " /RU SYSTEM /RL HIGHEST /F";
-            RunProcess("schtasks.exe", arguments);
+            string escapedScript = script.Replace("'", "''");
+            string escapedTaskName = TaskName.Replace("'", "''");
+            string command =
+                "$ErrorActionPreference='Stop';" +
+                "$action=New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"" + escapedScript + "\"';" +
+                "$trigger=New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes " + intervalMinutes + ");" +
+                "$settings=New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 10);" +
+                "Register-ScheduledTask -TaskName '" + escapedTaskName + "' -Action $action -Trigger $trigger -Settings $settings -User 'SYSTEM' -RunLevel Highest -Force | Out-Null";
+            string encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
+            RunProcess("powershell.exe", "-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand " + encodedCommand);
         }
 
         private static void RegisterUninstallEntry(string root)

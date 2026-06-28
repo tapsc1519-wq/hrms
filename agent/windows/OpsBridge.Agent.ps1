@@ -148,7 +148,8 @@ function Get-SecurityInventory {
 
 function Send-Snapshot {
     param([string]$Json, [string]$Endpoint, [string]$Token)
-    Invoke-RestMethod -Uri $Endpoint -Method Post -Headers @{ Authorization = "Bearer $Token"; 'X-Agent-Version' = $AgentVersion } -ContentType 'application/json' -Body $Json -TimeoutSec 120
+    $body = [Text.Encoding]::UTF8.GetBytes($Json)
+    Invoke-RestMethod -Uri $Endpoint -Method Post -Headers @{ Authorization = "Bearer $Token"; Accept = 'application/json'; 'X-Agent-Version' = $AgentVersion } -ContentType 'application/json' -Body $body -TimeoutSec 120
 }
 
 function Save-AgentConfig {
@@ -188,8 +189,9 @@ function Test-AgentCommandSignature {
 function Send-CommandResult {
     param([string]$PollUrl, [string]$Token, [string]$DeviceUuid, [string]$CommandUuid, [string]$Status, [string]$Message)
     $uri = $PollUrl.TrimEnd('/') + '/' + $CommandUuid + '/result'
-    $body = @{ device_uuid = $DeviceUuid; status = $Status; result = @{ message = $Message }; error_message = if ($Status -eq 'failed') { $Message } else { $null } } | ConvertTo-Json -Depth 5 -Compress
-    Invoke-RestMethod -Uri $uri -Method Post -Headers @{ Authorization = "Bearer $Token"; 'X-Agent-Version' = $AgentVersion } -ContentType 'application/json' -Body $body -TimeoutSec 60 | Out-Null
+    $json = @{ device_uuid = $DeviceUuid; status = $Status; result = @{ message = $Message }; error_message = if ($Status -eq 'failed') { $Message } else { $null } } | ConvertTo-Json -Depth 5 -Compress
+    $body = [Text.Encoding]::UTF8.GetBytes($json)
+    Invoke-RestMethod -Uri $uri -Method Post -Headers @{ Authorization = "Bearer $Token"; Accept = 'application/json'; 'X-Agent-Version' = $AgentVersion } -ContentType 'application/json' -Body $body -TimeoutSec 60 | Out-Null
 }
 
 function Invoke-AgentCommands {
@@ -197,7 +199,7 @@ function Invoke-AgentCommands {
     if (-not (Get-OptionalProperty $Config 'command_poll_url') -or -not (Get-OptionalProperty $Config 'command_signing_public_key_xml')) { return }
     $pollUrl = [string]$Config.command_poll_url
     $separator = if ($pollUrl.Contains('?')) { '&' } else { '?' }
-    $response = Invoke-RestMethod -Uri ($pollUrl + $separator + 'device_uuid=' + [Uri]::EscapeDataString([string]$Config.device_uuid)) -Method Get -Headers @{ Authorization = "Bearer $Token"; 'X-Agent-Version' = $AgentVersion } -TimeoutSec 60
+    $response = Invoke-RestMethod -Uri ($pollUrl + $separator + 'device_uuid=' + [Uri]::EscapeDataString([string]$Config.device_uuid)) -Method Get -Headers @{ Authorization = "Bearer $Token"; Accept = 'application/json'; 'X-Agent-Version' = $AgentVersion } -TimeoutSec 60
     foreach ($command in @($response.commands)) {
         if (-not (Test-AgentCommandSignature $command $Config.command_signing_public_key_xml $Config.device_uuid)) {
             Write-AgentLog "Rejected command $($command.command_uuid): invalid signature, target, or expiry." 'ERROR'
