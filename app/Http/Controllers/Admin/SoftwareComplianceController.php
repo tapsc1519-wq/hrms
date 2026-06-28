@@ -8,6 +8,7 @@ use App\Models\SoftwareAssignment;
 use App\Models\SoftwareComplianceAction;
 use App\Models\SoftwareDiscovery;
 use App\Models\SoftwareLicense;
+use App\Models\SoftwarePolicyException;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -23,7 +24,7 @@ class SoftwareComplianceController extends Controller
             ->where('organization_id', $organizationId)
             ->with([
                 'licenses.activeAssignments',
-                'discoveries' => fn ($query) => $query->where('status', 'mapped'),
+                'discoveries' => fn ($query) => $query->where('status', 'mapped')->where('is_installed', true)->with('activePolicyException'),
             ])
             ->orderBy('name');
 
@@ -48,10 +49,12 @@ class SoftwareComplianceController extends Controller
 
         $unknownDiscoveryCount = SoftwareDiscovery::where('organization_id', $organizationId)
             ->where('status', 'unknown')
+            ->where('is_installed', true)
             ->count();
 
         $stats = [
             'high_risk' => $rows->where('risk_level', 'high')->count(),
+            'prohibited' => $rows->where('status', 'prohibited')->count(),
             'under_licensed' => $rows->where('status', 'under_licensed')->count(),
             'unauthorized' => $rows->where('status', 'unauthorized')->count(),
             'allocation_mismatch' => $rows->where('allocation_mismatch_count', '>', 0)->count(),
@@ -74,7 +77,8 @@ class SoftwareComplianceController extends Controller
             'licenses.activeAssignments.user',
             'discoveries' => fn ($query) => $query
                 ->where('status', 'mapped')
-                ->with(['asset', 'user'])
+                ->where('is_installed', true)
+                ->with(['asset', 'user', 'activePolicyException.approvedBy'])
                 ->latest('last_used_date'),
         ]);
 
@@ -122,6 +126,11 @@ class SoftwareComplianceController extends Controller
             ->whereNotNull('software_discovery_id')
             ->pluck('software_discovery_id');
 
+        $exceptions = SoftwarePolicyException::where('organization_id', $this->orgId())
+            ->where('software_id', $software->id)
+            ->with(['discovery', 'user', 'asset', 'approvedBy', 'revokedBy'])
+            ->latest()->paginate(10, ['*'], 'exceptions_page')->withQueryString();
+
         $owners = User::where('organization_id', $this->orgId())
             ->whereIn('role', ['admin', 'staff'])
             ->orderBy('name')
@@ -141,6 +150,7 @@ class SoftwareComplianceController extends Controller
             'availableLicenses' => $availableLicenses,
             'actions' => $actions,
             'openUninstallDiscoveryIds' => $openUninstallDiscoveryIds,
+            'exceptions' => $exceptions,
             'owners' => $owners,
             'actionTypes' => $this->actionTypes(),
         ]);
@@ -198,6 +208,7 @@ class SoftwareComplianceController extends Controller
     {
         abort_if($software->organization_id !== $this->orgId(), 404);
         abort_if($discovery->organization_id !== $this->orgId() || $discovery->software_id !== $software->id, 404);
+        abort_if($discovery->activePolicyException()->exists(), 422, 'This installation has an active policy exception and cannot be queued for uninstall.');
 
         $validated = $request->validate([
             'due_date' => 'nullable|date',
@@ -240,6 +251,42 @@ class SoftwareComplianceController extends Controller
         ]);
 
         return back()->with('success', 'Uninstall/reclaim task created.');
+    }
+
+    public function approvePolicyException(Request $request, Software $software, SoftwareDiscovery $discovery)
+    {
+        abort_if($software->organization_id !== $this->orgId(), 404);
+        abort_if($discovery->organization_id !== $this->orgId() || $discovery->software_id !== $software->id || ! $discovery->is_installed, 404);
+        abort_unless(in_array($software->policy_status, ['restricted', 'prohibited'], true), 422, 'Policy exceptions are only available for restricted or prohibited software.');
+        abort_if($discovery->activePolicyException()->exists(), 422, 'This installation already has an active policy exception.');
+        $validated = $request->validate([
+            'valid_from' => 'required|date',
+            'expires_at' => 'required|date|after_or_equal:valid_from',
+            'reason' => 'required|string|max:2000',
+            'conditions' => 'nullable|string|max:2000',
+        ]);
+
+        SoftwarePolicyException::create($validated + [
+            'organization_id' => $this->orgId(), 'software_id' => $software->id,
+            'software_discovery_id' => $discovery->id, 'user_id' => $discovery->user_id,
+            'asset_id' => $discovery->asset_id, 'status' => 'approved', 'approved_by' => auth()->id(),
+        ]);
+        SoftwareComplianceAction::where('organization_id', $this->orgId())
+            ->where('software_discovery_id', $discovery->id)
+            ->where('action_type', 'uninstall_reclaim')->where('status', 'open')
+            ->update(['status' => 'cancelled', 'completed_at' => now()]);
+
+        return back()->with('success', 'Time-bound policy exception approved for this installation.');
+    }
+
+    public function revokePolicyException(Software $software, SoftwarePolicyException $exception)
+    {
+        abort_if($software->organization_id !== $this->orgId(), 404);
+        abort_if($exception->organization_id !== $this->orgId() || $exception->software_id !== $software->id, 404);
+        abort_unless($exception->is_active, 422, 'Only an active policy exception can be revoked.');
+        $exception->update(['status' => 'revoked', 'revoked_by' => auth()->id(), 'revoked_at' => now()]);
+
+        return back()->with('success', 'Policy exception revoked. The installation is included in policy compliance again.');
     }
 
     public function storeAction(Request $request, Software $software)
@@ -302,6 +349,9 @@ class SoftwareComplianceController extends Controller
             ->reject(fn ($license) => $license->is_expired);
 
         $installedCount = $discoveries->count();
+        $activeExceptionCount = $discoveries->filter(fn ($discovery) => $discovery->activePolicyException)->count();
+        $policyViolationCount = in_array($software->policy_status, ['restricted', 'prohibited'], true)
+            ? max(0, $installedCount - $activeExceptionCount) : 0;
         $discoveredUserIds = $discoveries->pluck('user_id')->filter()->unique()->values();
         $discoveredAssetIds = $discoveries->pluck('asset_id')->filter()->unique()->values();
         $allocatedAssignments = $validLicenses->flatMap(fn ($license) => $license->activeAssignments);
@@ -314,12 +364,14 @@ class SoftwareComplianceController extends Controller
         $expiredLicenseCount = $licenses->where('status', 'active')->filter(fn ($license) => $license->is_expired)->count();
         $missingSeats = max(0, $requiredSeats - $purchasedSeats);
         $financialExposure = $missingSeats * $this->averageSeatCost($validLicenses);
-        $status = $this->status($software, $installedCount, $requiredSeats, $purchasedSeats, $expiredLicenseCount, $allocationMismatchCount);
+        $status = $this->status($software, $installedCount, $requiredSeats, $purchasedSeats, $expiredLicenseCount, $allocationMismatchCount, $policyViolationCount);
         $riskScore = $this->riskScore($software, $requiredSeats, $missingSeats, $financialExposure, $status);
 
         return [
             'software' => $software,
             'installed_count' => $installedCount,
+            'active_exception_count' => $activeExceptionCount,
+            'policy_violation_count' => $policyViolationCount,
             'discovered_users' => $discoveredUserIds->count(),
             'discovered_devices' => $discoveredAssetIds->count(),
             'required_seats' => $requiredSeats,
@@ -366,8 +418,12 @@ class SoftwareComplianceController extends Controller
         };
     }
 
-    private function status(Software $software, int $installedCount, int $requiredSeats, int $purchasedSeats, int $expiredLicenseCount, int $allocationMismatchCount): string
+    private function status(Software $software, int $installedCount, int $requiredSeats, int $purchasedSeats, int $expiredLicenseCount, int $allocationMismatchCount, int $policyViolationCount): string
     {
+        if ($policyViolationCount > 0 && in_array($software->policy_status, ['prohibited', 'restricted'], true)) {
+            return $software->policy_status;
+        }
+
         if (! $software->license_required) {
             return 'free';
         }
@@ -404,6 +460,10 @@ class SoftwareComplianceController extends Controller
 
     private function riskScore(Software $software, int $requiredSeats, int $missingSeats, float $financialExposure, string $status): int
     {
+        if (in_array($status, ['prohibited', 'restricted'], true)) {
+            return $status === 'prohibited' ? 100 : 85;
+        }
+
         if (in_array($status, ['free', 'compliant', 'over_licensed'], true)) {
             return 0;
         }
@@ -447,6 +507,8 @@ class SoftwareComplianceController extends Controller
     private function statuses(): array
     {
         return [
+            'prohibited' => ['label' => 'Prohibited by Policy', 'badge' => 'danger'],
+            'restricted' => ['label' => 'Restricted - Exception Required', 'badge' => 'warning'],
             'compliant' => ['label' => 'Compliant', 'badge' => 'success'],
             'under_licensed' => ['label' => 'Under Licensed', 'badge' => 'danger'],
             'over_licensed' => ['label' => 'Over Licensed', 'badge' => 'info'],

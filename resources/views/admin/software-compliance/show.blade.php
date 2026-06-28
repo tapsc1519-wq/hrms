@@ -64,6 +64,7 @@
         <div>
             <span class="badge bg-{{ $row['status_meta']['badge'] }} me-2">{{ $row['status_meta']['label'] }}</span>
             <span class="badge bg-{{ $riskBadge }}">{{ ucfirst($row['risk_level']) }} Risk</span>
+            <span class="badge bg-{{ $software->policy_status_badge }} ms-1">Policy: {{ $software->policy_status_label }}</span>
         </div>
         <div class="text-muted small">
             Missing seats: <strong class="text-dark">{{ $row['missing_seats'] }}</strong>
@@ -362,6 +363,7 @@
                     <th>Device</th>
                     <th>Discovered Software</th>
                     <th>Usage</th>
+                    <th>Policy</th>
                     <th class="text-end pe-4">Allocation</th>
                 </tr>
             </thead>
@@ -387,6 +389,16 @@
                         <div>{{ $discovery->last_used_date?->format('d-m-Y') ?? 'No usage date' }}</div>
                         <div class="text-muted small">{{ $discovery->usage_count ?? 0 }} launches</div>
                     </td>
+                    <td>
+                        @if($discovery->activePolicyException)
+                            <span class="badge bg-success">Exception Active</span>
+                            <div class="text-muted small">Until {{ $discovery->activePolicyException->expires_at->format('d M Y') }}</div>
+                        @elseif(in_array($software->policy_status, ['restricted','prohibited']))
+                            <button type="button" class="btn btn-sm btn-outline-warning exception-button" data-bs-toggle="modal" data-bs-target="#policyExceptionModal" data-action="{{ route('admin.software-compliance.policy-exceptions.store', [$software, $discovery]) }}" data-title="{{ $discovery->user?->name ?? $discovery->asset?->asset_tag ?? $discovery->raw_name }}"><i class="bi bi-shield-plus me-1"></i>Exception</button>
+                        @else
+                            <span class="badge bg-{{ $software->policy_status_badge }}">{{ $software->policy_status_label }}</span>
+                        @endif
+                    </td>
                     <td class="text-end pe-4">
                         @if($discovery->user_id && $assignedUserIds->contains($discovery->user_id))
                             <span class="badge bg-success">Allocated</span>
@@ -399,7 +411,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-5">
+                    <td colspan="6" class="text-center text-muted py-5">
                         No mapped discovery records found for this software.
                     </td>
                 </tr>
@@ -411,6 +423,19 @@
         <div class="p-3 border-top">{{ $discoveriesPage->links() }}</div>
     @endif
 </div>
+
+@if(in_array($software->policy_status, ['restricted','prohibited']) || $exceptions->total() > 0)
+<div class="table-card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center"><div><h5 class="mb-1">Policy Exception History</h5><p class="text-muted small mb-0">Temporary approvals for specific detected installations.</p></div><span class="badge bg-light text-dark">{{ $exceptions->total() }}</span></div>
+    <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th class="ps-4">User / Device</th><th>Validity</th><th>Business Reason</th><th>Approved By</th><th>Status</th><th class="text-end pe-4">Action</th></tr></thead><tbody>
+    @forelse($exceptions as $exception)<tr><td class="ps-4"><div class="fw-bold">{{ $exception->user?->name ?? 'No user mapped' }}</div><div class="text-muted small">{{ $exception->asset?->asset_tag ?? $exception->discovery?->raw_name ?? 'No device mapped' }}</div></td><td>{{ $exception->valid_from->format('d M Y') }} to {{ $exception->expires_at->format('d M Y') }}</td><td><div>{{ $exception->reason }}</div>@if($exception->conditions)<div class="text-muted small">Conditions: {{ $exception->conditions }}</div>@endif</td><td>{{ $exception->approvedBy?->name ?? 'Unknown' }}<div class="text-muted small">{{ $exception->created_at->format('d M Y') }}</div></td><td><span class="badge bg-{{ $exception->status_badge }}">{{ $exception->status_label }}</span></td><td class="text-end pe-4">@if($exception->is_active)<form method="POST" action="{{ route('admin.software-compliance.policy-exceptions.revoke', [$software, $exception]) }}" onsubmit="return confirm('Revoke this policy exception?')">@csrf @method('PATCH')<button class="btn btn-sm btn-outline-danger">Revoke</button></form>@else<span class="text-muted small">Closed</span>@endif</td></tr>
+    @empty<tr><td colspan="6" class="text-center text-muted py-4">No policy exceptions have been recorded.</td></tr>@endforelse
+    </tbody></table></div>
+    @if($exceptions->hasPages())<div class="p-3 border-top">{{ $exceptions->links() }}</div>@endif
+</div>
+@endif
+
+<div class="modal fade" id="policyExceptionModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><form id="policyExceptionForm" method="POST" class="modal-content">@csrf<div class="modal-header"><div><h5 class="modal-title mb-0">Approve Policy Exception</h5><small id="policyExceptionTarget" class="text-muted"></small></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="alert alert-warning small"><i class="bi bi-clock-history me-1"></i>This approval applies only to this detected installation and expires automatically.</div><div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label">Valid From</label><input type="date" name="valid_from" class="form-control" value="{{ today()->toDateString() }}" required></div><div class="col-md-6"><label class="form-label">Expires On</label><input type="date" name="expires_at" class="form-control" min="{{ today()->toDateString() }}" value="{{ today()->addDays(30)->toDateString() }}" required></div></div><div class="mb-3"><label class="form-label">Business Reason</label><textarea name="reason" rows="3" maxlength="2000" class="form-control" required placeholder="Why is this installation required despite the software policy?"></textarea></div><div><label class="form-label">Conditions</label><textarea name="conditions" rows="2" maxlength="2000" class="form-control" placeholder="Example: Use only for the approved project and remove before expiry."></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-warning"><i class="bi bi-shield-check me-1"></i>Approve Exception</button></div></form></div></div>
 
 <div class="row g-3">
     <div class="col-xl-6">
@@ -499,3 +524,16 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.exception-button').forEach(function (button) {
+        button.addEventListener('click', function () {
+            document.getElementById('policyExceptionForm').action = button.dataset.action;
+            document.getElementById('policyExceptionTarget').textContent = button.dataset.title;
+        });
+    });
+});
+</script>
+@endpush

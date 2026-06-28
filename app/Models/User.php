@@ -53,6 +53,11 @@ class User extends Authenticatable
         return $this->hasMany(AssetRequest::class, 'requester_id');
     }
 
+    public function softwareRequests(): HasMany
+    {
+        return $this->hasMany(SoftwareRequest::class, 'requester_id');
+    }
+
     public function employeeProfile(): HasOne
     {
         return $this->hasOne(EmployeeProfile::class);

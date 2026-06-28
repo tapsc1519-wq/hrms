@@ -7,7 +7,39 @@
         <h4><i class="bi bi-display me-2 text-primary"></i>My Software</h4>
         <p>Software licenses assigned to you by your organization.</p>
     </div>
+    <div class="d-flex gap-2">
+        <a href="{{ route('staff.software-requests.index') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-clock-history me-1"></i>My Requests
+        </a>
+        <a href="{{ route('staff.software-requests.create') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Request Software
+        </a>
+    </div>
 </div>
+
+@if($usageReviews->isNotEmpty())
+<div class="table-card mb-3" style="border-left:4px solid #f59e0b">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-start gap-3 mb-3">
+            <i class="bi bi-question-circle-fill text-warning fs-4"></i>
+            <div><h6 class="mb-1">Please confirm your software needs</h6><p class="text-muted small mb-0">IT noticed that the following software has not been used recently. Confirm whether you still need it or release the license for another employee.</p></div>
+        </div>
+        @foreach($usageReviews as $review)
+        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap py-3 {{ !$loop->last ? 'border-bottom' : '' }}">
+            <div>
+                <div class="fw-bold">{{ $review->assignment?->license?->software?->name ?? 'Unknown software' }}</div>
+                <div class="text-muted small">Last used: {{ $review->last_used_date?->format('d M Y') ?? 'No recent usage recorded' }} &middot; Respond by {{ $review->due_date?->format('d M Y') ?? 'as soon as possible' }}</div>
+                @if($review->notes)<div class="small mt-1">{{ $review->notes }}</div>@endif
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#retainUsage{{ $review->id }}">I Still Need It</button>
+                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#releaseUsage{{ $review->id }}">Release License</button>
+            </div>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
 
 {{-- Search --}}
 <div class="table-card mb-3">
@@ -133,4 +165,9 @@
         </div>
     @endif
 @endif
+
+@foreach($usageReviews as $review)
+<div class="modal fade" id="retainUsage{{ $review->id }}" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><form method="POST" action="{{ route('staff.software-usage-reviews.retain', $review) }}" class="modal-content">@csrf @method('PATCH')<div class="modal-header"><h5 class="modal-title">Keep {{ $review->assignment?->license?->software?->name }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label">Why do you still need this software?</label><textarea name="decision_notes" class="form-control" rows="4" required minlength="5" placeholder="Mention the work, project, or upcoming task that requires it"></textarea></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Keep My License</button></div></form></div></div>
+<div class="modal fade" id="releaseUsage{{ $review->id }}" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><form method="POST" action="{{ route('staff.software-usage-reviews.release', $review) }}" class="modal-content">@csrf @method('PATCH')<div class="modal-header"><h5 class="modal-title">Release {{ $review->assignment?->license?->software?->name }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="alert alert-info small">The license will be removed from My Software and returned to the available pool.</div><label class="form-label">Release Note</label><textarea name="decision_notes" class="form-control" rows="3" required minlength="5" placeholder="Example: This project is complete and I no longer use the software."></textarea></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-success">Release License</button></div></form></div></div>
+@endforeach
 @endsection

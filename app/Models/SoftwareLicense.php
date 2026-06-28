@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SoftwareLicense extends Model
 {
@@ -14,6 +15,7 @@ class SoftwareLicense extends Model
         'purchase_date', 'expiry_date', 'renewal_date', 'purchase_price',
         'unit_cost', 'po_number', 'invoice_number', 'agreement_number',
         'subscription_period', 'evidence_document', 'notes', 'status',
+        'purchase_order_id', 'purchase_order_item_id', 'goods_receipt_id',
     ];
 
     protected $casts = [
@@ -46,6 +48,21 @@ class SoftwareLicense extends Model
         return $this->supplier();
     }
 
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    public function purchaseOrderItem(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrderItem::class);
+    }
+
+    public function goodsReceipt(): BelongsTo
+    {
+        return $this->belongsTo(GoodsReceipt::class);
+    }
+
     public function assignments(): HasMany
     {
         return $this->hasMany(SoftwareAssignment::class);
@@ -54,6 +71,16 @@ class SoftwareLicense extends Model
     public function activeAssignments(): HasMany
     {
         return $this->hasMany(SoftwareAssignment::class)->where('status', 'active');
+    }
+
+    public function renewalDecisions(): HasMany
+    {
+        return $this->hasMany(SoftwareRenewalDecision::class);
+    }
+
+    public function activeRenewalDecision(): HasOne
+    {
+        return $this->hasOne(SoftwareRenewalDecision::class)->where('status', 'planned')->latest('id');
     }
 
     // ── Accessors ───────────────────────────────────────────────────────────

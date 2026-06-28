@@ -8,7 +8,7 @@
         <i class="bi bi-arrow-left"></i> {{ $purchaseOrder->po_number }}
     </a>
     <h4>Receive Purchase Order</h4>
-    <p>Record delivery details and create traceable asset records for received units.</p>
+    <p>Record delivered assets or software seats and create traceable inventory records.</p>
 </div>
 
 @if($errors->any())
@@ -30,7 +30,7 @@
                 </div>
                 <div class="form-card-body">
                     <div class="alert alert-info py-2 small">
-                        Each received unit creates one asset. Enter one serial number per unit; asset tags may be entered or generated automatically.
+                        Asset lines create one asset per unit. Software lines create license seats and automatically allocate them to linked approved requests.
                     </div>
 
                     @foreach($purchaseOrder->items as $item)
@@ -38,7 +38,7 @@
                         <div class="border rounded-3 p-3 mb-3">
                             <div class="d-flex justify-content-between gap-3 mb-3">
                                 <div>
-                                    <div class="fw-bold">{{ $item->item_name }}</div>
+                                    <div class="fw-bold">{{ $item->item_name }} <span class="badge bg-light text-dark ms-1">{{ ucfirst($item->item_type) }}</span></div>
                                     <div class="text-muted small">
                                         {{ trim($item->brand . ' ' . $item->model) ?: ($item->category?->name ?? 'Uncategorized') }}
                                     </div>
@@ -77,6 +77,7 @@
                                            value="{{ old('items.' . $item->id . '.notes') }}"
                                            placeholder="Damage, shortage, packaging condition...">
                                 </div>
+                                @if($item->item_type === 'asset')
                                 <div class="col-md-6">
                                     <label class="form-label">Serial Numbers</label>
                                     <textarea name="items[{{ $item->id }}][serial_numbers]"
@@ -85,6 +86,29 @@
                                               placeholder="One serial number per received unit">{{ old('items.' . $item->id . '.serial_numbers') }}</textarea>
                                     @error('items.' . $item->id . '.serial_numbers')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                 </div>
+                                @else
+                                <div class="col-md-6">
+                                    <label class="form-label">License Key / Subscription ID</label>
+                                    <input type="text" name="items[{{ $item->id }}][license_key]" class="form-control" value="{{ old('items.' . $item->id . '.license_key') }}" placeholder="Optional license or tenant reference">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Expiry Date</label>
+                                    <input type="date" name="items[{{ $item->id }}][expiry_date]" class="form-control" value="{{ old('items.' . $item->id . '.expiry_date') }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Renewal Date</label>
+                                    <input type="date" name="items[{{ $item->id }}][renewal_date]" class="form-control" value="{{ old('items.' . $item->id . '.renewal_date') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Agreement Number</label>
+                                    <input type="text" name="items[{{ $item->id }}][agreement_number]" class="form-control" value="{{ old('items.' . $item->id . '.agreement_number') }}" placeholder="Contract or agreement reference">
+                                </div>
+                                @if($item->softwareRequests->isNotEmpty())
+                                <div class="col-12">
+                                    <div class="small text-primary"><i class="bi bi-people me-1"></i>{{ $item->softwareRequests->where('status', 'approved')->count() }} approved employee request(s) are waiting for these seats.</div>
+                                </div>
+                                @endif
+                                @endif
                                 <div class="col-md-6">
                                     <label class="form-label">Asset Tags <span class="text-muted">(optional)</span></label>
                                     <textarea name="items[{{ $item->id }}][asset_tags]"
@@ -166,7 +190,7 @@
     <div class="form-actions" style="border-radius:14px;border:1px solid #e2e8f0;margin-top:.5rem">
         <a href="{{ route('admin.purchase-orders.show', $purchaseOrder) }}" class="btn-cancel">Cancel</a>
         <button class="btn btn-primary btn-save">
-            <i class="bi bi-box-arrow-in-down"></i> Record Receipt & Create Assets
+            <i class="bi bi-box-arrow-in-down"></i> Record Receipt
         </button>
     </div>
 </form>

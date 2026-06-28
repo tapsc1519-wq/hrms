@@ -71,13 +71,13 @@ class PageHelpRegistry
             ],
             'admin.purchase-orders.*' => [
                 'title' => 'Purchase Orders Help',
-                'what' => 'Purchase Orders track approved purchases from suppliers before assets or licenses are received.',
+                'what' => 'Purchase Orders track approved purchases from suppliers before physical assets or software license seats are received.',
                 'how' => [
-                    'Create a purchase order with supplier, item, quantity, and price details.',
-                    'Receive items against the purchase order when delivery happens.',
-                    'Use received items to create compliant asset records instead of manually adding assets without purchase proof.',
+                    'Choose Asset or Software for each line so receiving creates the correct register record.',
+                    'Combine approved software requests when the product and supplier are the same.',
+                    'Receive delivered quantities to create assets or license seats with purchase evidence.',
                 ],
-                'next' => 'For compliance, prefer creating assets from received purchase order items whenever possible.',
+                'next' => 'Receiving software seats automatically fulfills linked approved employee requests in priority order.',
             ],
             'admin.disposals.*' => [
                 'title' => 'Disposal Help',
@@ -115,9 +115,40 @@ class PageHelpRegistry
                 'how' => [
                     'Use the renewal window filter to focus on licenses expiring soon.',
                     'Review unused and low-use licenses before renewing.',
-                    'Open a license to check assignments, supplier details, purchase evidence, and renewal dates.',
+                    'Create a renewal plan with the decision, target seats, projected cost, owner, due date, and rationale.',
+                    'Complete the plan after supplier confirmation so seats, cost, dates, and license status stay current.',
                 ],
-                'next' => 'Review expired and expiring licenses first, then look for reduce or cancel-review opportunities.',
+                'next' => 'Review expired and expiring licenses first, then assign owners to every decision before its due date.',
+            ],
+            'admin.software-requests.*' => [
+                'title' => 'Software Requests Help',
+                'what' => 'Software Requests turns employee demand into a reviewed and traceable license allocation.',
+                'how' => [
+                    'Review the employee, software, urgency, needed date, and business reason.',
+                    'Approve a valid need or reject it with a clear explanation.',
+                    'Allocate an available valid license after approval. If no seat is available, keep it approved while procurement is arranged.',
+                ],
+                'next' => 'Fulfilled requests automatically create the employee license allocation and appear under My Software.',
+            ],
+            'admin.software-optimization.*' => [
+                'title' => 'Usage Optimization Help',
+                'what' => 'Usage Optimization finds paid software allocations that have not been used recently and helps recover unnecessary seats.',
+                'how' => [
+                    'Choose an inactivity period such as 60 or 90 days.',
+                    'Start a review to ask the employee whether the software is still required.',
+                    'Retain justified allocations or reclaim unused seats for another employee.',
+                ],
+                'next' => 'No Usage Data means discovery telemetry is missing; confirm device reporting before reclaiming those licenses.',
+            ],
+            'staff.software-requests.*' => [
+                'title' => 'Request Software Help',
+                'what' => 'Use this page to ask for software needed for your work and follow its approval status.',
+                'how' => [
+                    'Choose the software from your organization catalog.',
+                    'Explain the work you need it for and when you need it.',
+                    'Track the request here. Once allocated, the license appears under My Software.',
+                ],
+                'next' => 'Contact IT through a support ticket if the software is not listed in the catalog.',
             ],
             'admin.software-licenses.*' => [
                 'title' => 'Software Licenses Help',
@@ -139,15 +170,46 @@ class PageHelpRegistry
                 ],
                 'next' => 'Open Normalization Workbench to map unknown software to the catalog.',
             ],
+            'admin.agent-sources.*' => [
+                'title' => 'Device Agent Sources Help',
+                'what' => 'Agent Sources is the operational view of computers reporting software inventory, their health, matching status, version, and secure access.',
+                'how' => [
+                    'Filter Healthy, Stale, or Offline devices and resolve computers that are not linked to an asset or employee.',
+                    'Select devices and queue a signed inventory refresh when current data is required.',
+                    'Download the Windows installer and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
+                    'Review the agent version before relying on newly introduced collection features.',
+                ],
+                'next' => 'Offline or stale devices should be checked before relying on their software data for compliance decisions.',
+            ],
             'admin.software-normalization.*' => [
                 'title' => 'Normalization Help',
-                'what' => 'Normalization means matching raw software names from devices to the correct software catalog record.',
+                'what' => 'Normalization groups unknown software reported across the fleet and matches each group to the correct catalog record.',
                 'how' => [
-                    'Review unknown software one by one.',
-                    'Map each record to the correct catalog software.',
-                    'Create recognition rules for names that should be mapped automatically next time.',
+                    'Start with groups affecting the most installations, devices, or employees.',
+                    'Map a group once to update every matching installation across the organization.',
+                    'Keep Create Recognition Rule selected so the same name and publisher are mapped automatically next time.',
                 ],
                 'next' => 'After mapping, open Software Compliance to review shortages and mismatches.',
+            ],
+            'admin.software-policies.*' => [
+                'title' => 'Software Policies Help',
+                'what' => 'Software Policies records whether each catalog application is approved, restricted, prohibited, or still awaiting review.',
+                'how' => [
+                    'Review detected software first so policy decisions focus on applications actually used in the organization.',
+                    'Record conditions for restricted products and a clear reason for prohibited products.',
+                    'For prohibited detected software, create remediation tasks for IT to review and complete safely.',
+                ],
+                'next' => 'Open Software Compliance to track prohibited installations and complete their remediation tasks.',
+            ],
+            'admin.sam-audit.*' => [
+                'title' => 'SAM Audit Pack Help',
+                'what' => 'The SAM Audit Pack creates a tenant-scoped ZIP containing point-in-time software, entitlement, discovery, policy, exception, device, and remediation evidence.',
+                'how' => [
+                    'Choose how far back historical exceptions and remediation actions should be included.',
+                    'Include removed installations when the auditor needs evidence of historical software presence.',
+                    'Store the generated package according to your organization audit and data-retention policy.',
+                ],
+                'next' => 'Review the summary and compliance snapshot first, then use the detailed CSV files as supporting evidence.',
             ],
             'admin.software-compliance.*' => [
                 'title' => 'Software Compliance Help',
@@ -155,7 +217,8 @@ class PageHelpRegistry
                 'how' => [
                     'Review Under Licensed, Unauthorized, and Allocation Mismatch first.',
                     'Open Review to see exact users, devices, purchased licenses, and active allocations.',
-                    'Record remediation so the decision is visible during audits.',
+                    'Approve a time-bound policy exception only for a specific installation with a documented business reason.',
+                    'Record remediation so every decision and follow-up remains visible during audits.',
                 ],
                 'next' => 'Fix issues by allocating an available license, purchasing seats, approving an exception, or planning uninstall/reclaim.',
             ],

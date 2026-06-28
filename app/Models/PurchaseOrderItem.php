@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PurchaseOrderItem extends Model
 {
     protected $fillable = [
-        'purchase_order_id', 'category_id', 'item_name', 'brand', 'model',
+        'purchase_order_id', 'item_type', 'category_id', 'software_id',
+        'license_type', 'subscription_period', 'item_name', 'brand', 'model',
         'description', 'specifications', 'quantity', 'received_quantity',
         'unit_price', 'tax_rate', 'total_price',
     ];
@@ -22,6 +23,21 @@ class PurchaseOrderItem extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(AssetCategory::class, 'category_id');
+    }
+
+    public function software(): BelongsTo
+    {
+        return $this->belongsTo(Software::class);
+    }
+
+    public function softwareRequests(): HasMany
+    {
+        return $this->hasMany(SoftwareRequest::class);
+    }
+
+    public function softwareLicenses(): HasMany
+    {
+        return $this->hasMany(SoftwareLicense::class);
     }
 
     public function receiptItems(): HasMany

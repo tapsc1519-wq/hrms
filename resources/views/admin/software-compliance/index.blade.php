@@ -8,6 +8,9 @@
         <p>Compare normalized discovery records with license purchases and active allocations.</p>
     </div>
     <div class="d-flex gap-2">
+        <a href="{{ route('admin.software-policies.index') }}" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-shield-lock me-1"></i>Policies
+        </a>
         <a href="{{ route('admin.software-normalization.index') }}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-diagram-3 me-1"></i>Normalize
         </a>
@@ -20,9 +23,9 @@
 <div class="row g-3 mb-3">
     @foreach([
         ['High Risk', $stats['high_risk'], 'grad-red', 'Needs urgent review'],
+        ['Prohibited', $stats['prohibited'], 'grad-red', 'Blocked by software policy'],
         ['Under Licensed', $stats['under_licensed'], 'grad-orange', 'Short on purchased seats'],
         ['Unauthorized', $stats['unauthorized'], 'grad-purple', 'Installs without valid license'],
-        ['Mismatch', $stats['allocation_mismatch'], 'grad-blue', 'Discovered users not allocated'],
     ] as [$label, $value, $color, $sub])
     <div class="col-sm-6 col-xl-3">
         <div class="stat-card-gradient {{ $color }}"><div class="card-body">
@@ -96,6 +99,7 @@
                             {{ $row['software']->vendor ?: 'Unknown vendor' }}
                             @if($row['software']->edition) &middot; {{ $row['software']->edition }} @endif
                         </div>
+                        <div class="mt-1"><span class="badge bg-{{ $row['software']->policy_status_badge }}">{{ $row['software']->policy_status_label }}</span></div>
                     </td>
                     <td>
                         <div class="fw-bold">{{ $row['software']->license_metric_label }}</div>

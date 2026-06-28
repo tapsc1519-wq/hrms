@@ -8,7 +8,7 @@
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
     <div>
         <h4>{{ $workbench ? 'Normalization Workbench' : 'Discovery Inventory' }}</h4>
-        <p>{{ $workbench ? 'Review unknown discovered software and map it to the catalogue.' : 'Raw discovered software from CSV imports and future device agents.' }}</p>
+        <p>{{ $workbench ? 'Review unknown discovered software and map it to the catalogue.' : 'Software inventory collected from CSV imports and enrolled device agents.' }}</p>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.software-discovery.import') }}" class="btn btn-primary btn-sm">
@@ -23,7 +23,7 @@
 </div>
 
 <div class="row g-3 mb-3">
-    @foreach([['Total', $stats['total'], 'grad-blue'], ['Unknown', $stats['unknown'], 'grad-orange'], ['Mapped', $stats['mapped'], 'grad-green'], ['Ignored', $stats['ignored'], 'grad-teal']] as [$label, $value, $color])
+    @foreach([['Installed', $stats['total'], 'grad-blue'], ['Unknown', $stats['unknown'], 'grad-orange'], ['Mapped', $stats['mapped'], 'grad-green'], ['Removed', $stats['removed'], 'grad-teal']] as [$label, $value, $color])
     <div class="col-sm-6 col-xl-3">
         <div class="stat-card-gradient {{ $color }}"><div class="card-body">
             <div class="stat-label">{{ $label }}</div>
@@ -42,7 +42,7 @@
                 <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Software, publisher, asset tag or employee">
             </div>
             @unless($workbench)
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label">Status</label>
                 <select name="status" class="form-select">
                     <option value="">All statuses</option>
@@ -51,11 +51,19 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-md-2">
+                <label class="form-label">Inventory State</label>
+                <select name="inventory_state" class="form-select">
+                    <option value="installed" @selected(request('inventory_state', 'installed') === 'installed')>Installed</option>
+                    <option value="removed" @selected(request('inventory_state') === 'removed')>Removed</option>
+                    <option value="all" @selected(request('inventory_state') === 'all')>All records</option>
+                </select>
+            </div>
             @endunless
             <div class="col-md-2">
                 <button class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i>Filter</button>
             </div>
-            @if(request()->hasAny(['search','status']))
+            @if(request()->hasAny(['search','status','inventory_state']))
             <div class="col-md-2">
                 <a href="{{ $clearRoute }}" class="btn btn-outline-secondary w-100"><i class="bi bi-x-lg me-1"></i>Clear</a>
             </div>
@@ -88,14 +96,14 @@
                         </div>
                     </td>
                     <td>
-                        <div class="fw-bold">{{ $item->asset?->asset_tag ?? 'No device' }}</div>
+                        <div class="fw-bold">{{ $item->asset?->asset_tag ?? $item->deviceAgent?->hostname ?? 'No device' }}</div>
                         <div class="text-muted small">{{ $item->user?->name ?? $item->user?->email ?? 'No user' }}</div>
                     </td>
                     <td>
                         <div>{{ $item->last_used_date?->format('d-m-Y') ?? 'No usage date' }}</div>
                         <div class="text-muted small">{{ $item->usage_count ?? 0 }} launches</div>
                     </td>
-                    <td><span class="badge bg-{{ $item->status_badge }}">{{ ucfirst($item->status) }}</span></td>
+                    <td><span class="badge bg-{{ $item->status_badge }}">{{ ucfirst($item->status) }}</span><div class="mt-1"><span class="badge bg-{{ $item->is_installed ? 'success' : 'secondary' }}">{{ $item->is_installed ? 'Installed' : 'Removed' }}</span></div><div class="text-muted small mt-1">{{ strtoupper($item->source) }}</div></td>
                     <td>
                         @if($item->software)
                             <div class="fw-bold">{{ $item->software->name }}</div>

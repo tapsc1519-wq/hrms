@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SoftwareAssignment extends Model
 {
@@ -32,5 +33,10 @@ class SoftwareAssignment extends Model
     public function assignedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_by');
+    }
+
+    public function usageReviews(): HasMany
+    {
+        return $this->hasMany(SoftwareUsageReview::class);
     }
 }

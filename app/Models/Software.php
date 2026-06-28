@@ -14,12 +14,14 @@ class Software extends Model
         'organization_id', 'name', 'vendor', 'version', 'edition',
         'category', 'software_type', 'license_required', 'criticality',
         'license_metric', 'trusted_publisher',
+        'policy_status', 'policy_notes', 'policy_reviewed_by', 'policy_reviewed_at',
         'description', 'publisher_website', 'icon',
     ];
 
     protected $casts = [
         'license_required' => 'boolean',
         'trusted_publisher' => 'boolean',
+        'policy_reviewed_at' => 'datetime',
     ];
 
     // ── Relationships ───────────────────────────────────────────────────────
@@ -47,6 +49,21 @@ class Software extends Model
     public function recognitionRules(): HasMany
     {
         return $this->hasMany(SoftwareRecognitionRule::class);
+    }
+
+    public function requests(): HasMany
+    {
+        return $this->hasMany(SoftwareRequest::class);
+    }
+
+    public function policyExceptions(): HasMany
+    {
+        return $this->hasMany(SoftwarePolicyException::class);
+    }
+
+    public function policyReviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'policy_reviewed_by');
     }
 
     // ── Accessors ───────────────────────────────────────────────────────────
@@ -114,6 +131,26 @@ class Software extends Model
             'high' => 'warning',
             'low' => 'secondary',
             default => 'primary',
+        };
+    }
+
+    public function getPolicyStatusLabelAttribute(): string
+    {
+        return match ($this->policy_status) {
+            'approved' => 'Approved',
+            'restricted' => 'Restricted',
+            'prohibited' => 'Prohibited',
+            default => 'Unreviewed',
+        };
+    }
+
+    public function getPolicyStatusBadgeAttribute(): string
+    {
+        return match ($this->policy_status) {
+            'approved' => 'success',
+            'restricted' => 'warning',
+            'prohibited' => 'danger',
+            default => 'secondary',
         };
     }
 

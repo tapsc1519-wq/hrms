@@ -8,12 +8,17 @@ use App\Models\Software;
 use App\Models\SoftwareDiscovery;
 use App\Models\SoftwareRecognitionRule;
 use App\Models\User;
+use App\Services\SoftwareRecognitionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SoftwareDiscoveryController extends Controller
 {
+    public function __construct(private readonly SoftwareRecognitionService $recognitionService)
+    {
+    }
+
     public function index(Request $request)
     {
         return $this->listDiscoveries($request, false);
@@ -21,19 +26,57 @@ class SoftwareDiscoveryController extends Controller
 
     public function workbench(Request $request)
     {
-        return $this->listDiscoveries($request, true);
+        $organizationId = $this->orgId();
+        $perPage = in_array((int) $request->input('per_page'), [25, 50, 100], true) ? (int) $request->input('per_page') : 25;
+        $baseQuery = SoftwareDiscovery::where('organization_id', $organizationId)
+            ->where('status', 'unknown')->where('is_installed', true)
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = trim($request->search);
+                $query->where(fn ($q) => $q->where('raw_name', 'like', "%{$search}%")
+                    ->orWhere('raw_publisher', 'like', "%{$search}%"));
+            });
+
+        $groups = (clone $baseQuery)
+            ->select(['raw_name', 'raw_publisher'])
+            ->selectRaw('COUNT(*) as installation_count')
+            ->selectRaw('COUNT(DISTINCT device_agent_id) as device_count')
+            ->selectRaw('COUNT(DISTINCT user_id) as user_count')
+            ->selectRaw('COUNT(DISTINCT raw_version) as version_count')
+            ->selectRaw('MAX(last_seen_at) as latest_seen_at')
+            ->groupBy('raw_name', 'raw_publisher')
+            ->orderByDesc('installation_count')->orderBy('raw_name')
+            ->paginate($perPage)->withQueryString();
+
+        $signatureQuery = (clone $baseQuery)->select(['raw_name', 'raw_publisher'])->groupBy('raw_name', 'raw_publisher');
+        $stats = [
+            'records' => (clone $baseQuery)->count(),
+            'signatures' => DB::query()->fromSub($signatureQuery, 'unknown_signatures')->count(),
+            'devices' => (clone $baseQuery)->whereNotNull('device_agent_id')->distinct()->count('device_agent_id'),
+            'publishers' => (clone $baseQuery)->whereNotNull('raw_publisher')->distinct()->count('raw_publisher'),
+        ];
+        $software = Software::where('organization_id', $organizationId)->orderBy('name')->get(['id', 'name', 'vendor', 'edition']);
+
+        return view('admin.software-discovery.workbench', compact('groups', 'software', 'stats', 'perPage'));
     }
 
     private function listDiscoveries(Request $request, bool $workbench)
     {
         $query = SoftwareDiscovery::where('organization_id', $this->orgId())
-            ->with(['asset', 'user', 'software'])
+            ->with(['asset', 'user', 'software', 'deviceAgent'])
             ->latest();
 
         if ($workbench) {
-            $query->where('status', 'unknown');
+            $query->where('status', 'unknown')->where('is_installed', true);
         } elseif ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        if (! $workbench) {
+            if ($request->input('inventory_state', 'installed') === 'removed') {
+                $query->where('is_installed', false);
+            } elseif ($request->input('inventory_state', 'installed') !== 'all') {
+                $query->where('is_installed', true);
+            }
         }
 
         if ($request->filled('search')) {
@@ -41,6 +84,7 @@ class SoftwareDiscoveryController extends Controller
                 $searchQuery->where('raw_name', 'like', '%' . $request->search . '%')
                     ->orWhere('raw_publisher', 'like', '%' . $request->search . '%')
                     ->orWhereHas('asset', fn ($assetQuery) => $assetQuery->where('asset_tag', 'like', '%' . $request->search . '%'))
+                    ->orWhereHas('deviceAgent', fn ($agentQuery) => $agentQuery->where('hostname', 'like', '%' . $request->search . '%'))
                     ->orWhereHas('user', fn ($userQuery) => $userQuery->where('name', 'like', '%' . $request->search . '%')->orWhere('email', 'like', '%' . $request->search . '%'));
             });
         }
@@ -49,10 +93,10 @@ class SoftwareDiscoveryController extends Controller
         $software = Software::where('organization_id', $this->orgId())->orderBy('name')->get(['id', 'name', 'vendor', 'edition']);
 
         $stats = [
-            'total' => SoftwareDiscovery::where('organization_id', $this->orgId())->count(),
-            'unknown' => SoftwareDiscovery::where('organization_id', $this->orgId())->where('status', 'unknown')->count(),
-            'mapped' => SoftwareDiscovery::where('organization_id', $this->orgId())->where('status', 'mapped')->count(),
-            'ignored' => SoftwareDiscovery::where('organization_id', $this->orgId())->where('status', 'ignored')->count(),
+            'total' => SoftwareDiscovery::where('organization_id', $this->orgId())->where('is_installed', true)->count(),
+            'unknown' => SoftwareDiscovery::where('organization_id', $this->orgId())->where('is_installed', true)->where('status', 'unknown')->count(),
+            'mapped' => SoftwareDiscovery::where('organization_id', $this->orgId())->where('is_installed', true)->where('status', 'mapped')->count(),
+            'removed' => SoftwareDiscovery::where('organization_id', $this->orgId())->where('is_installed', false)->count(),
         ];
 
         return view('admin.software-discovery.index', compact('discoveries', 'software', 'stats', 'workbench'));
@@ -151,7 +195,7 @@ class SoftwareDiscoveryController extends Controller
                 $user = $value('employee_email')
                     ? User::where('organization_id', $this->orgId())->where('email', $value('employee_email'))->first()
                     : null;
-                $match = $this->recognize($rawName, $value('raw_publisher'));
+                $match = $this->recognitionService->recognize($this->orgId(), $rawName, $value('raw_publisher'));
 
                 SoftwareDiscovery::create([
                     'organization_id' => $this->orgId(),
@@ -237,31 +281,67 @@ class SoftwareDiscoveryController extends Controller
         return back()->with('success', 'Discovery record ignored.');
     }
 
-    private function recognize(string $rawName, ?string $publisher): array
+    public function normalizeGroup(Request $request)
     {
-        $rawNameLower = strtolower($rawName);
-        $publisherLower = strtolower((string) $publisher);
+        $data = $request->validate([
+            'raw_name' => ['required', 'string', 'max:255'],
+            'raw_publisher' => ['nullable', 'string', 'max:255'],
+            'software_id' => ['required', 'integer'],
+            'confidence_score' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'create_rule' => ['nullable', 'boolean'],
+        ]);
+        $software = Software::where('organization_id', $this->orgId())->findOrFail($data['software_id']);
+        $confidence = $data['confidence_score'] ?? 95;
+        $publisher = filled($data['raw_publisher'] ?? null) ? $data['raw_publisher'] : null;
 
-        $rules = SoftwareRecognitionRule::where('organization_id', $this->orgId())->with('software')->get();
-        foreach ($rules as $rule) {
-            $nameMatches = str_contains($rawNameLower, strtolower($rule->raw_name_pattern));
-            $publisherMatches = !$rule->raw_publisher_pattern || str_contains($publisherLower, strtolower($rule->raw_publisher_pattern));
-            if ($nameMatches && $publisherMatches) {
-                return ['software_id' => $rule->software_id, 'confidence' => $rule->confidence_score];
+        $updated = DB::transaction(function () use ($data, $software, $confidence, $publisher) {
+            $updated = $this->signatureQuery($data['raw_name'], $publisher)
+                ->update([
+                    'software_id' => $software->id, 'status' => 'mapped',
+                    'confidence_score' => $confidence, 'reviewed_by' => auth()->id(),
+                    'reviewed_at' => now(), 'updated_at' => now(),
+                ]);
+
+            if (! empty($data['create_rule'])) {
+                SoftwareRecognitionRule::firstOrCreate([
+                    'organization_id' => $this->orgId(),
+                    'software_id' => $software->id,
+                    'raw_name_pattern' => $data['raw_name'],
+                    'raw_publisher_pattern' => $publisher,
+                ], ['confidence_score' => $confidence, 'approved_by' => auth()->id()]);
             }
-        }
 
-        $software = Software::where('organization_id', $this->orgId())->get()->first(function (Software $software) use ($rawNameLower, $publisherLower) {
-            $nameMatches = str_contains($rawNameLower, strtolower($software->name));
-            $publisherMatches = !$software->vendor || !$publisherLower || str_contains($publisherLower, strtolower($software->vendor));
-
-            return $nameMatches && $publisherMatches;
+            return $updated;
         });
+        $this->recognitionService->forgetOrganization($this->orgId());
 
-        return [
-            'software_id' => $software?->id,
-            'confidence' => $software ? 85 : null,
-        ];
+        return back()->with('success', $updated.' matching '.str('installation')->plural($updated).' mapped to '.$software->name.'.');
+    }
+
+    public function ignoreGroup(Request $request)
+    {
+        $data = $request->validate([
+            'raw_name' => ['required', 'string', 'max:255'],
+            'raw_publisher' => ['nullable', 'string', 'max:255'],
+        ]);
+        $publisher = filled($data['raw_publisher'] ?? null) ? $data['raw_publisher'] : null;
+        $updated = $this->signatureQuery($data['raw_name'], $publisher)->update([
+            'status' => 'ignored', 'reviewed_by' => auth()->id(),
+            'reviewed_at' => now(), 'updated_at' => now(),
+        ]);
+
+        return back()->with('success', $updated.' matching '.str('installation')->plural($updated).' ignored.');
+    }
+
+    private function signatureQuery(string $rawName, ?string $publisher)
+    {
+        return SoftwareDiscovery::where('organization_id', $this->orgId())
+            ->where('status', 'unknown')->where('is_installed', true)
+            ->where('raw_name', $rawName)
+            ->when($publisher !== null,
+                fn ($query) => $query->where('raw_publisher', $publisher),
+                fn ($query) => $query->where(fn ($q) => $q->whereNull('raw_publisher')->orWhere('raw_publisher', ''))
+            );
     }
 
     private function authorizeDiscovery(SoftwareDiscovery $discovery): void

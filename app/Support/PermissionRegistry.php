@@ -47,6 +47,14 @@ class PermissionRegistry
             ],
             'Software' => [
                 'software.manage' => 'Manage software assets and licenses',
+                'software.policies.manage' => 'Review software policy and create remediation tasks',
+                'software.audit.export' => 'Export the SAM audit evidence package',
+                'software.requests.view' => 'View software requests',
+                'software.requests.review' => 'Approve or reject software requests',
+                'software.requests.fulfill' => 'Allocate licenses for approved software requests',
+                'software.optimization.view' => 'View software usage and optimization',
+                'software.optimization.manage' => 'Start and complete license reclamation reviews',
+                'software.agents.manage' => 'Manage device agents and inventory API tokens',
             ],
             'HRMS' => [
                 'hrms.dashboard' => 'View HRMS dashboard',
@@ -132,6 +140,25 @@ class PermissionRegistry
             ],
             'assets.disposal.complete' => [
                 'assets.disposal.view',
+            ],
+            'software.manage' => [
+                'software.requests.view',
+                'software.requests.review',
+                'software.requests.fulfill',
+                'software.optimization.view',
+                'software.optimization.manage',
+                'software.agents.manage',
+                'software.policies.manage',
+                'software.audit.export',
+            ],
+            'software.requests.review' => [
+                'software.requests.view',
+            ],
+            'software.requests.fulfill' => [
+                'software.requests.view',
+            ],
+            'software.optimization.manage' => [
+                'software.optimization.view',
             ],
         ];
     }

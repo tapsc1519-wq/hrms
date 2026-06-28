@@ -62,6 +62,11 @@ class PurchaseOrder extends Model
         return $this->hasMany(Asset::class);
     }
 
+    public function softwareLicenses(): HasMany
+    {
+        return $this->hasMany(SoftwareLicense::class);
+    }
+
     public function getStatusBadgeAttribute(): string
     {
         return match($this->status) {

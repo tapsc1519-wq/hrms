@@ -91,7 +91,7 @@
             <div class="table-responsive">
                 <table class="table align-middle mb-0" style="font-size:.875rem">
                     <thead class="table-light">
-                        <tr><th>#</th><th>Item</th><th>Category</th><th>Qty</th><th>Received</th><th>Unit Price</th><th>Total</th></tr>
+                        <tr><th>#</th><th>Item</th><th>Register Link</th><th>Qty</th><th>Received</th><th>Unit Price</th><th>Total</th></tr>
                     </thead>
                     <tbody>
                         @foreach($purchaseOrder->items as $i => $item)
@@ -99,11 +99,15 @@
                             <td>{{ $i + 1 }}</td>
                             <td>
                                 <strong>{{ $item->item_name }}</strong>
+                                <span class="badge bg-light text-dark ms-1">{{ ucfirst($item->item_type) }}</span>
                                 @if($item->brand || $item->model)
                                 <br><small class="text-muted">{{ $item->brand }} {{ $item->model }}</small>
                                 @endif
+                                @if($item->softwareRequests->isNotEmpty())
+                                <br><small class="text-primary">{{ $item->softwareRequests->count() }} employee request(s) linked</small>
+                                @endif
                             </td>
-                            <td><small>{{ $item->category?->name ?? '—' }}</small></td>
+                            <td><small>{{ $item->item_type === 'software' ? ($item->software?->name ?? 'Software not linked') : ($item->category?->name ?? 'Uncategorized') }}</small></td>
                             <td>{{ $item->quantity }}</td>
                             <td>
                                 <span class="{{ $item->received_quantity < $item->quantity ? 'text-warning' : 'text-success' }}">
@@ -124,6 +128,27 @@
                 </table>
             </div>
         </div>
+
+        @if($purchaseOrder->items->where('item_type', 'software')->isNotEmpty())
+        <div class="table-card mb-3">
+            <div class="card-header"><span class="fw-600">Software Demand and Allocations</span></div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0" style="font-size:.82rem">
+                    <thead><tr><th class="ps-3">Software</th><th>Employees Requested</th><th>Seats Received</th><th>Requests Fulfilled</th></tr></thead>
+                    <tbody>
+                    @foreach($purchaseOrder->items->where('item_type', 'software') as $item)
+                        <tr>
+                            <td class="ps-3 fw-semibold">{{ $item->software?->name ?? $item->item_name }}</td>
+                            <td>{{ $item->softwareRequests->count() }}</td>
+                            <td>{{ $item->softwareLicenses->sum('seats') }}</td>
+                            <td>{{ $item->softwareRequests->where('status', 'fulfilled')->count() }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
 
         <div class="table-card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">

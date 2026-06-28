@@ -1092,6 +1092,12 @@
                class="sidebar-link {{ request()->routeIs('admin.software.*') ? 'active' : '' }}">
                 <i class="bi bi-display-fill"></i> Software Catalog
             </a>
+            @if($user->hasPermission('software.policies.manage'))
+            <a href="{{ route('admin.software-policies.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.software-policies.*') ? 'active' : '' }}">
+                <i class="bi bi-shield-lock-fill"></i> Software Policies
+            </a>
+            @endif
             <a href="{{ route('admin.software-licenses.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.software-licenses.index', 'admin.software-licenses.create', 'admin.software-licenses.show') ? 'active' : '' }}">
                 <i class="bi bi-key-fill"></i> Licenses
@@ -1100,10 +1106,28 @@
                class="sidebar-link {{ request()->routeIs('admin.software-licenses.renewals') ? 'active' : '' }}">
                 <i class="bi bi-calendar2-check-fill"></i> Renewals
             </a>
+            @if($user->hasPermission('software.optimization.view'))
+            <a href="{{ route('admin.software-optimization.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.software-optimization.*') ? 'active' : '' }}">
+                <i class="bi bi-graph-down-arrow"></i> Usage Optimization
+            </a>
+            @endif
+            @if($user->hasPermission('software.requests.view'))
+            <a href="{{ route('admin.software-requests.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.software-requests.*') ? 'active' : '' }}">
+                <i class="bi bi-person-check-fill"></i> Software Requests
+            </a>
+            @endif
             <a href="{{ route('admin.software-discovery.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.software-discovery.*') ? 'active' : '' }}">
                 <i class="bi bi-hdd-network-fill"></i> Discovery Inventory
             </a>
+            @if($user->hasPermission('software.agents.manage'))
+            <a href="{{ route('admin.agent-sources.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.agent-sources.*') ? 'active' : '' }}">
+                <i class="bi bi-router-fill"></i> Agent Sources
+            </a>
+            @endif
             <a href="{{ route('admin.software-normalization.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.software-normalization.*') ? 'active' : '' }}">
                 <i class="bi bi-diagram-3-fill"></i> Normalization
@@ -1112,6 +1136,12 @@
                class="sidebar-link {{ request()->routeIs('admin.software-compliance.*') ? 'active' : '' }}">
                 <i class="bi bi-shield-check"></i> Compliance
             </a>
+            @if($user->hasPermission('software.audit.export'))
+            <a href="{{ route('admin.sam-audit.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.sam-audit.*') ? 'active' : '' }}">
+                <i class="bi bi-file-earmark-zip-fill"></i> Audit Pack
+            </a>
+            @endif
             @endif
 
             @php
@@ -1297,7 +1327,7 @@
             @endif
             @if($hasSam)
             <a href="{{ route('staff.my-software.index') }}"
-               class="sidebar-link {{ request()->routeIs('staff.my-software.*') ? 'active' : '' }}">
+               class="sidebar-link {{ request()->routeIs('staff.my-software.*', 'staff.software-requests.*') ? 'active' : '' }}">
                 <i class="bi bi-display-fill"></i> My Software
             </a>
             @endif

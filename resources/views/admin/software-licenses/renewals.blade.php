@@ -3,145 +3,66 @@
 
 @section('content')
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
-    <div>
-        <a href="{{ route('admin.software-licenses.index') }}" class="back-link">
-            <i class="bi bi-arrow-left"></i> Licenses
-        </a>
-        <h4>License Renewals</h4>
-        <p>Review upcoming renewals, expired licenses, unused seats, and reduction opportunities.</p>
-    </div>
-    <a href="{{ route('admin.software-licenses.create') }}" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg me-1"></i>Add License
-    </a>
+    <div><a href="{{ route('admin.software-licenses.index') }}" class="back-link"><i class="bi bi-arrow-left"></i> Licenses</a><h4>License Renewal Planning</h4><p>Plan renewal spend, seat changes, ownership, and final supplier decisions.</p></div>
+    <a href="{{ route('admin.software-licenses.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add License</a>
 </div>
 
 <div class="row g-3 mb-3">
     @foreach([
-        ['Expired', $summary['expired'], 'grad-red', 'Needs immediate action'],
-        ['Expiring Soon', $summary['expiring_30'], 'grad-orange', 'Within 30 days'],
-        ['Unused', $summary['unused'], 'grad-purple', 'No active allocation'],
-        ['Reduce', $summary['reduce'], 'grad-blue', 'Possible cost saving'],
-    ] as [$label, $value, $color, $sub])
-    <div class="col-sm-6 col-xl-3">
-        <div class="stat-card-gradient {{ $color }}"><div class="card-body">
-            <div class="stat-label">{{ $label }}</div>
-            <div class="stat-number">{{ $value }}</div>
-            <div class="stat-sub">{{ $sub }}</div>
-        </div></div>
-    </div>
+        ['Expiring in 30 Days', $summary['expiring_30'], 'grad-orange', 'Requires an early decision'],
+        ['Renewal Value', 'Rs '.number_format($summary['renewal_value'],0), 'grad-blue', 'Current filtered license cost'],
+        ['Planned Spend', 'Rs '.number_format($summary['planned_spend'],0), 'grad-purple', 'Recorded renewal plans'],
+        ['Planned Savings', 'Rs '.number_format($summary['planned_savings'],0), 'grad-green', 'Reduce or cancel decisions'],
+    ] as [$label,$value,$color,$sub])
+    <div class="col-sm-6 col-xl-3"><div class="stat-card-gradient {{ $color }}"><div class="card-body"><div class="stat-label">{{ $label }}</div><div class="stat-number">{{ $value }}</div><div class="stat-sub">{{ $sub }}</div></div></div></div>
     @endforeach
 </div>
 
-<div class="table-card mb-3">
-    <div class="card-body">
-        <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label">Renewal Window</label>
-                <select name="window" class="form-select">
-                    <option value="">All active licenses</option>
-                    <option value="30" @selected(request('window') === '30')>Next 30 days</option>
-                    <option value="60" @selected(request('window') === '60')>Next 60 days</option>
-                    <option value="90" @selected(request('window') === '90')>Next 90 days</option>
-                    <option value="180" @selected(request('window') === '180')>Next 180 days</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Recommendation</label>
-                <select name="recommendation" class="form-select">
-                    <option value="">All recommendations</option>
-                    <option value="renew" @selected(request('recommendation') === 'renew')>Renew</option>
-                    <option value="reduce" @selected(request('recommendation') === 'reduce')>Reduce</option>
-                    <option value="cancel_review" @selected(request('recommendation') === 'cancel_review')>Cancel Review</option>
-                    <option value="manual_review" @selected(request('recommendation') === 'manual_review')>Manual Review</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i>Filter</button>
-            </div>
-            @if(request()->hasAny(['window','recommendation']))
-            <div class="col-md-2">
-                <a href="{{ route('admin.software-licenses.renewals') }}" class="btn btn-outline-secondary w-100">
-                    <i class="bi bi-x-lg me-1"></i>Clear
-                </a>
-            </div>
-            @endif
-        </form>
-    </div>
+<div class="table-card mb-3"><div class="card-body"><form method="GET" class="row g-2 align-items-end">
+    <div class="col-sm-6 col-lg-3"><label class="form-label">Renewal Window</label><select name="window" class="form-select"><option value="">All active licenses</option>@foreach([30,60,90,180] as $days)<option value="{{ $days }}" @selected(request('window')==(string)$days)>Next {{ $days }} days</option>@endforeach</select></div>
+    <div class="col-sm-6 col-lg-3"><label class="form-label">Recommendation</label><select name="recommendation" class="form-select"><option value="">All recommendations</option><option value="renew" @selected(request('recommendation')==='renew')>Renew</option><option value="reduce" @selected(request('recommendation')==='reduce')>Reduce</option><option value="cancel_review" @selected(request('recommendation')==='cancel_review')>Cancel Review</option><option value="manual_review" @selected(request('recommendation')==='manual_review')>Manual Review</option></select></div>
+    <div class="col-sm-6 col-lg-2"><label class="form-label">Planning</label><select name="plan_status" class="form-select"><option value="">All</option><option value="planned" @selected(request('plan_status')==='planned')>Plan created</option><option value="unplanned" @selected(request('plan_status')==='unplanned')>Needs a plan</option></select></div>
+    <div class="col-auto"><button class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Filter</button></div>
+    @if(request()->hasAny(['window','recommendation','plan_status']))<div class="col-auto"><a href="{{ route('admin.software-licenses.renewals') }}" class="btn btn-outline-secondary">Clear</a></div>@endif
+</form></div></div>
+
+<div class="table-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center"><span class="fw-semibold">Renewal Queue</span><span class="badge bg-light text-dark">{{ $licenses->total() }}</span></div>
+    <div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th class="ps-4">Software</th><th>Renewal / Expiry</th><th>Utilization</th><th>Current Cost</th><th>Recommendation</th><th>Plan</th><th class="text-end pe-4">Action</th></tr></thead><tbody>
+    @forelse($licenses as $license)
+    @php
+        $renewalDate=$license->renewal_date ?? $license->expiry_date;
+        $recommendationBadge=match($license->renewal_recommendation){'renew'=>'success','reduce'=>'info','cancel_review'=>'warning',default=>'secondary'};
+        $plan=$license->activeRenewalDecision;
+    @endphp
+    <tr><td class="ps-4"><a href="{{ route('admin.software-licenses.show',$license) }}" class="fw-bold text-decoration-none">{{ $license->software?->name ?? 'Unknown software' }}</a><div class="text-muted small">{{ $license->software?->vendor ?: 'Unknown publisher' }} · {{ $license->seats }} seats</div></td><td><div class="fw-bold {{ $license->is_expired?'text-danger':($license->is_expiring_soon?'text-warning':'') }}">{{ $renewalDate?->format('d M Y') ?? 'No date recorded' }}</div><div class="text-muted small">{{ $license->is_expired?'Expired':($license->is_expiring_soon?'Expiring soon':'Scheduled') }}</div></td><td><div class="fw-bold">{{ $license->used_seats }} / {{ $license->seats }}</div><div class="progress mt-1" style="height:5px;width:90px"><div class="progress-bar {{ $license->utilization_percentage>=80?'bg-success':($license->utilization_percentage>=30?'bg-warning':'bg-danger') }}" style="width:{{ $license->utilization_percentage }}%"></div></div></td><td><div class="fw-bold">Rs {{ number_format($license->total_cost,2) }}</div><div class="text-muted small">{{ $license->unit_cost?'Rs '.number_format((float)$license->unit_cost,2).' per seat':'Total purchase cost' }}</div></td><td><span class="badge bg-{{ $recommendationBadge }}">{{ $license->renewal_recommendation_label }}</span></td><td>@if($plan)<span class="badge bg-{{ $plan->decision_badge }}">{{ $plan->decision_label }}</span><div class="text-muted small mt-1">Due {{ $plan->due_date->format('d M Y') }}{{ $plan->owner?' · '.$plan->owner->name:'' }}</div>@else<span class="text-muted">No plan</span>@endif</td><td class="text-end pe-4">@if($plan)<div class="d-inline-flex gap-1"><button class="btn btn-sm btn-primary complete-plan-button" data-bs-toggle="modal" data-bs-target="#completePlanModal" data-action="{{ route('admin.software-licenses.renewal-plans.complete',[$license,$plan]) }}" data-name="{{ $license->software?->name }}" data-decision="{{ $plan->decision }}" data-seats="{{ $plan->target_seats }}" data-cost="{{ $plan->projected_cost }}"><i class="bi bi-check2 me-1"></i>Complete</button><form method="POST" action="{{ route('admin.software-licenses.renewal-plans.cancel',[$license,$plan]) }}" onsubmit="return confirm('Cancel this renewal plan?')">@csrf @method('PATCH')<button class="btn btn-sm btn-outline-danger" title="Cancel plan"><i class="bi bi-x-lg"></i></button></form></div>@else<button class="btn btn-sm btn-outline-primary plan-renewal-button" data-bs-toggle="modal" data-bs-target="#planRenewalModal" data-action="{{ route('admin.software-licenses.renewal-plans.store',$license) }}" data-name="{{ $license->software?->name }}" data-recommendation="{{ $license->renewal_recommendation==='cancel_review'?'cancel':$license->renewal_recommendation }}" data-seats="{{ $license->seats }}" data-used="{{ $license->used_seats }}" data-cost="{{ $license->total_cost }}"><i class="bi bi-calendar-plus me-1"></i>Plan</button>@endif</td></tr>
+    @empty<tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-calendar2-check fs-1 d-block mb-2 opacity-25"></i>No renewal records match these filters.</td></tr>@endforelse
+    </tbody></table></div>
+    @if($licenses->hasPages())<div class="p-3 border-top">{{ $licenses->links() }}</div>@endif
 </div>
 
 <div class="table-card">
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
-            <thead>
-                <tr>
-                    <th class="ps-4">Software</th>
-                    <th>Renewal / Expiry</th>
-                    <th>Usage</th>
-                    <th>Cost</th>
-                    <th>Recommendation</th>
-                    <th>Status</th>
-                    <th class="text-end pe-4">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($licenses as $license)
-                @php
-                    $renewalDate = $license->renewal_date ?? $license->expiry_date;
-                    $utilization = $license->seats > 0 ? min(100, round($license->used_seats / $license->seats * 100)) : 0;
-                    $recommendationBadge = match($license->renewal_recommendation) {
-                        'renew' => 'success',
-                        'reduce' => 'info',
-                        'cancel_review' => 'warning',
-                        default => 'secondary',
-                    };
-                @endphp
-                <tr>
-                    <td class="ps-4">
-                        <div class="fw-bold">{{ $license->software?->name ?? 'Unknown software' }}</div>
-                        <div class="text-muted small">
-                            {{ $license->software?->vendor ?: 'Unknown vendor' }}
-                            @if($license->purchase_batch) &middot; {{ $license->purchase_batch }} @endif
-                        </div>
-                    </td>
-                    <td>
-                        <div class="fw-bold {{ $license->is_expired ? 'text-danger' : ($license->is_expiring_soon ? 'text-warning' : '') }}">
-                            {{ $renewalDate?->format('d-m-Y') ?? 'No renewal date' }}
-                        </div>
-                        <div class="text-muted small">
-                            {{ $license->is_expired ? 'Expired' : ($license->is_expiring_soon ? 'Expiring soon' : 'Scheduled') }}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="fw-bold">{{ $license->used_seats }} / {{ $license->seats }} seats</div>
-                        <div class="progress mt-1" style="height:5px;width:90px;border-radius:99px">
-                            <div class="progress-bar {{ $utilization >= 90 ? 'bg-success' : ($utilization >= 30 ? 'bg-warning' : 'bg-danger') }}" style="width:{{ $utilization }}%"></div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="fw-bold">Rs {{ number_format($license->total_cost, 2) }}</div>
-                        <div class="text-muted small">{{ $license->unit_cost ? 'Rs '.number_format((float) $license->unit_cost, 2).' / seat' : 'Total cost' }}</div>
-                    </td>
-                    <td><span class="badge bg-{{ $recommendationBadge }}">{{ $license->renewal_recommendation_label }}</span></td>
-                    <td><span class="badge bg-{{ $license->status_badge }}">{{ $license->status_label }}</span></td>
-                    <td class="text-end pe-4">
-                        <a href="{{ route('admin.software-licenses.show', $license) }}" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-eye me-1"></i>Review
-                        </a>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="7" class="text-center text-muted py-5">
-                        <i class="bi bi-calendar2-check fs-1 d-block mb-2 opacity-25"></i>
-                        No renewal records found for the selected filters.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    @if($licenses->hasPages())
-        <div class="p-3 border-top">{{ $licenses->links() }}</div>
-    @endif
+    <div class="card-header d-flex justify-content-between align-items-center"><span class="fw-semibold">Decision History</span><span class="badge bg-light text-dark">{{ $decisions->total() }}</span></div>
+    <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th class="ps-4">Software</th><th>Decision</th><th>Target / Actual</th><th>Projected / Actual Cost</th><th>Owner</th><th>Status</th><th>Completed</th></tr></thead><tbody>
+    @forelse($decisions as $decision)<tr><td class="ps-4"><div class="fw-bold">{{ $decision->license?->software?->name ?? 'Deleted license' }}</div><div class="text-muted small">Plan #{{ $decision->id }}</div></td><td><span class="badge bg-{{ $decision->decision_badge }}">{{ $decision->decision_label }}</span><div class="text-muted small mt-1">{{ $decision->rationale }}</div></td><td>{{ $decision->target_seats ?? '-' }} / {{ $decision->actual_seats ?? '-' }}</td><td>Rs {{ number_format((float)($decision->projected_cost??0),2) }} / {{ $decision->actual_cost!==null?'Rs '.number_format((float)$decision->actual_cost,2):'-' }}</td><td>{{ $decision->owner?->name ?? 'Unassigned' }}<div class="text-muted small">Due {{ $decision->due_date->format('d M Y') }}</div></td><td><span class="badge bg-{{ $decision->status_badge }}">{{ ucfirst($decision->status) }}</span></td><td>{{ $decision->completed_at?->format('d M Y') ?? '-' }}<div class="text-muted small">{{ $decision->completedBy?->name }}</div></td></tr>
+    @empty<tr><td colspan="7" class="text-center text-muted py-4">No renewal decisions have been recorded.</td></tr>@endforelse
+    </tbody></table></div>
+    @if($decisions->hasPages())<div class="p-3 border-top">{{ $decisions->links() }}</div>@endif
 </div>
+
+<div class="modal fade" id="planRenewalModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><form id="planRenewalForm" method="POST" class="modal-content">@csrf<div class="modal-header"><div><h5 class="modal-title mb-0">Plan Renewal Decision</h5><small id="planLicenseName" class="text-muted"></small></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="mb-3"><label class="form-label">Decision</label><select id="planDecision" name="decision" class="form-select" required><option value="renew">Renew</option><option value="reduce">Renew with Fewer Seats</option><option value="cancel">Do Not Renew</option><option value="manual_review">Manual Review</option></select></div><div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label">Target Seats</label><input id="planSeats" type="number" name="target_seats" class="form-control" min="1" max="99999"><div id="activeSeatHint" class="form-text"></div></div><div class="col-md-6"><label class="form-label">Projected Cost</label><input id="planCost" type="number" name="projected_cost" class="form-control" min="0" step="0.01"></div><div class="col-md-6"><label class="form-label">Decision Due Date</label><input type="date" name="due_date" class="form-control" min="{{ today()->toDateString() }}" value="{{ today()->addDays(14)->toDateString() }}" required></div><div class="col-md-6"><label class="form-label">Owner</label><select name="owner_id" class="form-select"><option value="">Unassigned</option>@foreach($owners as $owner)<option value="{{ $owner->id }}">{{ $owner->name }}</option>@endforeach</select></div></div><div><label class="form-label">Decision Rationale</label><textarea name="rationale" rows="3" maxlength="2000" class="form-control" required placeholder="Explain expected demand, utilization, supplier discussion, or cancellation reason."></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary"><i class="bi bi-calendar-check me-1"></i>Save Plan</button></div></form></div></div>
+
+<div class="modal fade" id="completePlanModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><form id="completePlanForm" method="POST" class="modal-content">@csrf @method('PATCH')<div class="modal-header"><div><h5 class="modal-title mb-0">Complete Renewal Decision</h5><small id="completeLicenseName" class="text-muted"></small></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div id="completionUpdateFields"><div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label">Actual Seats</label><input id="actualSeats" type="number" name="actual_seats" class="form-control" min="1" max="99999"></div><div class="col-md-6"><label class="form-label">Actual Cost</label><input id="actualCost" type="number" name="actual_cost" class="form-control" min="0" step="0.01"></div><div class="col-md-6"><label class="form-label">New Expiry Date</label><input type="date" name="new_expiry_date" class="form-control" min="{{ today()->addDay()->toDateString() }}"></div><div class="col-md-6"><label class="form-label">Next Renewal Date</label><input type="date" name="new_renewal_date" class="form-control" min="{{ today()->addDay()->toDateString() }}"></div></div></div><div id="cancelWarning" class="alert alert-warning small d-none"><i class="bi bi-exclamation-triangle me-1"></i>All active license allocations must be returned before a cancellation can be completed.</div><div><label class="form-label">Completion Notes</label><textarea name="completion_notes" rows="3" maxlength="2000" class="form-control" required placeholder="Record supplier confirmation, final scope, or reason the review was closed."></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Back</button><button class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Complete Decision</button></div></form></div></div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+ var decisionInput=document.getElementById('planDecision'),seatInput=document.getElementById('planSeats'),costInput=document.getElementById('planCost');
+ function updatePlanFields(){var noSeats=decisionInput.value==='cancel'||decisionInput.value==='manual_review';seatInput.disabled=noSeats;if(decisionInput.value==='cancel')costInput.value='0';}
+ decisionInput.addEventListener('change',updatePlanFields);
+ document.querySelectorAll('.plan-renewal-button').forEach(function(button){button.addEventListener('click',function(){document.getElementById('planRenewalForm').action=button.dataset.action;document.getElementById('planLicenseName').textContent=button.dataset.name;decisionInput.value=button.dataset.recommendation;seatInput.value=button.dataset.seats;seatInput.min=Math.max(1,parseInt(button.dataset.used||'0'));costInput.value=button.dataset.cost;document.getElementById('activeSeatHint').textContent=button.dataset.used+' seats are actively allocated.';updatePlanFields();});});
+ document.querySelectorAll('.complete-plan-button').forEach(function(button){button.addEventListener('click',function(){var decision=button.dataset.decision;document.getElementById('completePlanForm').action=button.dataset.action;document.getElementById('completeLicenseName').textContent=button.dataset.name+' · '+decision.replace('_',' ');document.getElementById('actualSeats').value=button.dataset.seats||'';document.getElementById('actualCost').value=button.dataset.cost||'';document.getElementById('completionUpdateFields').classList.toggle('d-none',decision==='cancel'||decision==='manual_review');document.getElementById('cancelWarning').classList.toggle('d-none',decision!=='cancel');});});
+});
+</script>
+@endpush

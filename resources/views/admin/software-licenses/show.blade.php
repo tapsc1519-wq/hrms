@@ -15,6 +15,11 @@
         </p>
     </div>
     <div class="d-flex gap-2">
+        @if($softwareLicense->purchaseOrder)
+        <a href="{{ route('admin.purchase-orders.show', $softwareLicense->purchaseOrder) }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-cart-check me-1"></i>View Source PO
+        </a>
+        @endif
         <form method="POST" action="{{ route('admin.software-licenses.destroy', $softwareLicense) }}"
               onsubmit="return confirm('Delete this license record? All assignment history will be lost.')">
             @csrf @method('DELETE')

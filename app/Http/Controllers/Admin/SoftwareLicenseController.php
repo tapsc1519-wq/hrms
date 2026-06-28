@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Software;
 use App\Models\SoftwareAssignment;
 use App\Models\SoftwareLicense;
+use App\Models\SoftwareRenewalDecision;
 use App\Models\User;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class SoftwareLicenseController extends Controller
 {
@@ -57,7 +59,7 @@ class SoftwareLicenseController extends Controller
     {
         $query = SoftwareLicense::where('organization_id', $this->orgId())
             ->where('status', 'active')
-            ->with(['software', 'supplier', 'activeAssignments'])
+            ->with(['software', 'supplier', 'activeAssignments', 'activeRenewalDecision.owner'])
             ->orderByRaw('COALESCE(renewal_date, expiry_date) IS NULL')
             ->orderByRaw('COALESCE(renewal_date, expiry_date) ASC');
 
@@ -77,20 +79,130 @@ class SoftwareLicenseController extends Controller
         if ($request->filled('recommendation')) {
             $licenses = $licenses->filter(fn ($license) => $license->renewal_recommendation === $request->recommendation)->values();
         }
+        if ($request->plan_status === 'planned') {
+            $licenses = $licenses->filter(fn ($license) => $license->activeRenewalDecision)->values();
+        } elseif ($request->plan_status === 'unplanned') {
+            $licenses = $licenses->reject(fn ($license) => $license->activeRenewalDecision)->values();
+        }
+
+        $renewalValue = (float) $licenses->sum(fn ($license) => $license->total_cost);
+        $plannedSpend = (float) $licenses->sum(fn ($license) => $license->activeRenewalDecision?->projected_cost ?? 0);
+        $plannedSavings = (float) $licenses->sum(function ($license) {
+            $decision = $license->activeRenewalDecision;
+            if (! $decision || ! in_array($decision->decision, ['reduce', 'cancel'], true)) return 0;
+            return max(0, $license->total_cost - (float) ($decision->projected_cost ?? 0));
+        });
 
         $summary = [
             'expired' => $licenses->filter(fn ($license) => $license->is_expired)->count(),
             'expiring_30' => $licenses->filter(fn ($license) => $license->expiry_date && ! $license->is_expired && $license->expiry_date->lte(now()->addDays(30)))->count(),
             'unused' => $licenses->filter(fn ($license) => $license->used_seats === 0)->count(),
             'reduce' => $licenses->filter(fn ($license) => $license->renewal_recommendation === 'reduce')->count(),
+            'renewal_value' => $renewalValue,
+            'planned_spend' => $plannedSpend,
+            'planned_savings' => $plannedSavings,
         ];
 
         $licenses = $this->paginateCollection($licenses, 25, 'renewals_page');
+        $owners = User::where('organization_id', $this->orgId())->whereIn('role', ['admin', 'staff'])->orderBy('name')->get(['id','name']);
+        $decisions = SoftwareRenewalDecision::where('organization_id', $this->orgId())
+            ->with(['license.software','owner','createdBy','completedBy'])->latest()
+            ->paginate(15, ['*'], 'decisions_page')->withQueryString();
 
         return view('admin.software-licenses.renewals', [
             'licenses' => $licenses,
             'summary' => $summary,
+            'owners' => $owners,
+            'decisions' => $decisions,
         ]);
+    }
+
+    public function planRenewal(Request $request, SoftwareLicense $softwareLicense)
+    {
+        abort_if($softwareLicense->organization_id !== $this->orgId(), 404);
+        abort_if($softwareLicense->status !== 'active', 422, 'Only an active license can have a renewal plan.');
+        abort_if($softwareLicense->activeRenewalDecision()->exists(), 422, 'This license already has an active renewal plan.');
+        $validated = $request->validate([
+            'decision' => 'required|in:renew,reduce,cancel,manual_review',
+            'target_seats' => 'nullable|required_if:decision,renew,reduce|integer|min:1|max:99999',
+            'projected_cost' => 'nullable|numeric|min:0|max:999999999999.99',
+            'due_date' => 'required|date|after_or_equal:today',
+            'owner_id' => 'nullable|integer',
+            'rationale' => 'required|string|max:2000',
+        ]);
+        if (! empty($validated['owner_id'])) {
+            abort_unless(User::where('organization_id', $this->orgId())->whereKey($validated['owner_id'])->exists(), 403);
+        }
+        $activeSeats = $softwareLicense->activeAssignments()->count();
+        if (in_array($validated['decision'], ['renew','reduce'], true)) {
+            abort_if((int) $validated['target_seats'] < $activeSeats, 422, 'Target seats cannot be lower than the current active allocations.');
+        }
+        if ($validated['decision'] === 'reduce') {
+            abort_if((int) $validated['target_seats'] >= (int) $softwareLicense->seats, 422, 'A reduction plan must use fewer seats than the current license.');
+        }
+        if (in_array($validated['decision'], ['cancel','manual_review'], true)) {
+            $validated['target_seats'] = null;
+        }
+
+        SoftwareRenewalDecision::create($validated + [
+            'organization_id' => $this->orgId(), 'software_license_id' => $softwareLicense->id,
+            'status' => 'planned', 'created_by' => auth()->id(),
+        ]);
+        return back()->with('success', 'Renewal decision planned for '.$softwareLicense->software?->name.'.');
+    }
+
+    public function completeRenewal(Request $request, SoftwareLicense $softwareLicense, SoftwareRenewalDecision $decision)
+    {
+        abort_if($softwareLicense->organization_id !== $this->orgId(), 404);
+        abort_if($decision->organization_id !== $this->orgId() || $decision->software_license_id !== $softwareLicense->id, 404);
+        abort_unless($decision->status === 'planned', 422, 'Only a planned renewal decision can be completed.');
+        $validated = $request->validate([
+            'actual_seats' => 'nullable|integer|min:1|max:99999',
+            'actual_cost' => 'nullable|numeric|min:0|max:999999999999.99',
+            'new_expiry_date' => 'nullable|date|after:today',
+            'new_renewal_date' => 'nullable|date|after:today',
+            'completion_notes' => 'required|string|max:2000',
+        ]);
+
+        DB::transaction(function () use ($softwareLicense, $decision, $validated) {
+            $licenseUpdates = [];
+            if ($decision->decision === 'cancel') {
+                abort_if($softwareLicense->activeAssignments()->exists(), 422, 'Return all active allocations before cancelling this license.');
+                $licenseUpdates['status'] = 'cancelled';
+            } elseif (in_array($decision->decision, ['renew','reduce'], true)) {
+                $actualSeats = (int) ($validated['actual_seats'] ?? $decision->target_seats);
+                abort_if($actualSeats < $softwareLicense->activeAssignments()->count(), 422, 'Actual seats cannot be lower than active allocations.');
+                if (in_array($softwareLicense->license_type, ['subscription','per_seat','volume'], true)) {
+                    abort_if(empty($validated['new_expiry_date']) && empty($validated['new_renewal_date']), 422, 'Enter a new expiry or renewal date for this license.');
+                }
+                $licenseUpdates['seats'] = $actualSeats;
+                $licenseUpdates['status'] = 'active';
+                if (array_key_exists('actual_cost', $validated) && $validated['actual_cost'] !== null) $licenseUpdates['purchase_price'] = $validated['actual_cost'];
+                if (! empty($validated['new_expiry_date'])) $licenseUpdates['expiry_date'] = $validated['new_expiry_date'];
+                if (! empty($validated['new_renewal_date'])) $licenseUpdates['renewal_date'] = $validated['new_renewal_date'];
+            }
+            if ($licenseUpdates !== []) $softwareLicense->update($licenseUpdates);
+            $decision->update([
+                'status' => 'completed',
+                'actual_seats' => $validated['actual_seats'] ?? $decision->target_seats,
+                'actual_cost' => $validated['actual_cost'] ?? $decision->projected_cost,
+                'new_expiry_date' => $validated['new_expiry_date'] ?? null,
+                'new_renewal_date' => $validated['new_renewal_date'] ?? null,
+                'completion_notes' => $validated['completion_notes'],
+                'completed_by' => auth()->id(), 'completed_at' => now(),
+            ]);
+        });
+
+        return back()->with('success', 'Renewal decision completed and the license record was updated.');
+    }
+
+    public function cancelRenewalPlan(SoftwareLicense $softwareLicense, SoftwareRenewalDecision $decision)
+    {
+        abort_if($softwareLicense->organization_id !== $this->orgId(), 404);
+        abort_if($decision->organization_id !== $this->orgId() || $decision->software_license_id !== $softwareLicense->id, 404);
+        abort_unless($decision->status === 'planned', 422, 'Only a planned renewal decision can be cancelled.');
+        $decision->update(['status' => 'cancelled']);
+        return back()->with('success', 'Renewal plan cancelled.');
     }
 
     public function store(Request $request)
@@ -135,7 +247,7 @@ class SoftwareLicenseController extends Controller
     {
         abort_if($softwareLicense->organization_id !== $this->orgId(), 403);
 
-        $softwareLicense->load(['software','supplier','assignments.user','assignments.assignedBy']);
+        $softwareLicense->load(['software','supplier','purchaseOrder','assignments.user','assignments.assignedBy']);
 
         $employees = User::where('organization_id', $this->orgId())
             ->where('role', 'staff')
