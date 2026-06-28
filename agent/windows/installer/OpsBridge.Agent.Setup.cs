@@ -327,6 +327,7 @@ namespace OpsBridge.Agent.Setup
                 status.Text = result;
                 installButton.Text = "Installed";
                 MessageBox.Show(result, "OpsBridge Setup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Close();
             }
             catch (Exception exception)
             {
