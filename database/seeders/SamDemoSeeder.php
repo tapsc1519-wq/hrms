@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Asset;
+use App\Models\Organization;
 use App\Models\Software;
 use App\Models\SoftwareAssignment;
 use App\Models\SoftwareDiscovery;
@@ -14,18 +15,22 @@ class SamDemoSeeder extends Seeder
 {
     public function run(): void
     {
-        $organizationId = 1;
+        $organizationId = (int) env('SAM_DEMO_ORGANIZATION_ID', 1);
+        if (! Organization::whereKey($organizationId)->exists()) {
+            $this->command?->error("Organization {$organizationId} does not exist.");
+            return;
+        }
+
         $admin = User::where('organization_id', $organizationId)->where('role', 'admin')->first();
         $staff = User::where('organization_id', $organizationId)->where('role', 'staff')->orderBy('id')->get();
         $assets = Asset::where('organization_id', $organizationId)->orderBy('id')->get();
 
         if ($staff->count() < 2 || $assets->count() < 2) {
-            $this->command?->warn('SAM demo data needs at least two staff users and two assets.');
-            return;
+            $this->command?->warn('Software and licenses will be created. Some demo assignments and discoveries need two staff users and two assets.');
         }
 
-        [$lokesh, $ananya] = [$staff[0], $staff[1]];
-        [$laptopOne, $laptopTwo] = [$assets[0], $assets[1]];
+        [$lokesh, $ananya] = [$staff->get(0), $staff->get(1)];
+        [$laptopOne, $laptopTwo] = [$assets->get(0), $assets->get(1)];
 
         $m365 = $this->software($organizationId, [
             'name' => 'Microsoft 365 Apps',
@@ -153,21 +158,23 @@ class SamDemoSeeder extends Seeder
         $this->discover($organizationId, $slack, $laptopOne, $lokesh, 'Slack', 'Slack Technologies', '4.39', $admin);
         $this->discover($organizationId, $slack, $laptopTwo, $ananya, 'Slack', 'Slack Technologies', '4.39', $admin);
 
-        SoftwareDiscovery::updateOrCreate([
-            'organization_id' => $organizationId,
-            'asset_id' => $laptopTwo->id,
-            'user_id' => $ananya->id,
-            'software_id' => null,
-            'raw_name' => 'Unknown Screen Recorder Pro',
-        ], [
-            'raw_publisher' => 'Unknown Publisher',
-            'raw_version' => '3.4',
-            'source' => 'csv',
-            'status' => 'unknown',
-            'last_used_date' => now()->subDays(1)->toDateString(),
-            'usage_count' => 8,
-            'total_runtime_minutes' => 240,
-        ]);
+        if ($laptopTwo && $ananya) {
+            SoftwareDiscovery::updateOrCreate([
+                'organization_id' => $organizationId,
+                'asset_id' => $laptopTwo->id,
+                'user_id' => $ananya->id,
+                'software_id' => null,
+                'raw_name' => 'Unknown Screen Recorder Pro',
+            ], [
+                'raw_publisher' => 'Unknown Publisher',
+                'raw_version' => '3.4',
+                'source' => 'csv',
+                'status' => 'unknown',
+                'last_used_date' => now()->subDays(1)->toDateString(),
+                'usage_count' => 8,
+                'total_runtime_minutes' => 240,
+            ]);
+        }
 
         $this->command?->info('SAM demo software, licenses, assignments, and discovery records created.');
     }
@@ -193,8 +200,10 @@ class SamDemoSeeder extends Seeder
         ]);
     }
 
-    private function assign(SoftwareLicense $license, User $user, ?User $admin, string $notes): void
+    private function assign(SoftwareLicense $license, ?User $user, ?User $admin, string $notes): void
     {
+        if (! $user) return;
+
         SoftwareAssignment::updateOrCreate([
             'software_license_id' => $license->id,
             'user_id' => $user->id,
@@ -206,8 +215,10 @@ class SamDemoSeeder extends Seeder
         ]);
     }
 
-    private function discover(int $organizationId, Software $software, Asset $asset, User $user, string $rawName, string $publisher, string $version, ?User $admin): void
+    private function discover(int $organizationId, Software $software, ?Asset $asset, ?User $user, string $rawName, string $publisher, string $version, ?User $admin): void
     {
+        if (! $asset || ! $user) return;
+
         SoftwareDiscovery::updateOrCreate([
             'organization_id' => $organizationId,
             'asset_id' => $asset->id,
@@ -220,8 +231,8 @@ class SamDemoSeeder extends Seeder
             'source' => 'csv',
             'status' => 'mapped',
             'confidence_score' => 96,
-            'reviewed_by' => $admin?->id ?? 2,
-            'reviewed_at' => now(),
+            'reviewed_by' => $admin?->id,
+            'reviewed_at' => $admin ? now() : null,
             'last_used_date' => now()->subDays(rand(1, 12))->toDateString(),
             'usage_count' => rand(4, 38),
             'total_runtime_minutes' => rand(120, 2600),
