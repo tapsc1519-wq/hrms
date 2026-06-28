@@ -17,8 +17,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Installs the OpsBridge Windows Device Agent")]
 [assembly: AssemblyCompany("OpsBridge")]
 [assembly: AssemblyProduct("OpsBridge Device Agent")]
-[assembly: AssemblyVersion("0.1.2.0")]
-[assembly: AssemblyFileVersion("0.1.2.0")]
+[assembly: AssemblyVersion("0.2.0.0")]
+[assembly: AssemblyFileVersion("0.2.0.0")]
 
 namespace OpsBridge.Agent.Setup
 {
@@ -35,7 +35,8 @@ namespace OpsBridge.Agent.Setup
     internal static class AgentInstaller
     {
         private const string TaskName = "OpsBridge Device Agent";
-        private const string Version = "0.1.2";
+        private const string CommandTaskName = "OpsBridge Endpoint Commands";
+        private const string Version = "0.2.0";
 
         public static string Install(InstallOptions options)
         {
@@ -51,9 +52,8 @@ namespace OpsBridge.Agent.Setup
             RestrictDirectory(root);
             RegisterScheduledTask(root, options.IntervalMinutes);
             RegisterUninstallEntry(root);
-            RunProcess("schtasks.exe", "/Run /TN \"" + TaskName + "\"");
 
-            return "Installation completed. The first inventory check-in has been started.";
+            return "Installation completed. Inventory and endpoint command services have been started.";
         }
 
         private static void Validate(InstallOptions options)
@@ -125,12 +125,17 @@ namespace OpsBridge.Agent.Setup
             string script = Path.Combine(root, "OpsBridge.Agent.ps1");
             string escapedScript = script.Replace("'", "''");
             string escapedTaskName = TaskName.Replace("'", "''");
+            string escapedCommandTaskName = CommandTaskName.Replace("'", "''");
             string command =
                 "$ErrorActionPreference='Stop';" +
-                "$action=New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"" + escapedScript + "\"';" +
-                "$trigger=New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes " + intervalMinutes + ");" +
+                "$inventoryAction=New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"" + escapedScript + "\"';" +
+                "$commandAction=New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"" + escapedScript + "\" -CommandsOnly';" +
+                "$inventoryTrigger=New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes " + intervalMinutes + ");" +
+                "$commandTrigger=New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(2) -RepetitionInterval (New-TimeSpan -Minutes 5);" +
                 "$settings=New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 10);" +
-                "Register-ScheduledTask -TaskName '" + escapedTaskName + "' -Action $action -Trigger $trigger -Settings $settings -User 'SYSTEM' -RunLevel Highest -Force | Out-Null";
+                "Register-ScheduledTask -TaskName '" + escapedTaskName + "' -Action $inventoryAction -Trigger $inventoryTrigger -Settings $settings -User 'SYSTEM' -RunLevel Highest -Force | Out-Null;" +
+                "Register-ScheduledTask -TaskName '" + escapedCommandTaskName + "' -Action $commandAction -Trigger $commandTrigger -Settings $settings -User 'SYSTEM' -RunLevel Highest -Force | Out-Null;" +
+                "Start-ScheduledTask -TaskName '" + escapedTaskName + "';Start-ScheduledTask -TaskName '" + escapedCommandTaskName + "'";
             string encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
             RunProcess("powershell.exe", "-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand " + encodedCommand);
         }

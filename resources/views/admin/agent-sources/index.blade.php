@@ -1,10 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Device Agent Sources')
+@section('title', 'Endpoint Management')
 
 @section('content')
+@php $canManageAgents = auth()->user()->hasPermission('software.agents.manage'); @endphp
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
-    <div><h4>Device Agent Sources</h4><p>Monitor device inventory health, matching, agent versions, and secure access.</p></div>
-    <div class="d-flex gap-2 flex-wrap"><a href="{{ route('admin.agent-sources.windows-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-windows me-1"></i>Download Windows Installer</a><a href="{{ route('admin.agent-sources.windows-package') }}" class="btn btn-outline-secondary btn-sm" title="Advanced PowerShell package"><i class="bi bi-file-zip me-1"></i>PowerShell Package</a><button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTokenModal"><i class="bi bi-key me-1"></i>Create Enrollment Token</button></div>
+    <div><h4>Endpoint Management</h4><p>Monitor managed computers, deploy approved software, and review signed device actions.</p></div>
+    @if(auth()->user()->hasPermission('software.agents.manage'))<div class="d-flex gap-2 flex-wrap"><a href="{{ route('admin.agent-sources.windows-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-windows me-1"></i>Download Windows Installer</a><a href="{{ route('admin.agent-sources.windows-package') }}" class="btn btn-outline-secondary btn-sm" title="Advanced PowerShell package"><i class="bi bi-file-zip me-1"></i>PowerShell Package</a><button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTokenModal"><i class="bi bi-key me-1"></i>Create Enrollment Token</button></div>@endif
 </div>
 
 @if(session('new_agent_token'))
@@ -44,11 +45,11 @@
     </div>
 </div>
 
-<form id="bulkRefreshForm" method="POST" action="{{ route('admin.agent-sources.commands.inventory-refresh.bulk') }}">@csrf</form>
+@if($canManageAgents)<form id="bulkRefreshForm" method="POST" action="{{ route('admin.agent-sources.commands.inventory-refresh.bulk') }}">@csrf</form>@endif
 <div class="table-card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div><span class="fw-semibold">Enrolled Devices</span><span class="badge bg-light text-dark ms-2">{{ $devices->total() }}</span></div>
-        <button id="bulkRefreshButton" form="bulkRefreshForm" class="btn btn-outline-primary btn-sm" disabled><i class="bi bi-arrow-repeat me-1"></i>Refresh Selected <span id="selectedDeviceCount"></span></button>
+        @if($canManageAgents)<button id="bulkRefreshButton" form="bulkRefreshForm" class="btn btn-outline-primary btn-sm" disabled><i class="bi bi-arrow-repeat me-1"></i>Refresh Selected <span id="selectedDeviceCount"></span></button>@endif
     </div>
     <div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th class="ps-4" style="width:44px"><input id="selectPageDevices" class="form-check-input" type="checkbox" title="Select this page"></th><th>Device</th><th>Asset / Employee</th><th>Operating System</th><th>Agent</th><th>Software</th><th>Last Seen</th><th>Health</th><th>Access</th></tr></thead><tbody>
     @forelse($devices as $device)
@@ -63,6 +64,7 @@
     @if($devices->hasPages())<div class="p-3 border-top">{{ $devices->links() }}</div>@endif
 </div>
 
+@if($canManageAgents)
 <details class="table-card mb-4" @if(session('new_agent_token')) open @endif>
     <summary class="card-header d-flex justify-content-between align-items-center" style="cursor:pointer"><span class="fw-semibold"><i class="bi bi-gear me-1"></i>Deployment Setup</span><span class="small text-muted">{{ $stats['active_tokens'] }} active enrollment {{ Str::plural('token', $stats['active_tokens']) }}</span></summary>
     <div class="card-body border-top"><div class="row g-3"><div class="col-lg-7"><label class="form-label">Inventory API Endpoint</label><div class="input-group"><input id="agentEndpoint" type="text" class="form-control font-monospace" value="{{ url('/api/v1/agent/check-in') }}" readonly><button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('agentEndpoint').value)" title="Copy endpoint"><i class="bi bi-copy"></i></button></div></div><div class="col-lg-5"><label class="form-label">Authentication</label><div class="form-control bg-light text-muted">Enrollment token, then a unique device key</div></div></div></div>
@@ -73,8 +75,10 @@
 </details>
 
 <div class="modal fade" id="createTokenModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><form method="POST" action="{{ route('admin.agent-sources.tokens.store') }}" class="modal-content">@csrf<div class="modal-header"><h5 class="modal-title">Create Enrollment Token</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="alert alert-info small"><i class="bi bi-info-circle me-1"></i>Use this token only while installing agents. Each enrolled device receives its own API key automatically.</div><div class="mb-3"><label class="form-label">Token Name</label><input type="text" name="name" class="form-control" required maxlength="100" placeholder="Example: Production Windows Devices"></div><div><label class="form-label">Expiry Date</label><input type="date" name="expires_at" class="form-control" min="{{ today()->addDay()->toDateString() }}"><div class="form-text">Use a short expiry for rollout. Revoking it will not disconnect devices already enrolled.</div></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary"><i class="bi bi-key me-1"></i>Create Enrollment Token</button></div></form></div></div>
+@endif
 @endsection
 
+@if($canManageAgents)
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -95,3 +99,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+@endif

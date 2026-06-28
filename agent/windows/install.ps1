@@ -35,7 +35,11 @@ finally { $sha.Dispose() }
 & icacls.exe $root /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' | Out-Null
 $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$root\OpsBridge.Agent.ps1`""
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes $IntervalMinutes)
+$commandAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$root\OpsBridge.Agent.ps1`" -CommandsOnly"
+$commandTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(2) -RepetitionInterval (New-TimeSpan -Minutes 5)
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 10)
 Register-ScheduledTask -TaskName 'OpsBridge Device Agent' -Action $action -Trigger $trigger -Settings $settings -User 'SYSTEM' -RunLevel Highest -Force | Out-Null
+Register-ScheduledTask -TaskName 'OpsBridge Endpoint Commands' -Action $commandAction -Trigger $commandTrigger -Settings $settings -User 'SYSTEM' -RunLevel Highest -Force | Out-Null
 Start-ScheduledTask -TaskName 'OpsBridge Device Agent'
-Write-Host "OpsBridge Device Agent installed. Inventory runs every $IntervalMinutes minutes." -ForegroundColor Green
+Start-ScheduledTask -TaskName 'OpsBridge Endpoint Commands'
+Write-Host "OpsBridge Device Agent installed. Inventory runs every $IntervalMinutes minutes and commands poll every 5 minutes." -ForegroundColor Green

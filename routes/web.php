@@ -217,14 +217,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::post('software-optimization/assignments/{assignment}/reviews', [SoftwareOptimizationController::class, 'startReview'])->middleware('permission:software.optimization.manage')->name('software-optimization.reviews.store');
     Route::patch('software-optimization/reviews/{review}/retain', [SoftwareOptimizationController::class, 'retain'])->middleware('permission:software.optimization.manage')->name('software-optimization.reviews.retain');
     Route::patch('software-optimization/reviews/{review}/reclaim', [SoftwareOptimizationController::class, 'reclaim'])->middleware('permission:software.optimization.manage')->name('software-optimization.reviews.reclaim');
-    Route::get('agent-sources', [AgentSourceController::class, 'index'])->middleware('permission:software.agents.manage')->name('agent-sources.index');
+    Route::get('agent-sources', [AgentSourceController::class, 'index'])->middleware('permission:endpoint.view')->name('agent-sources.index');
     Route::get('agent-sources/windows-package', [AgentSourceController::class, 'downloadWindowsPackage'])->middleware('permission:software.agents.manage')->name('agent-sources.windows-package');
     Route::get('agent-sources/windows-installer', [AgentSourceController::class, 'downloadWindowsInstaller'])->middleware('permission:software.agents.manage')->name('agent-sources.windows-installer');
     Route::post('agent-sources/tokens', [AgentSourceController::class, 'createToken'])->middleware('permission:software.agents.manage')->name('agent-sources.tokens.store');
     Route::patch('agent-sources/tokens/{token}/revoke', [AgentSourceController::class, 'revokeToken'])->middleware('permission:software.agents.manage')->name('agent-sources.tokens.revoke');
     Route::patch('agent-sources/{deviceAgent}/credential/revoke', [AgentSourceController::class, 'revokeDeviceCredential'])->middleware('permission:software.agents.manage')->name('agent-sources.credential.revoke');
-    Route::get('agent-sources/{deviceAgent}', [AgentSourceController::class, 'show'])->middleware('permission:software.agents.manage')->name('agent-sources.show');
+    Route::get('agent-sources/{deviceAgent}', [AgentSourceController::class, 'show'])->middleware('permission:endpoint.view')->name('agent-sources.show');
     Route::post('agent-sources/{deviceAgent}/commands/inventory-refresh', [AgentSourceController::class, 'queueInventory'])->middleware('permission:software.agents.manage')->name('agent-sources.commands.inventory-refresh');
+    Route::post('agent-sources/{deviceAgent}/commands/lock', [AgentSourceController::class, 'queueLock'])->middleware('permission:endpoint.device.control')->name('agent-sources.commands.lock');
+    Route::post('agent-sources/{deviceAgent}/commands/restart', [AgentSourceController::class, 'queueRestart'])->middleware('permission:endpoint.device.control')->name('agent-sources.commands.restart');
+    Route::post('agent-sources/{deviceAgent}/commands/software-install', [AgentSourceController::class, 'queueSoftwareInstall'])->middleware('permission:endpoint.software.manage')->name('agent-sources.commands.software-install');
+    Route::post('agent-sources/{deviceAgent}/commands/software-uninstall', [AgentSourceController::class, 'queueSoftwareUninstall'])->middleware('permission:endpoint.software.manage')->name('agent-sources.commands.software-uninstall');
     Route::post('agent-sources/commands/inventory-refresh/bulk', [AgentSourceController::class, 'bulkQueueInventory'])->middleware('permission:software.agents.manage')->name('agent-sources.commands.inventory-refresh.bulk');
     Route::patch('agent-sources/{deviceAgent}/commands/{command}/cancel', [AgentSourceController::class, 'cancelCommand'])->middleware('permission:software.agents.manage')->name('agent-sources.commands.cancel');
 

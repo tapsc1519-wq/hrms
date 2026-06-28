@@ -13,7 +13,7 @@ class Software extends Model
     protected $fillable = [
         'organization_id', 'name', 'vendor', 'version', 'edition',
         'category', 'software_type', 'license_required', 'criticality',
-        'license_metric', 'trusted_publisher',
+        'license_metric', 'trusted_publisher', 'winget_package_id', 'endpoint_management_enabled',
         'policy_status', 'policy_notes', 'policy_reviewed_by', 'policy_reviewed_at',
         'description', 'publisher_website', 'icon',
     ];
@@ -21,6 +21,7 @@ class Software extends Model
     protected $casts = [
         'license_required' => 'boolean',
         'trusted_publisher' => 'boolean',
+        'endpoint_management_enabled' => 'boolean',
         'policy_reviewed_at' => 'datetime',
     ];
 

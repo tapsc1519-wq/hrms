@@ -1,13 +1,14 @@
 [CmdletBinding()]
 param(
     [string]$ConfigPath = "$env:ProgramData\OpsBridge\Agent\config.json",
-    [string]$OutputPath = ''
+    [string]$OutputPath = '',
+    [switch]$CommandsOnly
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Security
-$AgentVersion = '0.1.0'
+$AgentVersion = '0.2.0'
 $Root = Split-Path -Parent $ConfigPath
 $LogRoot = Join-Path $Root 'logs'
 $QueueRoot = Join-Path $Root 'queue'
@@ -194,6 +195,46 @@ function Send-CommandResult {
     Invoke-RestMethod -Uri $uri -Method Post -Headers @{ Authorization = "Bearer $Token"; Accept = 'application/json'; 'X-Agent-Version' = $AgentVersion } -ContentType 'application/json' -Body $body -TimeoutSec 60 | Out-Null
 }
 
+function Get-AgentCommandPayload {
+    param([object]$Command)
+    if (-not $Command.payload_base64) { return [pscustomobject]@{} }
+    $json = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String([string]$Command.payload_base64))
+    if (-not $json) { return [pscustomobject]@{} }
+    $json | ConvertFrom-Json
+}
+
+function Get-WinGetExecutable {
+    $command = Get-Command winget.exe -ErrorAction SilentlyContinue
+    if ($command) { return $command.Source }
+    $candidate = Get-ChildItem "$env:ProgramFiles\WindowsApps\Microsoft.DesktopAppInstaller_*\winget.exe" -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if ($candidate) { return $candidate.FullName }
+    throw 'WinGet is not installed or is unavailable to the device agent.'
+}
+
+function Invoke-ManagedPackageAction {
+    param([ValidateSet('install','uninstall')][string]$Action, [string]$PackageId)
+    if ($PackageId -notmatch '^[A-Za-z0-9][A-Za-z0-9._+-]{0,254}$') { throw 'The signed command contains an invalid WinGet package ID.' }
+    $winget = Get-WinGetExecutable
+    $arguments = @($Action, '--id', $PackageId, '--exact', '--silent', '--accept-source-agreements', '--disable-interactivity')
+    if ($Action -eq 'install') { $arguments += '--accept-package-agreements' }
+    $output = & $winget @arguments 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0) {
+        $detail = ($output -replace '\s+', ' ').Trim()
+        if ($detail.Length -gt 500) { $detail = $detail.Substring(0, 500) }
+        throw "WinGet $Action failed with exit code $LASTEXITCODE. $detail"
+    }
+    "WinGet $Action completed for $PackageId."
+}
+
+function Lock-InteractiveSession {
+    $line = & quser.exe 2>$null | Where-Object { $_ -match '\s+(\d+)\s+Active\s' } | Select-Object -First 1
+    if (-not $line) { throw 'No active interactive Windows session was found.' }
+    $sessionId = [regex]::Match($line, '\s+(\d+)\s+Active\s').Groups[1].Value
+    & tsdiscon.exe $sessionId
+    if ($LASTEXITCODE -ne 0) { throw "Windows could not lock session $sessionId." }
+}
+
 function Invoke-AgentCommands {
     param([object]$Config, [string]$Token)
     if (-not (Get-OptionalProperty $Config 'command_poll_url') -or -not (Get-OptionalProperty $Config 'command_signing_public_key_xml')) { return }
@@ -206,15 +247,46 @@ function Invoke-AgentCommands {
             Send-CommandResult $pollUrl $Token $Config.device_uuid $command.command_uuid 'failed' 'Command signature, device target, or expiry validation failed.'
             continue
         }
-        switch ([string]$command.command_type) {
-            'inventory_refresh' {
-                Send-CommandResult $pollUrl $Token $Config.device_uuid $command.command_uuid 'completed' 'Inventory snapshot completed during this agent run.'
-                Write-AgentLog "Completed signed inventory refresh command $($command.command_uuid)."
+        try {
+            $payload = Get-AgentCommandPayload $command
+            switch ([string]$command.command_type) {
+                'inventory_refresh' {
+                    Send-CommandResult $pollUrl $Token $Config.device_uuid $command.command_uuid 'completed' 'Inventory snapshot completed during this agent run.'
+                    Write-AgentLog "Completed signed inventory refresh command $($command.command_uuid)."
+                }
+                'lock_session' {
+                    Lock-InteractiveSession
+                    Send-CommandResult $pollUrl $Token $Config.device_uuid $command.command_uuid 'completed' 'The active Windows session was locked.'
+                    Write-AgentLog "Completed signed session lock command $($command.command_uuid)."
+                }
+                'restart_device' {
+                    $delay = [Math]::Min(60, [Math]::Max(1, [int]$payload.delay_minutes))
+                    $message = [string]$payload.message
+                    if (-not $message) { $message = 'Administrator-requested restart.' }
+                    & shutdown.exe /r /t ($delay * 60) /f /c $message
+                    if ($LASTEXITCODE -ne 0) { throw 'Windows rejected the restart request.' }
+                    Send-CommandResult $pollUrl $Token $Config.device_uuid $command.command_uuid 'completed' "Restart scheduled in $delay minutes."
+                    Write-AgentLog "Completed signed restart command $($command.command_uuid); delay $delay minutes."
+                }
+                'software_install' {
+                    $message = Invoke-ManagedPackageAction 'install' ([string]$payload.package_id)
+                    Send-CommandResult $pollUrl $Token $Config.device_uuid $command.command_uuid 'completed' $message
+                    Write-AgentLog "Completed signed software install command $($command.command_uuid)."
+                }
+                'software_uninstall' {
+                    $message = Invoke-ManagedPackageAction 'uninstall' ([string]$payload.package_id)
+                    Send-CommandResult $pollUrl $Token $Config.device_uuid $command.command_uuid 'completed' $message
+                    Write-AgentLog "Completed signed software uninstall command $($command.command_uuid)."
+                }
+                default {
+                    Send-CommandResult $pollUrl $Token $Config.device_uuid $command.command_uuid 'failed' "Command type '$($command.command_type)' is not allowlisted by agent $AgentVersion."
+                    Write-AgentLog "Rejected non-allowlisted command type $($command.command_type)." 'ERROR'
+                }
             }
-            default {
-                Send-CommandResult $pollUrl $Token $Config.device_uuid $command.command_uuid 'failed' "Command type '$($command.command_type)' is not allowlisted by agent $AgentVersion."
-                Write-AgentLog "Rejected non-allowlisted command type $($command.command_type)." 'ERROR'
-            }
+        } catch {
+            $errorMessage = $_.Exception.Message
+            Send-CommandResult $pollUrl $Token $Config.device_uuid $command.command_uuid 'failed' $errorMessage
+            Write-AgentLog "Command $($command.command_uuid) failed: $errorMessage" 'ERROR'
         }
     }
 }
@@ -227,6 +299,10 @@ try {
     $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
     $token = Unprotect-Token $config.token_ciphertext
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    if ($CommandsOnly) {
+        Invoke-AgentCommands $config $token
+        return
+    }
     if (-not $OutputPath) {
         Get-ChildItem $QueueRoot -Filter '*.json' | Sort-Object CreationTime | Select-Object -First 20 | ForEach-Object {
             try { Send-Snapshot (Get-Content $_.FullName -Raw) $config.endpoint $token | Out-Null; Remove-Item $_.FullName -Force }

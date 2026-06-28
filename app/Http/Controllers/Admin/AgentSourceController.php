@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AgentApiToken;
 use App\Models\AgentCommand;
 use App\Models\DeviceAgent;
+use App\Models\Software;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
@@ -79,7 +80,10 @@ class AgentSourceController extends Controller
         $discoveries = $deviceAgent->discoveries()->with('software')
             ->orderByDesc('is_installed')->orderBy('raw_name')->paginate(50);
         $commands = $deviceAgent->commands()->with('createdBy')->latest()->paginate(15, ['*'], 'commands_page')->withQueryString();
-        return view('admin.agent-sources.show', compact('deviceAgent', 'discoveries', 'commands'));
+        $managedSoftware = Software::where('organization_id', $this->orgId())
+            ->where('endpoint_management_enabled', true)->whereNotNull('winget_package_id')
+            ->orderBy('name')->get(['id', 'name', 'vendor', 'winget_package_id']);
+        return view('admin.agent-sources.show', compact('deviceAgent', 'discoveries', 'commands', 'managedSoftware'));
     }
 
     public function downloadWindowsPackage()
@@ -142,6 +146,48 @@ class AgentSourceController extends Controller
         return back()->with('success', 'Signed inventory refresh queued. The agent will collect it on the next poll.');
     }
 
+    public function queueLock(DeviceAgent $deviceAgent)
+    {
+        return $this->queueEndpointCommand($deviceAgent, 'lock_session', [
+            'message' => 'Your Windows session was locked by an authorized administrator.',
+        ], 10, 15, 'Device lock');
+    }
+
+    public function queueRestart(Request $request, DeviceAgent $deviceAgent)
+    {
+        $validated = $request->validate([
+            'delay_minutes' => 'required|integer|min:1|max:60',
+            'message' => 'nullable|string|max:180',
+        ]);
+
+        return $this->queueEndpointCommand($deviceAgent, 'restart_device', [
+            'delay_minutes' => (int) $validated['delay_minutes'],
+            'message' => $validated['message'] ?: 'This device will restart to complete an administrator-requested operation.',
+        ], 9, 15, 'Device restart');
+    }
+
+    public function queueSoftwareInstall(Request $request, DeviceAgent $deviceAgent)
+    {
+        $software = $this->managedSoftware($request);
+
+        return $this->queueEndpointCommand($deviceAgent, 'software_install', [
+            'software_id' => $software->id,
+            'name' => $software->name,
+            'package_id' => $software->winget_package_id,
+        ], 7, 24 * 60, $software->name.' installation');
+    }
+
+    public function queueSoftwareUninstall(Request $request, DeviceAgent $deviceAgent)
+    {
+        $software = $this->managedSoftware($request);
+
+        return $this->queueEndpointCommand($deviceAgent, 'software_uninstall', [
+            'software_id' => $software->id,
+            'name' => $software->name,
+            'package_id' => $software->winget_package_id,
+        ], 7, 24 * 60, $software->name.' removal');
+    }
+
     public function bulkQueueInventory(Request $request)
     {
         $validated = $request->validate([
@@ -178,5 +224,39 @@ class AgentSourceController extends Controller
         abort_unless(in_array($command->status, ['queued', 'delivered'], true), 422, 'Only pending commands can be cancelled.');
         $command->update(['status' => 'cancelled', 'error_message' => 'Cancelled by '.auth()->user()->name.'.']);
         return back()->with('success', 'Command cancelled.');
+    }
+
+    private function managedSoftware(Request $request): Software
+    {
+        $validated = $request->validate(['software_id' => 'required|integer']);
+
+        return Software::where('organization_id', $this->orgId())
+            ->where('endpoint_management_enabled', true)->whereNotNull('winget_package_id')
+            ->findOrFail($validated['software_id']);
+    }
+
+    private function queueEndpointCommand(DeviceAgent $deviceAgent, string $type, array $payload, int $priority, int $expiresInMinutes, string $label)
+    {
+        abort_if($deviceAgent->organization_id !== $this->orgId(), 403);
+        abort_unless($deviceAgent->credential?->is_active, 422, 'This endpoint does not have an active device credential.');
+
+        $alreadyQueued = AgentCommand::where('device_agent_id', $deviceAgent->id)
+            ->where('command_type', $type)->whereIn('status', ['queued', 'delivered'])->exists();
+        if ($alreadyQueued) return back()->with('error', "A {$label} command is already pending for this endpoint.");
+
+        AgentCommand::create([
+            'organization_id' => $this->orgId(),
+            'device_agent_id' => $deviceAgent->id,
+            'command_uuid' => (string) Str::uuid(),
+            'command_type' => $type,
+            'payload' => $payload,
+            'priority' => $priority,
+            'status' => 'queued',
+            'available_at' => now(),
+            'expires_at' => now()->addMinutes($expiresInMinutes),
+            'created_by' => auth()->id(),
+        ]);
+
+        return back()->with('success', "{$label} command queued. It will run after the endpoint's next secure check-in.");
     }
 }

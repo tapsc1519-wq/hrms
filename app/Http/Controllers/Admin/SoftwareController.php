@@ -71,11 +71,17 @@ class SoftwareController extends Controller
             'criticality'       => 'required|in:low,medium,high,critical',
             'license_metric'    => 'required|in:per_user,per_device,concurrent,site,enterprise,usage_based',
             'trusted_publisher' => 'nullable|boolean',
+            'winget_package_id' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9][A-Za-z0-9._+-]*$/'],
+            'endpoint_management_enabled' => 'nullable|boolean',
             'description'       => 'nullable|string|max:2000',
             'publisher_website' => 'nullable|url|max:255',
             'icon'              => 'nullable|image|max:2048',
         ]);
         $validated['trusted_publisher'] = $request->boolean('trusted_publisher');
+        $validated['endpoint_management_enabled'] = $request->boolean('endpoint_management_enabled');
+        if ($validated['endpoint_management_enabled'] && empty($validated['winget_package_id'])) {
+            return back()->withErrors(['winget_package_id' => 'Enter a WinGet package ID before enabling endpoint deployment.'])->withInput();
+        }
 
         if ($request->hasFile('icon')) {
             $validated['icon'] = $request->file('icon')->store('software-icons', 'public');
@@ -125,11 +131,17 @@ class SoftwareController extends Controller
             'criticality'       => 'required|in:low,medium,high,critical',
             'license_metric'    => 'required|in:per_user,per_device,concurrent,site,enterprise,usage_based',
             'trusted_publisher' => 'nullable|boolean',
+            'winget_package_id' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9][A-Za-z0-9._+-]*$/'],
+            'endpoint_management_enabled' => 'nullable|boolean',
             'description'       => 'nullable|string|max:2000',
             'publisher_website' => 'nullable|url|max:255',
             'icon'              => 'nullable|image|max:2048',
         ]);
         $validated['trusted_publisher'] = $request->boolean('trusted_publisher');
+        $validated['endpoint_management_enabled'] = $request->boolean('endpoint_management_enabled');
+        if ($validated['endpoint_management_enabled'] && empty($validated['winget_package_id'])) {
+            return back()->withErrors(['winget_package_id' => 'Enter a WinGet package ID before enabling endpoint deployment.'])->withInput();
+        }
 
         if ($request->hasFile('icon')) {
             if ($software->icon) Storage::disk('public')->delete($software->icon);

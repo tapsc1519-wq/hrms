@@ -120,6 +120,20 @@
                                   class="form-control @error('description') is-invalid @enderror">{{ old('description', $software->description) }}</textarea>
                         @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    <div class="col-md-7">
+                        <label class="form-label">WinGet Package ID</label>
+                        <input type="text" name="winget_package_id" value="{{ old('winget_package_id', $software->winget_package_id) }}"
+                               class="form-control @error('winget_package_id') is-invalid @enderror"
+                               placeholder="e.g. Microsoft.VisualStudioCode">
+                        <div class="form-text">Exact package ID used for controlled Windows installation and removal.</div>
+                        @error('winget_package_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-5 d-flex align-items-end">
+                        <label class="d-flex align-items-center gap-2 border rounded-3 px-3 py-2 w-100" style="cursor:pointer;background:#f8fafc">
+                            <input type="checkbox" name="endpoint_management_enabled" value="1" class="form-check-input m-0" @checked(old('endpoint_management_enabled', $software->endpoint_management_enabled))>
+                            <span class="fw-bold">Allow endpoint deployment</span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>

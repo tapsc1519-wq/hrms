@@ -171,13 +171,14 @@ class PageHelpRegistry
                 'next' => 'Open Normalization Workbench to map unknown software to the catalog.',
             ],
             'admin.agent-sources.*' => [
-                'title' => 'Device Agent Sources Help',
-                'what' => 'Agent Sources is the operational view of computers reporting software inventory, their health, matching status, version, and secure access.',
+                  'title' => 'Endpoint Management Help',
+                  'what' => 'Endpoint Management shows computers reporting inventory and lets authorized administrators send a small set of signed, audited device actions.',
                 'how' => [
                     'Filter Healthy, Stale, or Offline devices and resolve computers that are not linked to an asset or employee.',
                     'Select devices and queue a signed inventory refresh when current data is required.',
                     'Download the Windows installer and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
-                    'Review the agent version before relying on newly introduced collection features.',
+                      'Review the agent version before relying on newly introduced collection features.',
+                      'Open a device to install or remove approved WinGet packages, lock its active session, or schedule a restart.',
                 ],
                 'next' => 'Offline or stale devices should be checked before relying on their software data for compliance decisions.',
             ],

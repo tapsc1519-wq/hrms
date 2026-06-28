@@ -1122,10 +1122,10 @@
                class="sidebar-link {{ request()->routeIs('admin.software-discovery.*') ? 'active' : '' }}">
                 <i class="bi bi-hdd-network-fill"></i> Discovery Inventory
             </a>
-            @if($user->hasPermission('software.agents.manage'))
+            @if($user->hasPermission('endpoint.view'))
             <a href="{{ route('admin.agent-sources.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.agent-sources.*') ? 'active' : '' }}">
-                <i class="bi bi-router-fill"></i> Agent Sources
+                <i class="bi bi-pc-display-horizontal"></i> Endpoint Management
             </a>
             @endif
             <a href="{{ route('admin.software-normalization.index') }}"

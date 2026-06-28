@@ -9,15 +9,68 @@
     $healthBadge = $deviceAgent->health_status === 'healthy' ? 'success' : ($deviceAgent->health_status === 'stale' ? 'warning' : 'danger');
 @endphp
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
-    <div><a href="{{ route('admin.agent-sources.index') }}" class="back-link"><i class="bi bi-arrow-left"></i> Agent Sources</a><div class="d-flex align-items-center gap-2"><h4 class="mb-0">{{ $deviceAgent->hostname }}</h4><span class="badge bg-{{ $healthBadge }}">{{ ucfirst($deviceAgent->health_status) }}</span></div><p>{{ $deviceAgent->os_name ?: 'Unknown operating system' }} {{ $deviceAgent->os_version }}</p></div>
+    <div><a href="{{ route('admin.agent-sources.index') }}" class="back-link"><i class="bi bi-arrow-left"></i> Endpoint Management</a><div class="d-flex align-items-center gap-2"><h4 class="mb-0">{{ $deviceAgent->hostname }}</h4><span class="badge bg-{{ $healthBadge }}">{{ ucfirst($deviceAgent->health_status) }}</span></div><p>{{ $deviceAgent->os_name ?: 'Unknown operating system' }} {{ $deviceAgent->os_version }}</p></div>
     <div class="d-flex align-items-center gap-2 flex-wrap">
+        @if(auth()->user()->hasPermission('software.agents.manage'))
         <form method="POST" action="{{ route('admin.agent-sources.commands.inventory-refresh', $deviceAgent) }}">@csrf<button class="btn btn-primary btn-sm"><i class="bi bi-arrow-repeat me-1"></i>Queue Inventory Refresh</button></form>
         @if($deviceAgent->credential?->is_active)
         <form method="POST" action="{{ route('admin.agent-sources.credential.revoke', $deviceAgent) }}" onsubmit="return confirm('Revoke this device credential? The agent will stop reporting until it is re-enrolled.')">@csrf @method('PATCH')<button class="btn btn-outline-danger btn-sm"><i class="bi bi-shield-x me-1"></i>Revoke Device Access</button></form>
         @endif
+        @endif
         <div class="text-end small ms-1"><div class="text-muted">Last seen</div><div class="fw-bold">{{ $deviceAgent->last_seen_at?->format('d M Y, h:i A') ?? 'Never' }}</div></div>
     </div>
 </div>
+
+@if(auth()->user()->hasPermission('endpoint.device.control') || auth()->user()->hasPermission('endpoint.software.manage'))
+<div class="table-card mb-3">
+    <div class="card-header"><span class="fw-semibold">Endpoint Actions</span></div>
+    <div class="card-body">
+        <div class="row g-3 align-items-stretch">
+            @if(auth()->user()->hasPermission('endpoint.device.control'))
+            <div class="col-lg-5">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="fw-semibold mb-1"><i class="bi bi-shield-lock me-1 text-primary"></i>Device Controls</div>
+                    <div class="text-muted small mb-3">Lock the active session immediately or schedule a controlled restart.</div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <form method="POST" action="{{ route('admin.agent-sources.commands.lock', $deviceAgent) }}" onsubmit="return confirm('Lock the active Windows session on {{ addslashes($deviceAgent->hostname) }}?')">
+                            @csrf
+                            <button class="btn btn-outline-primary btn-sm"><i class="bi bi-lock-fill me-1"></i>Lock Session</button>
+                        </form>
+                        <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#restartEndpointModal"><i class="bi bi-arrow-clockwise me-1"></i>Restart</button>
+                    </div>
+                </div>
+            </div>
+            @endif
+            @if(auth()->user()->hasPermission('endpoint.software.manage'))
+            <div class="col-lg-7">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="fw-semibold mb-1"><i class="bi bi-box-arrow-down me-1 text-primary"></i>Managed Software</div>
+                    <div class="text-muted small mb-3">Only catalog applications explicitly enabled for endpoint deployment are available.</div>
+                    @if($managedSoftware->isNotEmpty())
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <form method="POST" action="{{ route('admin.agent-sources.commands.software-install', $deviceAgent) }}" onsubmit="return confirm('Install the selected approved software on this endpoint?')">
+                                @csrf
+                                <div class="input-group input-group-sm"><select name="software_id" class="form-select" required><option value="">Choose software</option>@foreach($managedSoftware as $item)<option value="{{ $item->id }}">{{ $item->name }}</option>@endforeach</select><button class="btn btn-primary"><i class="bi bi-download me-1"></i>Install</button></div>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <form method="POST" action="{{ route('admin.agent-sources.commands.software-uninstall', $deviceAgent) }}" onsubmit="return confirm('Remove the selected software from this endpoint?')">
+                                @csrf
+                                <div class="input-group input-group-sm"><select name="software_id" class="form-select" required><option value="">Choose software</option>@foreach($managedSoftware as $item)<option value="{{ $item->id }}">{{ $item->name }}</option>@endforeach</select><button class="btn btn-outline-danger"><i class="bi bi-trash3 me-1"></i>Remove</button></div>
+                            </form>
+                        </div>
+                    </div>
+                    @else
+                    <a href="{{ route('admin.software.index') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Configure Managed Software</a>
+                    @endif
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+</div>
+@endif
 
 <div class="table-card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center"><span class="fw-semibold">Signed Command History</span><span class="badge bg-light text-dark">{{ $commands->total() }}</span></div>
@@ -68,4 +121,20 @@
     </tbody></table></div>
     @if($discoveries->hasPages())<div class="p-3 border-top">{{ $discoveries->links() }}</div>@endif
 </div>
+
+@if(auth()->user()->hasPermission('endpoint.device.control'))
+<div class="modal fade" id="restartEndpointModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="{{ route('admin.agent-sources.commands.restart', $deviceAgent) }}" class="modal-content">
+            @csrf
+            <div class="modal-header"><h5 class="modal-title">Schedule Device Restart</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Delay</label><select name="delay_minutes" class="form-select" required><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></div>
+                <div><label class="form-label">Employee Message</label><textarea name="message" class="form-control" rows="3" maxlength="180">This device will restart to complete an administrator-requested operation.</textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-warning"><i class="bi bi-arrow-clockwise me-1"></i>Queue Restart</button></div>
+        </form>
+    </div>
+</div>
+@endif
 @endsection

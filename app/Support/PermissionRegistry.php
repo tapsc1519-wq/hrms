@@ -55,6 +55,9 @@ class PermissionRegistry
                 'software.optimization.view' => 'View software usage and optimization',
                 'software.optimization.manage' => 'Start and complete license reclamation reviews',
                 'software.agents.manage' => 'Manage device agents and inventory API tokens',
+                'endpoint.view' => 'View managed endpoints and command history',
+                'endpoint.software.manage' => 'Install and uninstall approved software on endpoints',
+                'endpoint.device.control' => 'Lock or restart managed endpoints',
             ],
             'HRMS' => [
                 'hrms.dashboard' => 'View HRMS dashboard',
@@ -148,6 +151,9 @@ class PermissionRegistry
                 'software.optimization.view',
                 'software.optimization.manage',
                 'software.agents.manage',
+                'endpoint.view',
+                'endpoint.software.manage',
+                'endpoint.device.control',
                 'software.policies.manage',
                 'software.audit.export',
             ],
@@ -159,6 +165,15 @@ class PermissionRegistry
             ],
             'software.optimization.manage' => [
                 'software.optimization.view',
+            ],
+            'software.agents.manage' => [
+                'endpoint.view',
+            ],
+            'endpoint.software.manage' => [
+                'endpoint.view',
+            ],
+            'endpoint.device.control' => [
+                'endpoint.view',
             ],
         ];
     }
