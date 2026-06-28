@@ -228,11 +228,60 @@ function Invoke-ManagedPackageAction {
 }
 
 function Lock-InteractiveSession {
-    $line = & quser.exe 2>$null | Where-Object { $_ -match '\s+(\d+)\s+Active\s' } | Select-Object -First 1
-    if (-not $line) { throw 'No active interactive Windows session was found.' }
-    $sessionId = [regex]::Match($line, '\s+(\d+)\s+Active\s').Groups[1].Value
-    & tsdiscon.exe $sessionId
-    if ($LASTEXITCODE -ne 0) { throw "Windows could not lock session $sessionId." }
+    if (-not ('OpsBridge.NativeTerminalServices' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+namespace OpsBridge {
+    public static class NativeTerminalServices {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct WTS_SESSION_INFO {
+            public int SessionID;
+            [MarshalAs(UnmanagedType.LPStr)]
+            public string pWinStationName;
+            public int State;
+        }
+
+        [DllImport("wtsapi32.dll", SetLastError = true)]
+        public static extern bool WTSEnumerateSessions(IntPtr hServer, int Reserved, int Version, out IntPtr ppSessionInfo, out int pCount);
+
+        [DllImport("wtsapi32.dll")]
+        public static extern void WTSFreeMemory(IntPtr pMemory);
+
+        [DllImport("wtsapi32.dll", SetLastError = true)]
+        public static extern bool WTSDisconnectSession(IntPtr hServer, int sessionId, bool wait);
+    }
+}
+'@
+    }
+
+    $sessionsPtr = [IntPtr]::Zero
+    $sessionCount = 0
+    $activeSessionId = $null
+    $server = [IntPtr]::Zero
+    if (-not [OpsBridge.NativeTerminalServices]::WTSEnumerateSessions($server, 0, 1, [ref]$sessionsPtr, [ref]$sessionCount)) {
+        throw 'Windows could not enumerate interactive sessions.'
+    }
+
+    try {
+        $structSize = [Runtime.InteropServices.Marshal]::SizeOf([type][OpsBridge.NativeTerminalServices+WTS_SESSION_INFO])
+        for ($index = 0; $index -lt $sessionCount; $index++) {
+            $sessionPtr = [IntPtr]::Add($sessionsPtr, $index * $structSize)
+            $session = [Runtime.InteropServices.Marshal]::PtrToStructure($sessionPtr, [type][OpsBridge.NativeTerminalServices+WTS_SESSION_INFO])
+            if ($session.State -eq 0 -and $session.SessionID -gt 0) {
+                $activeSessionId = $session.SessionID
+                break
+            }
+        }
+    } finally {
+        if ($sessionsPtr -ne [IntPtr]::Zero) { [OpsBridge.NativeTerminalServices]::WTSFreeMemory($sessionsPtr) }
+    }
+
+    if ($null -eq $activeSessionId) { throw 'No active interactive Windows session was found.' }
+    if (-not [OpsBridge.NativeTerminalServices]::WTSDisconnectSession($server, [int]$activeSessionId, $false)) {
+        throw "Windows could not lock session $activeSessionId."
+    }
 }
 
 function Invoke-AgentCommands {
