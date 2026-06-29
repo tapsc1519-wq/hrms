@@ -121,6 +121,7 @@ class SamAuditReportController extends Controller
             $this->writeUsageReviews($directory, $organizationId, $activityFrom);
             $this->writeSoftwareRequests($directory, $organizationId, $activityFrom);
             $this->writeSoftwareProcurement($directory, $organizationId, $activityFrom);
+            $this->writeSoftwareDemandFulfillment($directory, $organizationId, $activityFrom);
             $this->writeInventoryQuality($directory, $organizationId);
             $this->writePolicyGovernance($directory, $organizationId);
             $this->writeLicenseEvidenceQuality($directory, $organizationId);
@@ -166,6 +167,8 @@ class SamAuditReportController extends Controller
             ['Open Software Requests', SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->count()],
             ['Overdue Software Requests', SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->whereNotNull('needed_by')->where('needed_by', '<', now()->toDateString())->count()],
             ['Aging Software Requests', SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->where('created_at', '<', now()->subDays(7))->count()],
+            ['Software Requests Linked To Procurement', SoftwareRequest::where('organization_id', $organizationId)->whereNotNull('purchase_order_item_id')->count()],
+            ['Procured Software Requests Waiting Fulfillment', SoftwareRequest::where('organization_id', $organizationId)->where('status', 'approved')->whereNotNull('purchase_order_item_id')->count()],
             ['Software Purchase Order Lines', PurchaseOrderItem::where('item_type', 'software')->whereHas('purchaseOrder', fn ($q) => $q->where('organization_id', $organizationId))->count()],
             ['Active Policy Exceptions', SoftwarePolicyException::where('organization_id', $organizationId)->active()->count()],
             ['Planned Renewal Decisions', SoftwareRenewalDecision::where('organization_id', $organizationId)->where('status', 'planned')->count()],
@@ -423,6 +426,70 @@ class SamAuditReportController extends Controller
                             $item->receiptItems->pluck('goodsReceipt.invoice_number')->filter()->unique()->implode(', '),
                             $item->created_at->toIso8601String(),
                         ]);
+                    }
+                });
+        });
+    }
+
+    private function writeSoftwareDemandFulfillment(string $directory, int $organizationId, Carbon $activityFrom): void
+    {
+        $headers = ['Request ID','Employee Code','Employee','Email','Department','Software','Publisher','Request Status','Urgency','Needed By','SLA Status','SLA Issue','PO Number','PO Status','Supplier','PO Item ID','Ordered Quantity','Received Quantity','Pending Quantity','Created License Seats','Assignment ID','License ID','Fulfilled At','Fulfillment Status'];
+
+        $this->csv($directory, '21-software-demand-fulfillment.csv', $headers, function ($handle) use ($organizationId, $activityFrom) {
+            PurchaseOrderItem::where('item_type', 'software')
+                ->whereHas('purchaseOrder', fn ($query) => $query
+                    ->where('organization_id', $organizationId)
+                    ->where(fn ($q) => $q->where('created_at', '>=', $activityFrom)->orWhereNotIn('status', ['received', 'cancelled'])))
+                ->whereHas('softwareRequests')
+                ->with([
+                    'purchaseOrder.supplier',
+                    'software',
+                    'softwareLicenses',
+                    'softwareRequests.requester.department',
+                    'softwareRequests.assignment',
+                    'softwareRequests.license',
+                ])
+                ->orderBy('id')
+                ->chunkById(200, function ($items) use ($handle) {
+                    foreach ($items as $item) {
+                        $order = $item->purchaseOrder;
+
+                        foreach ($item->softwareRequests->sortBy([['status', 'asc'], ['needed_by', 'asc'], ['created_at', 'asc']]) as $request) {
+                            $fulfillmentStatus = match (true) {
+                                $request->status === 'fulfilled' && $request->software_assignment_id !== null => 'Allocated',
+                                $request->status === 'fulfilled' => 'Already Had License',
+                                $item->received_software_seat_count > 0 => 'Received Seats Waiting Allocation',
+                                $item->pending_quantity > 0 => 'Awaiting Receipt',
+                                default => 'Needs Review',
+                            };
+
+                            fputcsv($handle, [
+                                $request->id,
+                                $request->requester?->employee_id,
+                                $request->requester?->name,
+                                $request->requester?->email,
+                                $request->requester?->department?->name,
+                                $item->software?->name,
+                                $item->software?->vendor,
+                                $request->status_label,
+                                $request->urgency,
+                                $request->needed_by?->toDateString(),
+                                $request->sla_label,
+                                $request->sla_issue,
+                                $order?->po_number,
+                                $order?->status,
+                                $order?->supplier?->name,
+                                $item->id,
+                                $item->quantity,
+                                $item->received_quantity,
+                                $item->pending_quantity,
+                                $item->received_software_seat_count,
+                                $request->software_assignment_id,
+                                $request->software_license_id,
+                                $request->fulfilled_at?->toIso8601String(),
+                                $fulfillmentStatus,
+                            ]);
+                        }
                     }
                 });
         });
@@ -819,6 +886,6 @@ class SamAuditReportController extends Controller
 
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe SAM health score summarizes inventory coverage, normalization, compliance risk, SLA, demand SLA, policy, evidence, and data quality signals. The compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation, renewal, and software request SLA files highlight open/planned work that is overdue, aging, or scheduled. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe SAM health score summarizes inventory coverage, normalization, compliance risk, SLA, demand SLA, policy, evidence, and data quality signals. The compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation, renewal, and software request SLA files highlight open/planned work that is overdue, aging, or scheduled. Remediation, renewal, usage optimization, software request, software procurement, and software demand fulfillment decisions include open/planned items and items created during that period. Software demand fulfillment links employee requests to PO lines, receipts, generated licenses, and allocation outcomes. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }
