@@ -73,6 +73,30 @@
     </div>
 </div>
 
+@if(in_array(request('exception_risk'), ['expiring', 'expired'], true))
+    @php
+        $exceptionRisk = request('exception_risk');
+        $exceptionRiskLabel = $exceptionRisk === 'expired' ? 'expired approved policy exceptions' : 'approved policy exceptions expiring in 14 days';
+        $alternateRisk = $exceptionRisk === 'expired' ? 'expiring' : 'expired';
+    @endphp
+    <div class="alert alert-info d-flex align-items-start justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-shield-exclamation mt-1"></i>
+            <div>
+                <strong>Exception risk filter active.</strong>
+                Showing {{ $rows->total() }} software title{{ $rows->total() === 1 ? '' : 's' }} with {{ $exceptionRiskLabel }}.
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('admin.software-compliance.index', ['exception_risk' => $alternateRisk]) }}" class="btn btn-sm btn-outline-primary">
+                {{ $alternateRisk === 'expired' ? 'View Expired' : 'View Expiring' }}
+            </a>
+            <a href="{{ route('admin.sam-audit.index') }}" class="btn btn-sm btn-outline-secondary">Audit Pack</a>
+            <a href="{{ route('admin.software-compliance.index') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+        </div>
+    </div>
+@endif
+
 @if($stats['unknown_discovery'] > 0)
 <div class="alert alert-warning d-flex align-items-center gap-2">
     <i class="bi bi-exclamation-triangle-fill"></i>
