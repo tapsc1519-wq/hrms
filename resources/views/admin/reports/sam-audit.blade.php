@@ -35,6 +35,7 @@
     <div class="col-xl-7"><div class="table-card h-100"><div class="card-header"><span class="fw-semibold">Package Contents</span></div><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th class="ps-4">Evidence File</th><th>What It Proves</th></tr></thead><tbody>
         @foreach([
             ['Compliance Snapshot','Required versus purchased seats, policy violations, exceptions, risk and exposure.'],
+            ['SAM Health Score','Executive health score and penalty contributors across inventory, normalization, compliance, SLA, policy, evidence, and data quality.'],
             ['Software Catalog','Normalized titles, license metrics, criticality and reviewed policy decisions.'],
             ['License Entitlements','Purchased seats, dates, supplier references and masked key references.'],
             ['License Evidence Quality','Active licenses missing supplier, PO, invoice, agreement, purchase date, cost, or uploaded evidence document.'],

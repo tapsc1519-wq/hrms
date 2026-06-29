@@ -117,6 +117,7 @@ class SamAuditReportController extends Controller
             $this->writeLicenseEvidenceQuality($directory, $organizationId);
             $this->writeRemediationSla($directory, $organizationId);
             $this->writeRenewalSla($directory, $organizationId);
+            $this->writeSamHealthScore($directory, $organizationId);
             File::put($directory.DIRECTORY_SEPARATOR.'README.txt', $this->readme($organization, $activityFrom, $includeRemoved, $generatedAt));
 
             $zip = new ZipArchive();
@@ -648,6 +649,50 @@ class SamAuditReportController extends Controller
         });
     }
 
+    private function writeSamHealthScore(string $directory, int $organizationId): void
+    {
+        $installed = SoftwareDiscovery::where('organization_id', $organizationId)->where('is_installed', true)->count();
+        $mapped = SoftwareDiscovery::where('organization_id', $organizationId)->where('is_installed', true)->where('status', 'mapped')->count();
+        $devices = DeviceAgent::where('organization_id', $organizationId)->count();
+        $healthyDevices = DeviceAgent::where('organization_id', $organizationId)->where('last_seen_at', '>=', now()->subHours(24))->count();
+        $riskRows = Software::where('organization_id', $organizationId)
+            ->with(['licenses.activeAssignments', 'discoveries' => fn ($q) => $q->where('status', 'mapped')->where('is_installed', true)->with('activePolicyException')])
+            ->get()
+            ->map(fn ($software) => $this->complianceRow($software))
+            ->filter(fn ($row) => $row['installs'] > 0 && $row['risk_score'] > 0)
+            ->count();
+        $stats = [
+            'healthy_percent' => $devices > 0 ? (int) round(($healthyDevices / $devices) * 100) : 0,
+            'normalized_percent' => $installed > 0 ? (int) round(($mapped / $installed) * 100) : 0,
+            'risk_rows' => $riskRows,
+            'overdue_actions' => SoftwareComplianceAction::where('organization_id', $organizationId)->where('status', 'open')->whereNotNull('due_date')->where('due_date', '<', now()->toDateString())->count(),
+            'overdue_renewals' => SoftwareRenewalDecision::where('organization_id', $organizationId)->where('status', 'planned')->whereNotNull('due_date')->where('due_date', '<', now()->toDateString())->count(),
+            'policy_gaps' => Software::where('organization_id', $organizationId)->where(fn ($q) => $q->where('policy_status', 'unreviewed')->orWhereNull('policy_reviewed_at')->orWhere('policy_reviewed_at', '<', now()->subYear()))->count(),
+            'license_evidence_gaps' => SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->where(fn ($q) => $q->whereNull('evidence_document')->orWhereNull('invoice_number')->orWhereNull('po_number')->orWhereNull('vendor_id'))->count(),
+            'inventory_gaps' => DeviceAgent::where('organization_id', $organizationId)->where(fn ($q) => $q->whereNull('asset_id')->orWhereNull('user_id')->orWhereNull('last_seen_at')->orWhere('last_seen_at', '<', now()->subHours(24))->orWhereNotNull('last_error'))->count(),
+        ];
+        $penalties = [
+            'Inventory coverage' => $stats['healthy_percent'] >= 80 ? 0 : ($stats['healthy_percent'] >= 60 ? 8 : 15),
+            'Normalization backlog' => $stats['normalized_percent'] >= 85 ? 0 : ($stats['normalized_percent'] >= 65 ? 8 : 15),
+            'Compliance risk' => min(20, $stats['risk_rows'] * 3),
+            'Overdue remediation' => min(15, $stats['overdue_actions'] * 5),
+            'Overdue renewals' => min(10, $stats['overdue_renewals'] * 4),
+            'Policy governance' => min(12, $stats['policy_gaps'] * 2),
+            'License evidence' => min(10, $stats['license_evidence_gaps'] * 2),
+            'Inventory data quality' => min(10, $stats['inventory_gaps'] * 2),
+        ];
+        $score = max(0, 100 - array_sum($penalties));
+        $label = $score >= 80 ? 'Healthy' : ($score >= 60 ? 'Needs Attention' : 'High Risk');
+
+        $this->csv($directory, '19-sam-health-score.csv', ['Measure', 'Value'], function ($handle) use ($score, $label, $stats, $penalties) {
+            fputcsv($handle, ['SAM Health Score', $score]);
+            fputcsv($handle, ['SAM Health Label', $label]);
+            foreach ($stats as $measure => $value) fputcsv($handle, [str_replace('_', ' ', ucfirst($measure)), $value]);
+            foreach ($penalties as $measure => $value) fputcsv($handle, [$measure.' penalty', $value]);
+        });
+    }
+
+
     private function csv(string $directory, string $filename, array $headers, Closure $writer): void
     {
         $handle = fopen($directory.DIRECTORY_SEPARATOR.$filename, 'wb');
@@ -720,6 +765,6 @@ class SamAuditReportController extends Controller
 
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation and renewal SLA files highlight open/planned work that is overdue or scheduled. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe SAM health score summarizes inventory coverage, normalization, compliance risk, SLA, policy, evidence, and data quality signals. The compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation and renewal SLA files highlight open/planned work that is overdue or scheduled. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }

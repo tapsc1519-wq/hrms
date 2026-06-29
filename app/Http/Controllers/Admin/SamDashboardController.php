@@ -289,9 +289,11 @@ class SamDashboardController extends Controller
                 ? (int) round(($stats['healthy_devices'] / $stats['devices']) * 100)
                 : 0,
         ];
+        $samHealth = $this->samHealth($stats, $coverage, $riskRows->count());
 
         return view('admin.sam-dashboard.index', compact(
             'stats',
+            'samHealth',
             'coverage',
             'normalizationGroups',
             'riskRows',
@@ -306,6 +308,28 @@ class SamDashboardController extends Controller
             'actionSlaRisks',
             'renewalSlaRisks'
         ));
+    }
+
+    private function samHealth(array $stats, array $coverage, int $riskRowCount): array
+    {
+        $penalties = [
+            'Inventory coverage' => $coverage['healthy_percent'] >= 80 ? 0 : ($coverage['healthy_percent'] >= 60 ? 8 : 15),
+            'Normalization backlog' => $coverage['normalized_percent'] >= 85 ? 0 : ($coverage['normalized_percent'] >= 65 ? 8 : 15),
+            'Compliance risk' => $riskRowCount === 0 ? 0 : min(20, $riskRowCount * 3),
+            'Overdue remediation' => min(15, $stats['overdue_actions'] * 5),
+            'Overdue renewals' => min(10, $stats['overdue_renewal_decisions'] * 4),
+            'Policy governance' => min(12, ($stats['unreviewed_policies'] + $stats['stale_policies'] + $stats['prohibited_installations']) * 2),
+            'License evidence' => min(10, $stats['licenses_missing_evidence'] * 2),
+            'Inventory data quality' => min(10, ($stats['unlinked_devices'] + $stats['unassigned_devices'] + $stats['devices_with_errors']) * 2),
+        ];
+        $score = max(0, 100 - array_sum($penalties));
+
+        return [
+            'score' => $score,
+            'label' => $score >= 80 ? 'Healthy' : ($score >= 60 ? 'Needs Attention' : 'High Risk'),
+            'badge' => $score >= 80 ? 'success' : ($score >= 60 ? 'warning' : 'danger'),
+            'penalties' => collect($penalties)->filter()->sortDesc(),
+        ];
     }
 
     private function riskRow(Software $software): array

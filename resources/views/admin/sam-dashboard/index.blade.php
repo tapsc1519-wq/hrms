@@ -30,6 +30,33 @@
     </div>
 </div>
 
+<div class="table-card mb-3">
+    <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <div class="text-muted small">SAM Health</div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="display-6 fw-bold mb-0">{{ $samHealth['score'] }}</span>
+                <span class="badge bg-{{ $samHealth['badge'] }}">{{ $samHealth['label'] }}</span>
+            </div>
+        </div>
+        <div class="flex-grow-1" style="min-width:240px;max-width:520px">
+            <div class="progress mb-2" style="height:8px">
+                <div class="progress-bar bg-{{ $samHealth['badge'] }}" style="width: {{ $samHealth['score'] }}%"></div>
+            </div>
+            <div class="text-muted small">
+                @if($samHealth['penalties']->isNotEmpty())
+                    Top concern: {{ $samHealth['penalties']->keys()->first() }} (-{{ $samHealth['penalties']->first() }})
+                @else
+                    No major SAM health concerns detected.
+                @endif
+            </div>
+        </div>
+        <a href="{{ route('admin.sam-audit.index') }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-file-earmark-zip me-1"></i>Audit Pack
+        </a>
+    </div>
+</div>
+
 <div class="row g-3 mb-3">
     @foreach([
         ['Inventory Coverage', $coverage['healthy_percent'].'%', 'grad-blue', $stats['healthy_devices'].' healthy of '.$stats['devices'].' enrolled devices'],
