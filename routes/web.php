@@ -240,6 +240,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::get('software-discovery/template', [SoftwareDiscoveryController::class, 'template'])->name('software-discovery.template');
     Route::get('software-normalization', [SoftwareDiscoveryController::class, 'workbench'])->name('software-normalization.index');
     Route::patch('software-normalization/map-group', [SoftwareDiscoveryController::class, 'normalizeGroup'])->name('software-normalization.map-group');
+    Route::post('software-normalization/create-and-map-group', [SoftwareDiscoveryController::class, 'createAndNormalizeGroup'])->name('software-normalization.create-and-map-group');
     Route::patch('software-normalization/ignore-group', [SoftwareDiscoveryController::class, 'ignoreGroup'])->name('software-normalization.ignore-group');
     Route::patch('software-discovery/{discovery}/normalize', [SoftwareDiscoveryController::class, 'normalize'])->name('software-discovery.normalize');
     Route::patch('software-discovery/{discovery}/ignore', [SoftwareDiscoveryController::class, 'ignore'])->name('software-discovery.ignore');

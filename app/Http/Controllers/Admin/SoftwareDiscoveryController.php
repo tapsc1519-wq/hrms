@@ -318,6 +318,71 @@ class SoftwareDiscoveryController extends Controller
         return back()->with('success', $updated.' matching '.str('installation')->plural($updated).' mapped to '.$software->name.'.');
     }
 
+    public function createAndNormalizeGroup(Request $request)
+    {
+        $data = $request->validate([
+            'raw_name' => ['required', 'string', 'max:255'],
+            'raw_publisher' => ['nullable', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
+            'vendor' => ['nullable', 'string', 'max:255'],
+            'category' => ['required', 'in:productivity,security,design,development,communication,database,erp,operating_system,other'],
+            'software_type' => ['required', 'in:commercial,saas,open_source,freeware,os'],
+            'license_required' => ['required', 'boolean'],
+            'criticality' => ['required', 'in:low,medium,high,critical'],
+            'license_metric' => ['required', 'in:per_user,per_device,concurrent,site,enterprise,usage_based'],
+            'confidence_score' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'create_rule' => ['nullable', 'boolean'],
+        ]);
+
+        $publisher = filled($data['raw_publisher'] ?? null) ? $data['raw_publisher'] : null;
+        $confidence = $data['confidence_score'] ?? 95;
+
+        $result = DB::transaction(function () use ($data, $publisher, $confidence) {
+            $software = Software::create([
+                'organization_id' => $this->orgId(),
+                'name' => $data['name'],
+                'vendor' => $data['vendor'] ?? null,
+                'category' => $data['category'],
+                'software_type' => $data['software_type'],
+                'license_required' => (bool) $data['license_required'],
+                'criticality' => $data['criticality'],
+                'license_metric' => $data['license_metric'],
+                'trusted_publisher' => false,
+                'endpoint_management_enabled' => false,
+                'policy_status' => 'unreviewed',
+            ]);
+
+            $updated = $this->signatureQuery($data['raw_name'], $publisher)
+                ->update([
+                    'software_id' => $software->id,
+                    'status' => 'mapped',
+                    'confidence_score' => $confidence,
+                    'reviewed_by' => auth()->id(),
+                    'reviewed_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+            if (! empty($data['create_rule'])) {
+                SoftwareRecognitionRule::firstOrCreate([
+                    'organization_id' => $this->orgId(),
+                    'software_id' => $software->id,
+                    'raw_name_pattern' => $data['raw_name'],
+                    'raw_publisher_pattern' => $publisher,
+                ], ['confidence_score' => $confidence, 'approved_by' => auth()->id()]);
+            }
+
+            return [$software, $updated];
+        });
+
+        $this->recognitionService->forgetOrganization($this->orgId());
+
+        [$software, $updated] = $result;
+
+        return redirect()
+            ->route('admin.software-normalization.index')
+            ->with('success', $software->name.' was added to the catalog and '.$updated.' matching '.str('installation')->plural($updated).' mapped.');
+    }
+
     public function ignoreGroup(Request $request)
     {
         $data = $request->validate([
