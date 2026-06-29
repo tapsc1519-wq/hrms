@@ -4,6 +4,46 @@
 @section('content')
 @php
     $riskBadge = $row['risk_level'] === 'high' ? 'danger' : ($row['risk_level'] === 'medium' ? 'warning' : 'success');
+    $recommendedActions = [];
+
+    if ($row['missing_seats'] > 0) {
+        $recommendedActions[] = [
+            'icon' => 'bi-cart-plus',
+            'badge' => 'danger',
+            'title' => 'Purchase missing seats',
+            'summary' => 'Create a purchase follow-up for '.$row['missing_seats'].' seat(s).',
+            'action_type' => 'purchase_license',
+            'quantity' => $row['missing_seats'],
+            'due_date' => today()->addDays(7)->toDateString(),
+            'notes' => 'Purchase '.$row['missing_seats'].' additional license seat(s) for '.$software->name.' based on the current SAM compliance gap.',
+        ];
+    }
+
+    if ($row['allocation_mismatch_count'] > 0 && $availableLicenses->isNotEmpty()) {
+        $recommendedActions[] = [
+            'icon' => 'bi-person-check',
+            'badge' => 'warning',
+            'title' => 'Allocate available licenses',
+            'summary' => 'Assign existing seats to '.$row['allocation_mismatch_count'].' discovered user(s).',
+            'action_type' => 'allocate_license',
+            'quantity' => $row['allocation_mismatch_count'],
+            'due_date' => today()->addDays(3)->toDateString(),
+            'notes' => 'Allocate available '.$software->name.' license seat(s) to discovered users missing allocation.',
+        ];
+    }
+
+    if ($row['policy_violation_count'] > 0) {
+        $recommendedActions[] = [
+            'icon' => 'bi-shield-exclamation',
+            'badge' => 'danger',
+            'title' => 'Review policy violations',
+            'summary' => 'Open remediation for '.$row['policy_violation_count'].' restricted/prohibited install(s).',
+            'action_type' => 'uninstall_reclaim',
+            'quantity' => $row['policy_violation_count'],
+            'due_date' => today()->addDays(5)->toDateString(),
+            'notes' => 'Review restricted/prohibited '.$software->name.' installations and either uninstall them or approve documented exceptions.',
+        ];
+    }
 @endphp
 
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
@@ -70,6 +110,43 @@
             Missing seats: <strong class="text-dark">{{ $row['missing_seats'] }}</strong>
             &middot; Estimated exposure: <strong class="text-dark">Rs {{ number_format($row['financial_exposure'], 2) }}</strong>
         </div>
+    </div>
+</div>
+
+<div class="table-card mb-3">
+    <div class="card-header bg-white border-0 px-4 pt-4 pb-0">
+        <h5 class="mb-1">Recommended Actions</h5>
+        <p class="text-muted small mb-0">One-click follow-up tasks generated from the current compliance position.</p>
+    </div>
+    <div class="list-group list-group-flush">
+        @forelse($recommendedActions as $quickAction)
+            <div class="list-group-item px-4 py-3 d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                <div class="d-flex align-items-start gap-3">
+                    <span class="badge bg-{{ $quickAction['badge'] }} rounded-circle p-2">
+                        <i class="bi {{ $quickAction['icon'] }}"></i>
+                    </span>
+                    <div>
+                        <div class="fw-bold">{{ $quickAction['title'] }}</div>
+                        <div class="text-muted small">{{ $quickAction['summary'] }}</div>
+                    </div>
+                </div>
+                <form method="POST" action="{{ route('admin.software-compliance.actions.store', $software) }}">
+                    @csrf
+                    <input type="hidden" name="action_type" value="{{ $quickAction['action_type'] }}">
+                    <input type="hidden" name="quantity" value="{{ $quickAction['quantity'] }}">
+                    <input type="hidden" name="due_date" value="{{ $quickAction['due_date'] }}">
+                    <input type="hidden" name="notes" value="{{ $quickAction['notes'] }}">
+                    <button class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Create Task
+                    </button>
+                </form>
+            </div>
+        @empty
+            <div class="list-group-item px-4 py-4 text-center text-muted">
+                <i class="bi bi-check2-circle fs-3 d-block mb-2 opacity-50"></i>
+                No urgent SAM remediation action is required for this software.
+            </div>
+        @endforelse
     </div>
 </div>
 
