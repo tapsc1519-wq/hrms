@@ -12,6 +12,12 @@
 
 <form method="POST" action="{{ route('admin.software.update', $software) }}" enctype="multipart/form-data">
 @csrf @method('PUT')
+@if($errors->any())
+    <div class="alert alert-danger">
+        <strong>Unable to save changes.</strong>
+        Please review the highlighted fields and try again.
+    </div>
+@endif
 <div class="row g-4">
     <div class="col-lg-8">
 
@@ -175,13 +181,10 @@
             </div>
             <div class="form-card-body">
                 <p class="text-muted small mb-3">Permanently delete this software and all associated licenses and assignments.</p>
-                <form method="POST" action="{{ route('admin.software.destroy', $software) }}"
-                      onsubmit="return confirm('Delete {{ addslashes($software->name) }}? This cannot be undone.')">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="btn btn-danger btn-sm w-100">
-                        <i class="bi bi-trash me-1"></i>Delete Software
-                    </button>
-                </form>
+                <button type="submit" form="deleteSoftwareForm" class="btn btn-danger btn-sm w-100"
+                        onclick="return confirm('Delete {{ addslashes($software->name) }}? This cannot be undone.')">
+                    <i class="bi bi-trash me-1"></i>Delete Software
+                </button>
             </div>
         </div>
 
@@ -194,6 +197,10 @@
         <i class="bi bi-check-lg"></i> Save Changes
     </button>
 </div>
+</form>
+
+<form id="deleteSoftwareForm" method="POST" action="{{ route('admin.software.destroy', $software) }}" class="d-none">
+    @csrf @method('DELETE')
 </form>
 @endsection
 
