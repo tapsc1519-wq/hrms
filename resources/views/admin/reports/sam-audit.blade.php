@@ -9,7 +9,8 @@
         ['Catalog Titles', $stats['catalog'], 'grad-blue', 'Normalized software register'],
         ['Active Installations', $stats['installations'], 'grad-purple', 'Current discovery evidence'],
         ['License Seats', $stats['license_seats'], 'grad-green', 'Active purchased entitlement'],
-        ['Open Actions', $stats['open_actions'], 'grad-orange', 'Remediation still in progress'],
+        ['Renewal Plans', $stats['renewal_plans'], 'grad-orange', 'Planned supplier or seat decisions'],
+        ['Open Actions', $stats['open_actions'], 'grad-red', 'Remediation still in progress'],
     ] as [$label,$value,$color,$sub])
     <div class="col-sm-6 col-xl-3"><div class="stat-card-gradient {{ $color }}"><div class="card-body"><div class="stat-label">{{ $label }}</div><div class="stat-number">{{ number_format($value) }}</div><div class="stat-sub">{{ $sub }}</div></div></div></div>
     @endforeach
@@ -34,6 +35,7 @@
             ['Recognition Rules','Approved rules used to normalize raw software evidence.'],
             ['Policy Exceptions','Time-bound approvals, reasons, conditions and revocation history.'],
             ['Remediation Actions','Compliance tasks, ownership, due dates, completion and audit notes.'],
+            ['Renewal Decisions','Renew, reduce, cancel, or review decisions with projected cost, ownership, completion, and updated renewal dates.'],
         ] as [$name,$description])<tr><td class="ps-4 fw-semibold">{{ $name }}</td><td class="text-muted">{{ $description }}</td></tr>@endforeach
     </tbody></table></div></div></div>
 </div>
