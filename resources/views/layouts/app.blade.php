@@ -592,12 +592,106 @@
         font-size: var(--font-sm);
         line-height: 1.3;
     }
-    #main-content nav[role="navigation"][aria-label*="Pagination"] svg,
-    #main-content nav[role="navigation"][aria-label*="pagination"] svg {
-        display: inline-block;
-        width: 1rem;
-        height: 1rem;
-        vertical-align: -.125em;
+    .ops-pagination {
+        align-items: center;
+        display: flex;
+        gap: .9rem;
+        justify-content: space-between;
+        width: 100%;
+    }
+    .ops-pagination-actions,
+    .ops-pagination-meta,
+    .ops-page-list {
+        align-items: center;
+        display: flex;
+        gap: .45rem;
+    }
+    .ops-pagination-actions { flex-shrink: 0; }
+    .ops-pagination-meta {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        min-width: 0;
+    }
+    .ops-pagination-summary {
+        color: #64748b;
+        font-size: var(--font-xs);
+        font-weight: 600;
+        margin-right: .35rem;
+        white-space: nowrap;
+    }
+    .ops-pagination-summary span {
+        color: #0f172a;
+        font-weight: 800;
+    }
+    .ops-page-step,
+    .ops-page-link {
+        align-items: center;
+        background: #fff;
+        border: 1px solid #dbe4f0;
+        color: #334155;
+        display: inline-flex;
+        font-size: var(--font-xs);
+        font-weight: 750;
+        justify-content: center;
+        min-height: 32px;
+        text-decoration: none;
+        transition: all .16s ease;
+    }
+    .ops-page-step {
+        border-radius: 8px;
+        gap: .3rem;
+        padding: .42rem .72rem;
+    }
+    .ops-page-link {
+        border-radius: 7px;
+        min-width: 32px;
+        padding: .38rem .58rem;
+    }
+    .ops-page-step i {
+        font-size: .72rem;
+        line-height: 1;
+    }
+    .ops-page-step:hover,
+    .ops-page-link:hover {
+        background: #eef6ff;
+        border-color: #bfdbfe;
+        color: #1d4ed8;
+        transform: translateY(-1px);
+    }
+    .ops-page-link.active {
+        background: #2563eb;
+        border-color: #2563eb;
+        box-shadow: 0 6px 14px rgba(37, 99, 235, .22);
+        color: #fff;
+    }
+    .ops-page-step.disabled,
+    .ops-page-link.disabled {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        box-shadow: none;
+        color: #94a3b8;
+        cursor: not-allowed;
+        transform: none;
+    }
+    @media (max-width: 767.98px) {
+        .ops-pagination {
+            align-items: stretch;
+            flex-direction: column;
+        }
+        .ops-pagination-actions,
+        .ops-pagination-meta {
+            justify-content: space-between;
+            width: 100%;
+        }
+        .ops-pagination-summary {
+            margin-right: 0;
+            white-space: normal;
+        }
+        .ops-page-list {
+            justify-content: flex-end;
+            overflow-x: auto;
+            padding-bottom: .12rem;
+        }
     }
     .payroll-component-item {
         padding-top: .8rem !important;

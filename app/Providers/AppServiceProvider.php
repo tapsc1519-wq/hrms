@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use SocialiteProviders\Manager\SocialiteWasCalled;
@@ -23,5 +24,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Event::listen(SocialiteWasCalled::class, MicrosoftExtendSocialite::class);
+        Paginator::defaultView('vendor.pagination.opsbridge');
+        Paginator::defaultSimpleView('vendor.pagination.opsbridge-simple');
     }
 }
