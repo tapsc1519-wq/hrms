@@ -941,7 +941,7 @@ class SamAuditReportController extends Controller
 
     private function writeManifest(string $directory, Carbon $generatedAt): void
     {
-        $this->csv($directory, '99-manifest.csv', ['File Name','Size Bytes','SHA-256','Generated At'], function ($handle) use ($directory, $generatedAt) {
+        $this->csv($directory, '99-manifest.csv', ['File Name','Size Bytes','Data Rows','SHA-256','Generated At'], function ($handle) use ($directory, $generatedAt) {
             collect(File::files($directory))
                 ->reject(fn ($file) => $file->getFilename() === '99-manifest.csv')
                 ->sortBy(fn ($file) => $file->getFilename())
@@ -949,6 +949,7 @@ class SamAuditReportController extends Controller
                     fputcsv($handle, [
                         $file->getFilename(),
                         $file->getSize(),
+                        $file->getExtension() === 'csv' ? $this->countCsvDataRows($file->getPathname()) : '',
                         hash_file('sha256', $file->getPathname()),
                         $generatedAt->toIso8601String(),
                     ]);
@@ -956,8 +957,22 @@ class SamAuditReportController extends Controller
         });
     }
 
+    private function countCsvDataRows(string $path): int
+    {
+        $file = new \SplFileObject($path, 'r');
+        $file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::SKIP_EMPTY);
+        $rows = 0;
+
+        foreach ($file as $row) {
+            if ($row === [null] || $row === false) continue;
+            $rows++;
+        }
+
+        return max(0, $rows - 1);
+    }
+
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe SAM health score summarizes inventory coverage, normalization, compliance risk, SLA, demand SLA, policy, evidence, and data quality signals. The compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period, with expiry status and days-to-expiry. Policy exception expiry highlights approvals that are expiring, expired, or revoked and the expected governance action. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation, renewal, and software request SLA files highlight open/planned work that is overdue, aging, or scheduled. Remediation, renewal, usage optimization, software request, software procurement, and software demand fulfillment decisions include open/planned items and items created during that period. Software demand fulfillment links employee requests to PO lines, receipts, generated licenses, and allocation outcomes. Inventory data quality highlights endpoint records that may affect SAM confidence. The manifest file lists every generated evidence file with byte size and SHA-256 hash for integrity checks. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe SAM health score summarizes inventory coverage, normalization, compliance risk, SLA, demand SLA, policy, evidence, and data quality signals. The compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period, with expiry status and days-to-expiry. Policy exception expiry highlights approvals that are expiring, expired, or revoked and the expected governance action. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation, renewal, and software request SLA files highlight open/planned work that is overdue, aging, or scheduled. Remediation, renewal, usage optimization, software request, software procurement, and software demand fulfillment decisions include open/planned items and items created during that period. Software demand fulfillment links employee requests to PO lines, receipts, generated licenses, and allocation outcomes. Inventory data quality highlights endpoint records that may affect SAM confidence. The manifest file lists every generated evidence file with byte size, CSV data row count, and SHA-256 hash for integrity checks. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }
