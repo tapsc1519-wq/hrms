@@ -93,18 +93,12 @@ class AgentSourceController extends Controller
 
     public function downloadWindowsPackage()
     {
-        $source = base_path('agent/windows');
-        abort_unless(File::isDirectory($source), 404, 'Windows agent package is not available.');
-        $tempDirectory = storage_path('app/temp');
-        File::ensureDirectoryExists($tempDirectory);
-        $zipPath = $tempDirectory . DIRECTORY_SEPARATOR . 'opsbridge-windows-agent-' . Str::uuid() . '.zip';
-        $zip = new ZipArchive();
-        abort_unless($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true, 500, 'Unable to build the agent package.');
-        foreach (['OpsBridge.Agent.ps1', 'install.ps1', 'uninstall.ps1', 'README.md'] as $file) {
-            $zip->addFile($source . DIRECTORY_SEPARATOR . $file, $file);
-        }
-        $zip->close();
-        return response()->download($zipPath, 'opsbridge-windows-agent.zip')->deleteFileAfterSend(true);
+        return $this->downloadAgentPackage('windows', ['OpsBridge.Agent.ps1', 'install.ps1', 'uninstall.ps1', 'README.md'], 'opsbridge-windows-agent.zip');
+    }
+
+    public function downloadUnixPackage()
+    {
+        return $this->downloadAgentPackage('unix', ['opsbridge_agent.py', 'install.sh', 'uninstall.sh', 'README.md'], 'opsbridge-macos-linux-agent.zip');
     }
 
     public function downloadWindowsInstaller()
@@ -286,5 +280,22 @@ class AgentSourceController extends Controller
         ]);
 
         return back()->with('success', "{$label} command queued. It will run after the endpoint's next secure check-in.");
+    }
+
+    private function downloadAgentPackage(string $platform, array $files, string $downloadName)
+    {
+        $source = base_path('agent/'.$platform);
+        abort_unless(File::isDirectory($source), 404, 'Agent package is not available.');
+        $tempDirectory = storage_path('app/temp');
+        File::ensureDirectoryExists($tempDirectory);
+        $zipPath = $tempDirectory . DIRECTORY_SEPARATOR . Str::beforeLast($downloadName, '.') . '-' . Str::uuid() . '.zip';
+        $zip = new ZipArchive();
+        abort_unless($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true, 500, 'Unable to build the agent package.');
+        foreach ($files as $file) {
+            $zip->addFile($source . DIRECTORY_SEPARATOR . $file, $file);
+        }
+        $zip->close();
+
+        return response()->download($zipPath, $downloadName)->deleteFileAfterSend(true);
     }
 }

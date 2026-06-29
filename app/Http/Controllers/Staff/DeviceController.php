@@ -8,6 +8,7 @@ use App\Models\DeviceAgent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use ZipArchive;
 
 class DeviceController extends Controller
 {
@@ -60,5 +61,22 @@ class DeviceController extends Controller
         return response()->download($installer, 'OpsBridge-Agent-Setup.exe', [
             'Content-Type' => 'application/vnd.microsoft.portable-executable',
         ]);
+    }
+
+    public function downloadUnixPackage()
+    {
+        $source = base_path('agent/unix');
+        abort_unless(File::isDirectory($source), 404, 'macOS/Linux agent package is not available.');
+        $tempDirectory = storage_path('app/temp');
+        File::ensureDirectoryExists($tempDirectory);
+        $zipPath = $tempDirectory . DIRECTORY_SEPARATOR . 'opsbridge-macos-linux-agent-' . Str::uuid() . '.zip';
+        $zip = new ZipArchive();
+        abort_unless($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true, 500, 'Unable to build the agent package.');
+        foreach (['opsbridge_agent.py', 'install.sh', 'uninstall.sh', 'README.md'] as $file) {
+            $zip->addFile($source . DIRECTORY_SEPARATOR . $file, $file);
+        }
+        $zip->close();
+
+        return response()->download($zipPath, 'opsbridge-macos-linux-agent.zip')->deleteFileAfterSend(true);
     }
 }

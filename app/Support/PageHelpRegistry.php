@@ -265,10 +265,10 @@ class PageHelpRegistry
             ],
             'staff.devices.*' => [
                 'title' => 'My Device Help',
-                'what' => 'My Device lets employees install the Windows device agent from their own account so IT can automatically link the reported device to the correct employee.',
+                'what' => 'My Device lets employees install the Windows, macOS, or Linux device agent from their own account so IT can automatically link the reported device to the correct employee.',
                 'how' => [
                     'Create a setup token from this page and copy it immediately.',
-                    'Download and run the Windows installer on your company device.',
+                    'Download and run the correct agent package for your company device.',
                     'Paste the API endpoint and setup token during installation.',
                     'After the first check-in, confirm your device appears under My Reported Devices.',
                 ],
@@ -278,7 +278,8 @@ class PageHelpRegistry
                     'My Reported Devices' => 'Devices that checked in using your employee-bound token or are otherwise linked to your account.',
                 ],
                 'actions' => [
-                    'Download Agent' => 'Downloads the Windows installer for this portal.',
+                    'Windows Agent' => 'Downloads the Windows installer for this portal.',
+                    'macOS/Linux Agent' => 'Downloads the Python-based macOS and Linux package for this portal.',
                     'Create Setup Token' => 'Creates a 24-hour one-time enrollment token linked to your employee account.',
                     'Copy' => 'Copies the endpoint or setup token for pasting into the installer.',
                 ],
@@ -310,19 +311,20 @@ class PageHelpRegistry
                 'how' => [
                     'Filter Healthy, Stale, or Offline devices and resolve computers that are not linked to an asset or employee.',
                     'Select devices and queue a signed inventory refresh when current data is required.',
-                    'Download the Windows installer and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
+                    'Download the Windows installer or macOS/Linux package and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
                       'Review the agent version before relying on newly introduced collection features.',
                       'Open a device to install or remove approved WinGet packages, lock its active session, or schedule a restart.',
                 ],
                 'sections' => [
-                    'Endpoint list' => 'Shows enrolled Windows devices, health, version, last seen, asset link, employee link, and inventory count.',
+                    'Endpoint list' => 'Shows enrolled Windows, macOS, and Linux devices, health, version, last seen, asset link, employee link, and inventory count.',
                     'Endpoint actions' => 'On a device page, this area contains lock, restart, inventory refresh, software install, and software remove controls.',
                     'Managed Software' => 'Lists only catalog software with endpoint deployment enabled and a WinGet Package ID.',
                     'Signed Command History' => 'Shows queued, delivered, executed, completed, failed, cancelled, or expired commands with result messages.',
                     'Software Inventory' => 'Shows software discovered on that device and whether each record is mapped to the catalog.',
                 ],
                 'actions' => [
-                    'Download Windows Installer' => 'Downloads the installer used to enroll Windows devices into this portal.',
+                    'Windows Installer' => 'Downloads the installer used to enroll Windows devices into this portal.',
+                    'macOS/Linux Package' => 'Downloads the Python-based package used to enroll macOS and Linux devices into this portal.',
                     'Create Enrollment Token' => 'Creates a short-lived setup token for agent installation.',
                     'Refresh Selected' => 'Queues inventory refresh commands for selected devices.',
                     'Link' => 'Connects a reported endpoint to the correct asset and employee.',
@@ -336,7 +338,7 @@ class PageHelpRegistry
                     [
                         'target' => 'endpoint-installer-actions',
                         'title' => 'Installer and Enrollment',
-                        'body' => 'Use these actions to download the Windows agent package and create enrollment tokens for new device setup.',
+                        'body' => 'Use these actions to download the correct agent package and create enrollment tokens for new device setup.',
                     ],
                     [
                         'target' => 'endpoint-health-summary',
@@ -372,12 +374,12 @@ class PageHelpRegistry
                 'how' => [
                     'Filter Healthy, Stale, or Offline devices and resolve computers that are not linked to an asset or employee.',
                     'Select devices and queue a signed inventory refresh when current data is required.',
-                    'Download the Windows installer and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
+                    'Download the Windows installer or macOS/Linux package and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
                       'Review the agent version before relying on newly introduced collection features.',
                       'Open a device to install or remove approved WinGet packages, lock its active session, or schedule a restart.',
                 ],
                 'sections' => [
-                    'Endpoint list' => 'Shows enrolled Windows devices, health, version, last seen, asset link, employee link, and inventory count.',
+                    'Endpoint list' => 'Shows enrolled Windows, macOS, and Linux devices, health, version, last seen, asset link, employee link, and inventory count.',
                     'Endpoint actions' => 'On a device page, this area contains lock, restart, inventory refresh, software install, and software remove controls.',
                     'Managed Software' => 'Lists only catalog software with endpoint deployment enabled and a WinGet Package ID.',
                     'Signed Command History' => 'Shows queued, delivered, executed, completed, failed, cancelled, or expired commands with result messages.',
