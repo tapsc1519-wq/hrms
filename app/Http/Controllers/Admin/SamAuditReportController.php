@@ -131,6 +131,7 @@ class SamAuditReportController extends Controller
             $this->writeSoftwareRequestSla($directory, $organizationId);
             $this->writePolicyExceptionExpiry($directory, $organizationId);
             File::put($directory.DIRECTORY_SEPARATOR.'README.txt', $this->readme($organization, $activityFrom, $includeRemoved, $generatedAt));
+            $this->writeMetadata($directory, $organization, $activityFrom, $includeRemoved, $generatedAt, $identifier);
             $this->writeManifest($directory, $generatedAt);
 
             $zip = new ZipArchive();
@@ -957,6 +958,42 @@ class SamAuditReportController extends Controller
         });
     }
 
+    private function writeMetadata(string $directory, Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt, string $identifier): void
+    {
+        $user = auth()->user();
+        $metadata = [
+            'package' => [
+                'type' => 'sam_audit_pack',
+                'identifier' => $identifier,
+                'generated_at' => $generatedAt->toIso8601String(),
+                'timezone' => config('app.timezone'),
+            ],
+            'organization' => [
+                'id' => $organization->id,
+                'name' => $organization->name,
+                'email' => $organization->email,
+            ],
+            'filters' => [
+                'activity_from' => $activityFrom->toDateString(),
+                'include_removed_installations' => $includeRemoved,
+            ],
+            'generated_by' => [
+                'id' => $user?->id,
+                'name' => $user?->name,
+                'email' => $user?->email,
+            ],
+            'integrity' => [
+                'manifest_file' => '99-manifest.csv',
+                'hash_algorithm' => 'SHA-256',
+            ],
+        ];
+
+        File::put(
+            $directory.DIRECTORY_SEPARATOR.'98-metadata.json',
+            json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL
+        );
+    }
+
     private function countCsvDataRows(string $path): int
     {
         $file = new \SplFileObject($path, 'r');
@@ -973,6 +1010,6 @@ class SamAuditReportController extends Controller
 
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe SAM health score summarizes inventory coverage, normalization, compliance risk, SLA, demand SLA, policy, evidence, and data quality signals. The compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period, with expiry status and days-to-expiry. Policy exception expiry highlights approvals that are expiring, expired, or revoked and the expected governance action. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation, renewal, and software request SLA files highlight open/planned work that is overdue, aging, or scheduled. Remediation, renewal, usage optimization, software request, software procurement, and software demand fulfillment decisions include open/planned items and items created during that period. Software demand fulfillment links employee requests to PO lines, receipts, generated licenses, and allocation outcomes. Inventory data quality highlights endpoint records that may affect SAM confidence. The manifest file lists every generated evidence file with byte size, CSV data row count, and SHA-256 hash for integrity checks. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe SAM health score summarizes inventory coverage, normalization, compliance risk, SLA, demand SLA, policy, evidence, and data quality signals. The compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period, with expiry status and days-to-expiry. Policy exception expiry highlights approvals that are expiring, expired, or revoked and the expected governance action. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation, renewal, and software request SLA files highlight open/planned work that is overdue, aging, or scheduled. Remediation, renewal, usage optimization, software request, software procurement, and software demand fulfillment decisions include open/planned items and items created during that period. Software demand fulfillment links employee requests to PO lines, receipts, generated licenses, and allocation outcomes. Inventory data quality highlights endpoint records that may affect SAM confidence. The metadata file records the package identifier, organization, filters, generator and hash algorithm. The manifest file lists every generated evidence file with byte size, CSV data row count, and SHA-256 hash for integrity checks. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }
