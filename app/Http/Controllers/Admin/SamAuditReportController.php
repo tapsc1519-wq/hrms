@@ -254,9 +254,9 @@ class SamAuditReportController extends Controller
 
     private function writePolicyExceptions(string $directory, int $organizationId, Carbon $activityFrom): void
     {
-        $this->csv($directory, '08-policy-exceptions.csv', ['Exception ID','Software','Discovery ID','Employee Code','Employee','Asset Tag','Valid From','Expires At','Status','Expiry Status','Days To Expiry','Reason','Conditions','Approved By','Revoked By','Revoked At','Created At'], function ($handle) use ($organizationId, $activityFrom) {
-            SoftwarePolicyException::where('organization_id', $organizationId)->where(fn ($q) => $q->where('created_at','>=',$activityFrom)->orWhere('expires_at','>=',today()))->with(['software','user','asset','approvedBy','revokedBy'])->orderBy('id')->chunkById(500, function ($items) use ($handle) {
-                foreach ($items as $item) fputcsv($handle, [$item->id,$item->software?->name,$item->software_discovery_id,$item->user?->employee_id,$item->user?->name,$item->asset?->asset_tag,$item->valid_from->toDateString(),$item->expires_at->toDateString(),$item->status_label,$item->expiry_label,$item->days_to_expiry,$item->reason,$item->conditions,$item->approvedBy?->name,$item->revokedBy?->name,$item->revoked_at?->toIso8601String(),$item->created_at->toIso8601String()]);
+        $this->csv($directory, '08-policy-exceptions.csv', ['Exception ID','Software','Discovery ID','Employee Code','Employee','Asset Tag','Valid From','Expires At','Status','Expiry Status','Days To Expiry','Reason','Conditions','Approved By','Revoked By','Revoked At','Created At','Updated At'], function ($handle) use ($organizationId, $activityFrom) {
+            SoftwarePolicyException::where('organization_id', $organizationId)->where(fn ($q) => $q->where('created_at','>=',$activityFrom)->orWhere('updated_at','>=',$activityFrom)->orWhere('expires_at','>=',today()))->with(['software','user','asset','approvedBy','revokedBy'])->orderBy('id')->chunkById(500, function ($items) use ($handle) {
+                foreach ($items as $item) fputcsv($handle, [$item->id,$item->software?->name,$item->software_discovery_id,$item->user?->employee_id,$item->user?->name,$item->asset?->asset_tag,$item->valid_from->toDateString(),$item->expires_at->toDateString(),$item->status_label,$item->expiry_label,$item->days_to_expiry,$item->reason,$item->conditions,$item->approvedBy?->name,$item->revokedBy?->name,$item->revoked_at?->toIso8601String(),$item->created_at->toIso8601String(),$item->updated_at?->toIso8601String()]);
             });
         });
     }
@@ -772,13 +772,14 @@ class SamAuditReportController extends Controller
 
     private function writePolicyExceptionExpiry(string $directory, int $organizationId): void
     {
-        $headers = ['Exception ID','Software','Publisher','Employee Code','Employee','Email','Asset Tag','Discovery ID','Valid From','Expires At','Expiry Status','Days To Expiry','Approval Status','Approved By','Revoked By','Revoked At','Reason','Conditions','Governance Action'];
+        $headers = ['Exception ID','Software','Publisher','Employee Code','Employee','Email','Asset Tag','Discovery ID','Valid From','Expires At','Expiry Status','Days To Expiry','Approval Status','Approved By','Revoked By','Revoked At','Reason','Conditions','Governance Action','Created At','Updated At'];
 
         $this->csv($directory, '22-policy-exception-expiry.csv', $headers, function ($handle) use ($organizationId) {
             SoftwarePolicyException::where('organization_id', $organizationId)
                 ->where(fn ($query) => $query
                     ->where('expires_at', '<=', today()->addDays(14))
-                    ->orWhere('status', 'revoked'))
+                    ->orWhere('status', 'revoked')
+                    ->orWhere('updated_at', '>=', now()->subDays(30)))
                 ->with(['software', 'user', 'asset', 'approvedBy', 'revokedBy'])
                 ->orderBy('expires_at')
                 ->chunkById(500, function ($items) use ($handle) {
@@ -810,6 +811,8 @@ class SamAuditReportController extends Controller
                             $item->reason,
                             $item->conditions,
                             $governanceAction,
+                            $item->created_at?->toIso8601String(),
+                            $item->updated_at?->toIso8601String(),
                         ]);
                     }
                 });
