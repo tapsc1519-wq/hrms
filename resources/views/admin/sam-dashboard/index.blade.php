@@ -418,11 +418,11 @@
         <div class="table-card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span class="fw-semibold">Policy Exception Watch</span>
-                <a href="{{ route('admin.software-compliance.index', ['exception_risk' => 'expiring']) }}" class="btn btn-sm btn-outline-primary">Compliance</a>
+                <a href="{{ route('admin.software-compliance.index', ['exception_risk' => $stats['expired_policy_exceptions'] > 0 ? 'expired' : 'expiring']) }}" class="btn btn-sm btn-outline-primary">Compliance</a>
             </div>
             <div class="card-body border-bottom">
-                <div class="d-flex justify-content-between text-muted small mb-2"><span>Expiring in 14 days</span><strong class="text-dark">{{ $stats['policy_exceptions_expiring'] }}</strong></div>
-                <div class="d-flex justify-content-between text-muted small"><span>Expired but not revoked</span><strong class="{{ $stats['expired_policy_exceptions'] > 0 ? 'text-danger' : 'text-dark' }}">{{ $stats['expired_policy_exceptions'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Expiring in 14 days</span><a href="{{ route('admin.software-compliance.index', ['exception_risk' => 'expiring']) }}" class="fw-bold text-decoration-none {{ $stats['policy_exceptions_expiring'] > 0 ? 'text-warning' : 'text-dark' }}">{{ $stats['policy_exceptions_expiring'] }}</a></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Expired but not revoked</span><a href="{{ route('admin.software-compliance.index', ['exception_risk' => 'expired']) }}" class="fw-bold text-decoration-none {{ $stats['expired_policy_exceptions'] > 0 ? 'text-danger' : 'text-dark' }}">{{ $stats['expired_policy_exceptions'] }}</a></div>
             </div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
