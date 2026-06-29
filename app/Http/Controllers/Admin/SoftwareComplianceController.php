@@ -50,6 +50,20 @@ class SoftwareComplianceController extends Controller
             $rows = $rows->filter(fn (array $row) => $row['status'] === $request->string('status')->toString())->values();
         }
 
+        if (in_array($request->string('exception_risk')->toString(), ['expired', 'expiring'], true)) {
+            $exceptionQuery = SoftwarePolicyException::where('organization_id', $organizationId)
+                ->where('status', 'approved');
+
+            match ($request->string('exception_risk')->toString()) {
+                'expired' => $exceptionQuery->where('expires_at', '<', today()),
+                'expiring' => $exceptionQuery->whereBetween('expires_at', [today(), today()->addDays(14)]),
+                default => null,
+            };
+
+            $softwareIds = $exceptionQuery->pluck('software_id')->unique();
+            $rows = $rows->filter(fn (array $row) => $softwareIds->contains($row['software']->id))->values();
+        }
+
         $unknownDiscoveryCount = SoftwareDiscovery::where('organization_id', $organizationId)
             ->where('status', 'unknown')
             ->where('is_installed', true)

@@ -418,7 +418,7 @@
         <div class="table-card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span class="fw-semibold">Policy Exception Watch</span>
-                <a href="{{ route('admin.software-compliance.index', ['status' => 'prohibited']) }}" class="btn btn-sm btn-outline-primary">Compliance</a>
+                <a href="{{ route('admin.software-compliance.index', ['exception_risk' => 'expiring']) }}" class="btn btn-sm btn-outline-primary">Compliance</a>
             </div>
             <div class="card-body border-bottom">
                 <div class="d-flex justify-content-between text-muted small mb-2"><span>Expiring in 14 days</span><strong class="text-dark">{{ $stats['policy_exceptions_expiring'] }}</strong></div>

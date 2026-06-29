@@ -40,7 +40,7 @@
 <div class="table-card mb-3">
     <div class="card-body">
         <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-5">
+            <div class="col-md-4">
                 <label class="form-label">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Software, vendor or edition">
             </div>
@@ -53,10 +53,18 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-md-3">
+                <label class="form-label">Exception Risk</label>
+                <select name="exception_risk" class="form-select">
+                    <option value="">All exceptions</option>
+                    <option value="expiring" @selected(request('exception_risk') === 'expiring')>Expiring in 14 days</option>
+                    <option value="expired" @selected(request('exception_risk') === 'expired')>Expired not revoked</option>
+                </select>
+            </div>
             <div class="col-md-2">
                 <button class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i>Filter</button>
             </div>
-            @if(request()->hasAny(['search','status']))
+            @if(request()->hasAny(['search','status','exception_risk']))
             <div class="col-md-2">
                 <a href="{{ route('admin.software-compliance.index') }}" class="btn btn-outline-secondary w-100"><i class="bi bi-x-lg me-1"></i>Clear</a>
             </div>
