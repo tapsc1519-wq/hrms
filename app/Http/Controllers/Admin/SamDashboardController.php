@@ -8,6 +8,7 @@ use App\Models\Software;
 use App\Models\SoftwareComplianceAction;
 use App\Models\SoftwareDiscovery;
 use App\Models\SoftwareLicense;
+use App\Models\SoftwareRequest;
 use App\Models\SoftwareRenewalDecision;
 use App\Models\SoftwareUsageReview;
 
@@ -35,6 +36,16 @@ class SamDashboardController extends Controller
             'unknown_records' => (clone $discoveryBase)->where('status', 'unknown')->count(),
             'mapped_records' => (clone $discoveryBase)->where('status', 'mapped')->count(),
             'catalog_items' => Software::where('organization_id', $organizationId)->count(),
+            'pending_requests' => SoftwareRequest::where('organization_id', $organizationId)
+                ->where('status', 'pending')
+                ->count(),
+            'approved_requests' => SoftwareRequest::where('organization_id', $organizationId)
+                ->where('status', 'approved')
+                ->count(),
+            'urgent_requests' => SoftwareRequest::where('organization_id', $organizationId)
+                ->whereIn('status', ['pending', 'approved'])
+                ->whereIn('urgency', ['high', 'critical'])
+                ->count(),
             'active_licenses' => SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->count(),
             'expiring_licenses' => SoftwareLicense::where('organization_id', $organizationId)
                 ->where('status', 'active')
@@ -126,6 +137,16 @@ class SamDashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $softwareRequests = SoftwareRequest::where('organization_id', $organizationId)
+            ->whereIn('status', ['pending', 'approved'])
+            ->with(['requester.department', 'software', 'purchaseOrderItem.purchaseOrder'])
+            ->orderByRaw("CASE WHEN urgency = 'critical' THEN 0 WHEN urgency = 'high' THEN 1 ELSE 2 END")
+            ->orderByRaw('CASE WHEN needed_by IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('needed_by')
+            ->latest('id')
+            ->limit(8)
+            ->get();
+
         $coverage = [
             'normalized_percent' => $stats['installed_records'] > 0
                 ? (int) round(($stats['mapped_records'] / $stats['installed_records']) * 100)
@@ -142,7 +163,8 @@ class SamDashboardController extends Controller
             'riskRows',
             'renewals',
             'openActions',
-            'usageReviews'
+            'usageReviews',
+            'softwareRequests'
         ));
     }
 

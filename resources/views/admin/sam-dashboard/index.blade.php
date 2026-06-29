@@ -35,7 +35,7 @@
         ['Inventory Coverage', $coverage['healthy_percent'].'%', 'grad-blue', $stats['healthy_devices'].' healthy of '.$stats['devices'].' enrolled devices'],
         ['Normalization', $coverage['normalized_percent'].'%', 'grad-green', $stats['mapped_records'].' mapped of '.$stats['installed_records'].' installed records'],
         ['Unknown Software', $stats['unknown_records'], 'grad-orange', 'Records waiting for review'],
-        ['Open SAM Actions', $stats['open_actions'], 'grad-red', 'Compliance tasks still open'],
+        ['Open Demand', $stats['pending_requests'] + $stats['approved_requests'], 'grad-red', $stats['urgent_requests'].' urgent software requests'],
     ] as [$label, $value, $color, $sub])
     <div class="col-sm-6 col-xl-3">
         <div class="stat-card-gradient {{ $color }}"><div class="card-body">
@@ -235,6 +235,42 @@
                         </tr>
                         @empty
                         <tr><td colspan="4" class="text-center text-muted py-4">No usage optimization reviews yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Software Demand</span>
+                <a href="{{ route('admin.software-requests.index', ['status' => 'approved']) }}" class="btn btn-sm btn-outline-primary">Requests</a>
+            </div>
+            <div class="card-body border-bottom">
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Pending review</span><strong class="text-dark">{{ $stats['pending_requests'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Approved awaiting allocation or PO</span><strong class="text-dark">{{ $stats['approved_requests'] }}</strong></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th class="ps-4">Employee</th><th>Software</th><th>Status</th><th class="text-end pe-4">Need</th></tr></thead>
+                    <tbody>
+                        @forelse($softwareRequests as $softwareRequest)
+                        <tr>
+                            <td class="ps-4"><div class="fw-bold">{{ $softwareRequest->requester?->name ?? 'Unknown employee' }}</div><div class="text-muted small">{{ $softwareRequest->requester?->department?->name ?? $softwareRequest->requester?->employee_id ?? 'No department' }}</div></td>
+                            <td><div class="fw-bold">{{ $softwareRequest->software?->name ?? 'Unknown software' }}</div><div class="text-muted small">{{ $softwareRequest->software?->vendor ?: 'Unknown publisher' }}</div></td>
+                            <td><span class="badge bg-{{ $softwareRequest->status_badge }}">{{ $softwareRequest->status_label }}</span><div class="text-muted small">{{ ucfirst($softwareRequest->urgency) }} priority</div></td>
+                            <td class="text-end pe-4">
+                                <div>{{ $softwareRequest->needed_by?->format('d-m-Y') ?? 'No date' }}</div>
+                                @if($softwareRequest->purchaseOrderItem)
+                                    <div class="text-muted small">{{ $softwareRequest->purchaseOrderItem->purchaseOrder?->po_number ?? 'PO linked' }}</div>
+                                @elseif($softwareRequest->status === 'approved')
+                                    <div class="text-warning small">Needs allocation / PO</div>
+                                @endif
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="text-center text-muted py-4">No pending or approved software demand.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
