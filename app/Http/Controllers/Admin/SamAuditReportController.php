@@ -55,6 +55,11 @@ class SamAuditReportController extends Controller
                     ->orWhereNull('po_number')
                     ->orWhereNull('vendor_id'))
                 ->count(),
+            'overdue_actions' => SoftwareComplianceAction::where('organization_id', $organizationId)
+                ->where('status', 'open')
+                ->whereNotNull('due_date')
+                ->where('due_date', '<', now()->toDateString())
+                ->count(),
             'software_requests' => SoftwareRequest::where('organization_id', $organizationId)
                 ->whereIn('status', ['pending', 'approved'])
                 ->count(),
@@ -105,6 +110,7 @@ class SamAuditReportController extends Controller
             $this->writeInventoryQuality($directory, $organizationId);
             $this->writePolicyGovernance($directory, $organizationId);
             $this->writeLicenseEvidenceQuality($directory, $organizationId);
+            $this->writeRemediationSla($directory, $organizationId);
             File::put($directory.DIRECTORY_SEPARATOR.'README.txt', $this->readme($organization, $activityFrom, $includeRemoved, $generatedAt));
 
             $zip = new ZipArchive();
@@ -146,6 +152,7 @@ class SamAuditReportController extends Controller
             ['Planned Renewal Decisions', SoftwareRenewalDecision::where('organization_id', $organizationId)->where('status', 'planned')->count()],
             ['Usage Optimization Reviews', SoftwareUsageReview::where('organization_id', $organizationId)->count()],
             ['Open Remediation Actions', SoftwareComplianceAction::where('organization_id', $organizationId)->where('status', 'open')->count()],
+            ['Overdue Remediation Actions', SoftwareComplianceAction::where('organization_id', $organizationId)->where('status', 'open')->whereNotNull('due_date')->where('due_date', '<', now()->toDateString())->count()],
         ];
         $this->csv($directory, '00-summary.csv', ['Measure', 'Value'], fn ($handle) => collect($rows)->each(fn ($row) => fputcsv($handle, $row)));
     }
@@ -553,6 +560,44 @@ class SamAuditReportController extends Controller
         });
     }
 
+    private function writeRemediationSla(string $directory, int $organizationId): void
+    {
+        $headers = ['Action ID','Software','Action','Status','Owner','Due Date','SLA Status','Days Overdue','Quantity','Created By','Created At','Notes'];
+
+        $this->csv($directory, '17-remediation-sla.csv', $headers, function ($handle) use ($organizationId) {
+            SoftwareComplianceAction::where('organization_id', $organizationId)
+                ->where('status', 'open')
+                ->whereNotNull('due_date')
+                ->with(['software', 'owner', 'createdBy'])
+                ->orderBy('due_date')
+                ->chunkById(500, function ($items) use ($handle) {
+                    foreach ($items as $item) {
+                        $slaStatus = match (true) {
+                            $item->due_date->lt(today()) => 'Overdue',
+                            $item->due_date->lte(today()->addDays(7)) => 'Due in 7 days',
+                            default => 'Scheduled',
+                        };
+                        $daysOverdue = $item->due_date->lt(today()) ? $item->due_date->diffInDays(today()) : 0;
+
+                        fputcsv($handle, [
+                            $item->id,
+                            $item->software?->name,
+                            $item->action_type_label,
+                            $item->status,
+                            $item->owner?->name,
+                            $item->due_date?->toDateString(),
+                            $slaStatus,
+                            $daysOverdue,
+                            $item->quantity,
+                            $item->createdBy?->name,
+                            $item->created_at->toIso8601String(),
+                            $item->notes,
+                        ]);
+                    }
+                });
+        });
+    }
+
     private function csv(string $directory, string $filename, array $headers, Closure $writer): void
     {
         $handle = fopen($directory.DIRECTORY_SEPARATOR.$filename, 'wb');
@@ -625,6 +670,6 @@ class SamAuditReportController extends Controller
 
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation SLA highlights open actions that are overdue or scheduled. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }

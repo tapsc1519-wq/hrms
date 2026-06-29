@@ -112,6 +112,15 @@ class SamDashboardController extends Controller
                 ->where('status', 'reclaimed')
                 ->sum('estimated_annual_savings'),
             'open_actions' => SoftwareComplianceAction::where('organization_id', $organizationId)->where('status', 'open')->count(),
+            'overdue_actions' => SoftwareComplianceAction::where('organization_id', $organizationId)
+                ->where('status', 'open')
+                ->whereNotNull('due_date')
+                ->where('due_date', '<', $now->toDateString())
+                ->count(),
+            'actions_due_soon' => SoftwareComplianceAction::where('organization_id', $organizationId)
+                ->where('status', 'open')
+                ->whereBetween('due_date', [$now->toDateString(), $now->copy()->addDays(7)->toDateString()])
+                ->count(),
         ];
 
         $normalizationGroups = SoftwareDiscovery::where('organization_id', $organizationId)
@@ -245,6 +254,15 @@ class SamDashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $actionSlaRisks = SoftwareComplianceAction::where('organization_id', $organizationId)
+            ->where('status', 'open')
+            ->whereNotNull('due_date')
+            ->with(['software', 'owner'])
+            ->orderBy('due_date')
+            ->latest('id')
+            ->limit(8)
+            ->get();
+
         $coverage = [
             'normalized_percent' => $stats['installed_records'] > 0
                 ? (int) round(($stats['mapped_records'] / $stats['installed_records']) * 100)
@@ -266,7 +284,8 @@ class SamDashboardController extends Controller
             'softwareProcurement',
             'inventoryGaps',
             'policyGaps',
-            'licenseEvidenceGaps'
+            'licenseEvidenceGaps',
+            'actionSlaRisks'
         ));
     }
 

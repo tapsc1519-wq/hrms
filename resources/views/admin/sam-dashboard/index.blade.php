@@ -423,5 +423,37 @@
             </div>
         </div>
     </div>
+    <div class="col-xl-6">
+        <div class="table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Remediation SLA</span>
+                <a href="{{ route('admin.software-compliance.index') }}" class="btn btn-sm btn-outline-primary">Compliance</a>
+            </div>
+            <div class="card-body border-bottom">
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Overdue open actions</span><strong class="text-dark">{{ $stats['overdue_actions'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Due in next 7 days</span><strong class="text-dark">{{ $stats['actions_due_soon'] }}</strong></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th class="ps-4">Action</th><th>Owner</th><th>SLA</th><th class="text-end pe-4">Due</th></tr></thead>
+                    <tbody>
+                        @forelse($actionSlaRisks as $action)
+                        @php
+                            $isOverdue = $action->due_date && $action->due_date->isPast() && !$action->due_date->isToday();
+                        @endphp
+                        <tr>
+                            <td class="ps-4"><div class="fw-bold">{{ $action->action_type_label }}</div><div class="text-muted small">{{ $action->software?->name ?? 'Unknown software' }}</div></td>
+                            <td>{{ $action->owner?->name ?? 'Unassigned' }}</td>
+                            <td><span class="badge bg-{{ $isOverdue ? 'danger' : 'warning text-dark' }}">{{ $isOverdue ? 'Overdue' : 'Due Soon' }}</span></td>
+                            <td class="text-end pe-4">{{ $action->due_date?->format('d-m-Y') ?? '-' }}</td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="text-center text-muted py-4">No open remediation actions with due dates.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
