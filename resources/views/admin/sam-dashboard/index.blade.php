@@ -392,7 +392,8 @@
             <div class="card-body border-bottom">
                 <div class="d-flex justify-content-between text-muted small mb-2"><span>Unreviewed policies</span><strong class="text-dark">{{ $stats['unreviewed_policies'] }}</strong></div>
                 <div class="d-flex justify-content-between text-muted small mb-2"><span>Stale policy reviews</span><strong class="text-dark">{{ $stats['stale_policies'] }}</strong></div>
-                <div class="d-flex justify-content-between text-muted small"><span>Active exceptions / prohibited installs</span><strong class="text-dark">{{ $stats['active_policy_exceptions'] }} / {{ $stats['prohibited_installations'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Active exceptions / prohibited installs</span><strong class="text-dark">{{ $stats['active_policy_exceptions'] }} / {{ $stats['prohibited_installations'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Exception expiry risk</span><strong class="{{ ($stats['policy_exceptions_expiring'] + $stats['expired_policy_exceptions']) > 0 ? 'text-danger' : 'text-dark' }}">{{ $stats['policy_exceptions_expiring'] }} soon, {{ $stats['expired_policy_exceptions'] }} expired</strong></div>
             </div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
@@ -407,6 +408,35 @@
                         </tr>
                         @empty
                         <tr><td colspan="4" class="text-center text-muted py-4">No policy governance gaps found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Policy Exception Watch</span>
+                <a href="{{ route('admin.software-compliance.index', ['status' => 'prohibited']) }}" class="btn btn-sm btn-outline-primary">Compliance</a>
+            </div>
+            <div class="card-body border-bottom">
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Expiring in 14 days</span><strong class="text-dark">{{ $stats['policy_exceptions_expiring'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Expired but not revoked</span><strong class="{{ $stats['expired_policy_exceptions'] > 0 ? 'text-danger' : 'text-dark' }}">{{ $stats['expired_policy_exceptions'] }}</strong></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th class="ps-4">Software</th><th>Target</th><th>Status</th><th class="text-end pe-4">Expires</th></tr></thead>
+                    <tbody>
+                        @forelse($policyExceptionRisks as $exception)
+                        <tr>
+                            <td class="ps-4"><a href="{{ route('admin.software-compliance.show', $exception->software) }}" class="fw-bold text-decoration-none">{{ $exception->software?->name ?? 'Unknown software' }}</a><div class="text-muted small">{{ $exception->software?->vendor ?: 'Unknown publisher' }}</div></td>
+                            <td><div>{{ $exception->user?->name ?? 'No user mapped' }}</div><div class="text-muted small">{{ $exception->asset?->asset_tag ?? $exception->discovery?->raw_name ?? 'No device mapped' }}</div></td>
+                            <td><span class="badge bg-{{ $exception->expiry_badge }}">{{ $exception->expiry_label }}</span><div class="text-muted small">{{ $exception->days_to_expiry }} day(s)</div></td>
+                            <td class="text-end pe-4">{{ $exception->expires_at->format('d-m-Y') }}</td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="text-center text-muted py-4">No policy exceptions expiring soon.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

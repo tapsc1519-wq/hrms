@@ -54,4 +54,27 @@ class SoftwarePolicyException extends Model
             'Active' => 'success', 'Scheduled' => 'info', 'Expired' => 'secondary', default => 'danger',
         };
     }
+
+    public function getDaysToExpiryAttribute(): int
+    {
+        return (int) today()->diffInDays($this->expires_at, false);
+    }
+
+    public function getExpiryLabelAttribute(): string
+    {
+        if ($this->status === 'revoked') return 'Revoked';
+        if ($this->days_to_expiry < 0) return 'Expired';
+        if ($this->days_to_expiry === 0) return 'Expires Today';
+        if ($this->days_to_expiry <= 14) return 'Expiring Soon';
+        return 'Current';
+    }
+
+    public function getExpiryBadgeAttribute(): string
+    {
+        return match ($this->expiry_label) {
+            'Expired', 'Revoked' => 'danger',
+            'Expires Today', 'Expiring Soon' => 'warning',
+            default => 'success',
+        };
+    }
 }

@@ -51,6 +51,14 @@ class SamDashboardController extends Controller
             'active_policy_exceptions' => SoftwarePolicyException::where('organization_id', $organizationId)
                 ->active()
                 ->count(),
+            'policy_exceptions_expiring' => SoftwarePolicyException::where('organization_id', $organizationId)
+                ->where('status', 'approved')
+                ->whereBetween('expires_at', [$now->toDateString(), $now->copy()->addDays(14)->toDateString()])
+                ->count(),
+            'expired_policy_exceptions' => SoftwarePolicyException::where('organization_id', $organizationId)
+                ->where('status', 'approved')
+                ->where('expires_at', '<', $now->toDateString())
+                ->count(),
             'prohibited_installations' => SoftwareDiscovery::where('organization_id', $organizationId)
                 ->where('status', 'mapped')
                 ->where('is_installed', true)
@@ -257,6 +265,15 @@ class SamDashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $policyExceptionRisks = SoftwarePolicyException::where('organization_id', $organizationId)
+            ->where('status', 'approved')
+            ->where('expires_at', '<=', $now->copy()->addDays(14)->toDateString())
+            ->with(['software', 'user', 'asset', 'discovery'])
+            ->orderBy('expires_at')
+            ->latest('id')
+            ->limit(8)
+            ->get();
+
         $licenseEvidenceGaps = SoftwareLicense::where('organization_id', $organizationId)
             ->where('status', 'active')
             ->where(function ($query) {
@@ -315,6 +332,7 @@ class SamDashboardController extends Controller
             'softwareProcurement',
             'inventoryGaps',
             'policyGaps',
+            'policyExceptionRisks',
             'licenseEvidenceGaps',
             'actionSlaRisks',
             'renewalSlaRisks'
@@ -330,7 +348,7 @@ class SamDashboardController extends Controller
             'Overdue remediation' => min(15, $stats['overdue_actions'] * 5),
             'Overdue renewals' => min(10, $stats['overdue_renewal_decisions'] * 4),
             'Demand SLA' => min(10, ($stats['overdue_software_requests'] * 4) + ($stats['aging_software_requests'] * 2)),
-            'Policy governance' => min(12, ($stats['unreviewed_policies'] + $stats['stale_policies'] + $stats['prohibited_installations']) * 2),
+            'Policy governance' => min(12, ($stats['unreviewed_policies'] + $stats['stale_policies'] + $stats['prohibited_installations'] + $stats['policy_exceptions_expiring'] + $stats['expired_policy_exceptions']) * 2),
             'License evidence' => min(10, $stats['licenses_missing_evidence'] * 2),
             'Inventory data quality' => min(10, ($stats['unlinked_devices'] + $stats['unassigned_devices'] + $stats['devices_with_errors']) * 2),
         ];
