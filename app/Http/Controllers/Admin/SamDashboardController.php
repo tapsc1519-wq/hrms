@@ -8,6 +8,7 @@ use App\Models\Software;
 use App\Models\SoftwareComplianceAction;
 use App\Models\SoftwareDiscovery;
 use App\Models\SoftwareLicense;
+use App\Models\SoftwareRenewalDecision;
 
 class SamDashboardController extends Controller
 {
@@ -44,6 +45,9 @@ class SamDashboardController extends Controller
                 ->whereNotNull('expiry_date')
                 ->where('expiry_date', '<', $now->toDateString())
                 ->count(),
+            'planned_renewals' => SoftwareRenewalDecision::where('organization_id', $organizationId)
+                ->where('status', 'planned')
+                ->count(),
             'open_actions' => SoftwareComplianceAction::where('organization_id', $organizationId)->where('status', 'open')->count(),
         ];
 
@@ -78,10 +82,26 @@ class SamDashboardController extends Controller
             ->where('status', 'active')
             ->whereNotNull('expiry_date')
             ->where('expiry_date', '<=', $now->copy()->addDays(60)->toDateString())
-            ->with('software')
+            ->with(['software', 'activeRenewalDecision.owner'])
             ->orderBy('expiry_date')
             ->limit(8)
             ->get();
+
+        $upcomingRenewalIds = SoftwareLicense::where('organization_id', $organizationId)
+            ->where('status', 'active')
+            ->whereNotNull('expiry_date')
+            ->where('expiry_date', '<=', $now->copy()->addDays(60)->toDateString())
+            ->pluck('id');
+
+        $plannedUpcomingRenewals = SoftwareRenewalDecision::where('organization_id', $organizationId)
+            ->where('status', 'planned')
+            ->whereIn('software_license_id', $upcomingRenewalIds)
+            ->count();
+
+        $stats['unplanned_renewals'] = max(0, $upcomingRenewalIds->count() - $plannedUpcomingRenewals);
+        $stats['planned_renewal_spend'] = SoftwareRenewalDecision::where('organization_id', $organizationId)
+            ->where('status', 'planned')
+            ->sum('projected_cost');
 
         $openActions = SoftwareComplianceAction::where('organization_id', $organizationId)
             ->where('status', 'open')

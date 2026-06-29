@@ -14,6 +14,9 @@
         <a href="{{ route('admin.software-compliance.index') }}" class="btn btn-primary btn-sm">
             <i class="bi bi-shield-check me-1"></i>Compliance
         </a>
+        <a href="{{ route('admin.software-licenses.renewals', ['window' => 60, 'plan_status' => 'unplanned']) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-calendar2-check me-1"></i>Renewals
+        </a>
         @if(auth()->user()->hasPermission('endpoint.view'))
         <a href="{{ route('admin.agent-sources.index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-pc-display-horizontal me-1"></i>Endpoints
@@ -59,13 +62,14 @@
         <div class="table-card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span class="fw-semibold">License Signals</span>
-                <a href="{{ route('admin.software-licenses.index') }}" class="btn btn-sm btn-outline-secondary">Licenses</a>
+                <a href="{{ route('admin.software-licenses.renewals', ['window' => 60]) }}" class="btn btn-sm btn-outline-secondary">Renewals</a>
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2"><span>Active licenses</span><strong>{{ $stats['active_licenses'] }}</strong></div>
                 <div class="d-flex justify-content-between text-muted small mb-2"><span>Expiring in 30 days</span><span>{{ $stats['expiring_licenses'] }}</span></div>
                 <div class="d-flex justify-content-between text-muted small mb-2"><span>Expired active licenses</span><span>{{ $stats['expired_licenses'] }}</span></div>
-                <div class="d-flex justify-content-between text-muted small"><span>Catalog products</span><span>{{ $stats['catalog_items'] }}</span></div>
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Unplanned renewals</span><span>{{ $stats['unplanned_renewals'] }}</span></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Planned renewal spend</span><span>Rs {{ number_format((float) $stats['planned_renewal_spend'], 0) }}</span></div>
             </div>
         </div>
     </div>
@@ -151,16 +155,24 @@
             </div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
-                    <thead><tr><th class="ps-4">License</th><th>Seats</th><th class="text-end pe-4">Expiry</th></tr></thead>
+                    <thead><tr><th class="ps-4">License</th><th>Seats</th><th>Plan</th><th class="text-end pe-4">Expiry</th></tr></thead>
                     <tbody>
                         @forelse($renewals as $license)
                         <tr>
                             <td class="ps-4"><div class="fw-bold">{{ $license->software?->name ?? 'Unknown software' }}</div><div class="text-muted small">{{ $license->purchase_batch ?: $license->license_type_label }}</div></td>
                             <td>{{ $license->seats }}</td>
+                            <td>
+                                @if($license->activeRenewalDecision)
+                                    <span class="badge bg-{{ $license->activeRenewalDecision->decision_badge }}">{{ $license->activeRenewalDecision->decision_label }}</span>
+                                    <div class="text-muted small">{{ $license->activeRenewalDecision->owner?->name ?? 'Unassigned' }}</div>
+                                @else
+                                    <a href="{{ route('admin.software-licenses.renewals', ['window' => 60, 'plan_status' => 'unplanned']) }}" class="btn btn-sm btn-outline-primary">Plan</a>
+                                @endif
+                            </td>
                             <td class="text-end pe-4"><span class="badge bg-{{ $license->is_expired ? 'danger' : 'warning' }}">{{ $license->expiry_date?->format('d-m-Y') }}</span></td>
                         </tr>
                         @empty
-                        <tr><td colspan="3" class="text-center text-muted py-4">No licenses expiring in the next 60 days.</td></tr>
+                        <tr><td colspan="4" class="text-center text-muted py-4">No licenses expiring in the next 60 days.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

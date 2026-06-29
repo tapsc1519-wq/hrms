@@ -10,9 +10,14 @@
         <h4><i class="bi bi-key me-2 text-primary"></i>All Licenses</h4>
         <p>License compliance overview across all software titles.</p>
     </div>
-    <a href="{{ route('admin.software-licenses.create') }}" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg me-1"></i>Add License
-    </a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ route('admin.software-licenses.renewals', ['window' => 60, 'plan_status' => 'unplanned']) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-calendar2-check me-1"></i>Renewals
+        </a>
+        <a href="{{ route('admin.software-licenses.create') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Add License
+        </a>
+    </div>
 </div>
 
 {{-- Compliance Summary --}}
@@ -53,7 +58,9 @@
                     <div>
                         <div class="stat-number">{{ $compliance['expiring'] }}</div>
                         <div class="stat-label">Expiring Soon</div>
-                        <div class="stat-sub">Within 30 days</div>
+                        <div class="stat-sub">
+                            <a href="{{ route('admin.software-licenses.renewals', ['window' => 30]) }}" class="text-white text-decoration-none">Open renewal queue</a>
+                        </div>
                     </div>
                 </div>
             </div>
