@@ -47,17 +47,21 @@
                     <div class="fw-semibold mb-1"><i class="bi bi-box-arrow-down me-1 text-primary"></i>Managed Software</div>
                     <div class="text-muted small mb-3">Only catalog applications explicitly enabled for endpoint deployment are available.</div>
                     @if($managedSoftware->isNotEmpty())
+                    <div class="alert alert-info small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Install and remove commands use the selected software's WinGet Package ID on this endpoint.
+                    </div>
                     <div class="row g-2">
                         <div class="col-md-6">
                             <form method="POST" action="{{ route('admin.agent-sources.commands.software-install', $deviceAgent) }}" onsubmit="return confirm('Install the selected approved software on this endpoint?')">
                                 @csrf
-                                <div class="input-group input-group-sm"><select name="software_id" class="form-select" required><option value="">Choose software</option>@foreach($managedSoftware as $item)<option value="{{ $item->id }}">{{ $item->name }}</option>@endforeach</select><button class="btn btn-primary"><i class="bi bi-download me-1"></i>Install</button></div>
+                                <div class="input-group input-group-sm"><select name="software_id" class="form-select" required><option value="">Choose software to install</option>@foreach($managedSoftware as $item)<option value="{{ $item->id }}">{{ $item->name }} - {{ $item->winget_package_id }}</option>@endforeach</select><button class="btn btn-primary"><i class="bi bi-download me-1"></i>Install</button></div>
                             </form>
                         </div>
                         <div class="col-md-6">
                             <form method="POST" action="{{ route('admin.agent-sources.commands.software-uninstall', $deviceAgent) }}" onsubmit="return confirm('Remove the selected software from this endpoint?')">
                                 @csrf
-                                <div class="input-group input-group-sm"><select name="software_id" class="form-select" required><option value="">Choose software</option>@foreach($managedSoftware as $item)<option value="{{ $item->id }}">{{ $item->name }}</option>@endforeach</select><button class="btn btn-outline-danger"><i class="bi bi-trash3 me-1"></i>Remove</button></div>
+                                <div class="input-group input-group-sm"><select name="software_id" class="form-select" required><option value="">Choose software to remove</option>@foreach($managedSoftware as $item)<option value="{{ $item->id }}">{{ $item->name }} - {{ $item->winget_package_id }}</option>@endforeach</select><button class="btn btn-outline-danger"><i class="bi bi-trash3 me-1"></i>Remove</button></div>
                             </form>
                         </div>
                     </div>
