@@ -129,6 +129,7 @@ class SamAuditReportController extends Controller
             $this->writeRenewalSla($directory, $organizationId);
             $this->writeSamHealthScore($directory, $organizationId);
             $this->writeSoftwareRequestSla($directory, $organizationId);
+            $this->writePolicyExceptionExpiry($directory, $organizationId);
             File::put($directory.DIRECTORY_SEPARATOR.'README.txt', $this->readme($organization, $activityFrom, $includeRemoved, $generatedAt));
 
             $zip = new ZipArchive();
@@ -171,6 +172,8 @@ class SamAuditReportController extends Controller
             ['Procured Software Requests Waiting Fulfillment', SoftwareRequest::where('organization_id', $organizationId)->where('status', 'approved')->whereNotNull('purchase_order_item_id')->count()],
             ['Software Purchase Order Lines', PurchaseOrderItem::where('item_type', 'software')->whereHas('purchaseOrder', fn ($q) => $q->where('organization_id', $organizationId))->count()],
             ['Active Policy Exceptions', SoftwarePolicyException::where('organization_id', $organizationId)->active()->count()],
+            ['Policy Exceptions Expiring In 14 Days', SoftwarePolicyException::where('organization_id', $organizationId)->where('status', 'approved')->whereBetween('expires_at', [now()->toDateString(), now()->addDays(14)->toDateString()])->count()],
+            ['Expired Policy Exceptions Not Revoked', SoftwarePolicyException::where('organization_id', $organizationId)->where('status', 'approved')->where('expires_at', '<', now()->toDateString())->count()],
             ['Planned Renewal Decisions', SoftwareRenewalDecision::where('organization_id', $organizationId)->where('status', 'planned')->count()],
             ['Usage Optimization Reviews', SoftwareUsageReview::where('organization_id', $organizationId)->count()],
             ['Open Remediation Actions', SoftwareComplianceAction::where('organization_id', $organizationId)->where('status', 'open')->count()],
@@ -251,9 +254,9 @@ class SamAuditReportController extends Controller
 
     private function writePolicyExceptions(string $directory, int $organizationId, Carbon $activityFrom): void
     {
-        $this->csv($directory, '08-policy-exceptions.csv', ['Exception ID','Software','Discovery ID','Employee Code','Employee','Asset Tag','Valid From','Expires At','Status','Reason','Conditions','Approved By','Revoked By','Revoked At','Created At'], function ($handle) use ($organizationId, $activityFrom) {
+        $this->csv($directory, '08-policy-exceptions.csv', ['Exception ID','Software','Discovery ID','Employee Code','Employee','Asset Tag','Valid From','Expires At','Status','Expiry Status','Days To Expiry','Reason','Conditions','Approved By','Revoked By','Revoked At','Created At'], function ($handle) use ($organizationId, $activityFrom) {
             SoftwarePolicyException::where('organization_id', $organizationId)->where(fn ($q) => $q->where('created_at','>=',$activityFrom)->orWhere('expires_at','>=',today()))->with(['software','user','asset','approvedBy','revokedBy'])->orderBy('id')->chunkById(500, function ($items) use ($handle) {
-                foreach ($items as $item) fputcsv($handle, [$item->id,$item->software?->name,$item->software_discovery_id,$item->user?->employee_id,$item->user?->name,$item->asset?->asset_tag,$item->valid_from->toDateString(),$item->expires_at->toDateString(),$item->status_label,$item->reason,$item->conditions,$item->approvedBy?->name,$item->revokedBy?->name,$item->revoked_at?->toIso8601String(),$item->created_at->toIso8601String()]);
+                foreach ($items as $item) fputcsv($handle, [$item->id,$item->software?->name,$item->software_discovery_id,$item->user?->employee_id,$item->user?->name,$item->asset?->asset_tag,$item->valid_from->toDateString(),$item->expires_at->toDateString(),$item->status_label,$item->expiry_label,$item->days_to_expiry,$item->reason,$item->conditions,$item->approvedBy?->name,$item->revokedBy?->name,$item->revoked_at?->toIso8601String(),$item->created_at->toIso8601String()]);
             });
         });
     }
@@ -767,6 +770,52 @@ class SamAuditReportController extends Controller
         });
     }
 
+    private function writePolicyExceptionExpiry(string $directory, int $organizationId): void
+    {
+        $headers = ['Exception ID','Software','Publisher','Employee Code','Employee','Email','Asset Tag','Discovery ID','Valid From','Expires At','Expiry Status','Days To Expiry','Approval Status','Approved By','Revoked By','Revoked At','Reason','Conditions','Governance Action'];
+
+        $this->csv($directory, '22-policy-exception-expiry.csv', $headers, function ($handle) use ($organizationId) {
+            SoftwarePolicyException::where('organization_id', $organizationId)
+                ->where(fn ($query) => $query
+                    ->where('expires_at', '<=', today()->addDays(14))
+                    ->orWhere('status', 'revoked'))
+                ->with(['software', 'user', 'asset', 'approvedBy', 'revokedBy'])
+                ->orderBy('expires_at')
+                ->chunkById(500, function ($items) use ($handle) {
+                    foreach ($items as $item) {
+                        $governanceAction = match ($item->expiry_label) {
+                            'Expired' => 'Review installation and create remediation or renewed exception',
+                            'Expires Today', 'Expiring Soon' => 'Confirm business need before expiry',
+                            'Revoked' => 'Closed',
+                            default => 'Monitor',
+                        };
+
+                        fputcsv($handle, [
+                            $item->id,
+                            $item->software?->name,
+                            $item->software?->vendor,
+                            $item->user?->employee_id,
+                            $item->user?->name,
+                            $item->user?->email,
+                            $item->asset?->asset_tag,
+                            $item->software_discovery_id,
+                            $item->valid_from?->toDateString(),
+                            $item->expires_at?->toDateString(),
+                            $item->expiry_label,
+                            $item->days_to_expiry,
+                            $item->status_label,
+                            $item->approvedBy?->name,
+                            $item->revokedBy?->name,
+                            $item->revoked_at?->toIso8601String(),
+                            $item->reason,
+                            $item->conditions,
+                            $governanceAction,
+                        ]);
+                    }
+                });
+        });
+    }
+
     private function writeSamHealthScore(string $directory, int $organizationId): void
     {
         $installed = SoftwareDiscovery::where('organization_id', $organizationId)->where('is_installed', true)->count();
@@ -788,6 +837,8 @@ class SamAuditReportController extends Controller
             'overdue_software_requests' => SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->whereNotNull('needed_by')->where('needed_by', '<', now()->toDateString())->count(),
             'aging_software_requests' => SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->where('created_at', '<', now()->subDays(7))->count(),
             'policy_gaps' => Software::where('organization_id', $organizationId)->where(fn ($q) => $q->where('policy_status', 'unreviewed')->orWhereNull('policy_reviewed_at')->orWhere('policy_reviewed_at', '<', now()->subYear()))->count(),
+            'policy_exceptions_expiring' => SoftwarePolicyException::where('organization_id', $organizationId)->where('status', 'approved')->whereBetween('expires_at', [now()->toDateString(), now()->addDays(14)->toDateString()])->count(),
+            'expired_policy_exceptions' => SoftwarePolicyException::where('organization_id', $organizationId)->where('status', 'approved')->where('expires_at', '<', now()->toDateString())->count(),
             'license_evidence_gaps' => SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->where(fn ($q) => $q->whereNull('evidence_document')->orWhereNull('invoice_number')->orWhereNull('po_number')->orWhereNull('vendor_id'))->count(),
             'inventory_gaps' => DeviceAgent::where('organization_id', $organizationId)->where(fn ($q) => $q->whereNull('asset_id')->orWhereNull('user_id')->orWhereNull('last_seen_at')->orWhere('last_seen_at', '<', now()->subHours(24))->orWhereNotNull('last_error'))->count(),
         ];
@@ -798,7 +849,7 @@ class SamAuditReportController extends Controller
             'Overdue remediation' => min(15, $stats['overdue_actions'] * 5),
             'Overdue renewals' => min(10, $stats['overdue_renewals'] * 4),
             'Demand SLA' => min(10, ($stats['overdue_software_requests'] * 4) + ($stats['aging_software_requests'] * 2)),
-            'Policy governance' => min(12, $stats['policy_gaps'] * 2),
+            'Policy governance' => min(12, ($stats['policy_gaps'] + $stats['policy_exceptions_expiring'] + $stats['expired_policy_exceptions']) * 2),
             'License evidence' => min(10, $stats['license_evidence_gaps'] * 2),
             'Inventory data quality' => min(10, $stats['inventory_gaps'] * 2),
         ];
@@ -886,6 +937,6 @@ class SamAuditReportController extends Controller
 
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe SAM health score summarizes inventory coverage, normalization, compliance risk, SLA, demand SLA, policy, evidence, and data quality signals. The compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation, renewal, and software request SLA files highlight open/planned work that is overdue, aging, or scheduled. Remediation, renewal, usage optimization, software request, software procurement, and software demand fulfillment decisions include open/planned items and items created during that period. Software demand fulfillment links employee requests to PO lines, receipts, generated licenses, and allocation outcomes. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe SAM health score summarizes inventory coverage, normalization, compliance risk, SLA, demand SLA, policy, evidence, and data quality signals. The compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period, with expiry status and days-to-expiry. Policy exception expiry highlights approvals that are expiring, expired, or revoked and the expected governance action. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation, renewal, and software request SLA files highlight open/planned work that is overdue, aging, or scheduled. Remediation, renewal, usage optimization, software request, software procurement, and software demand fulfillment decisions include open/planned items and items created during that period. Software demand fulfillment links employee requests to PO lines, receipts, generated licenses, and allocation outcomes. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }
