@@ -276,17 +276,19 @@
             </div>
             <div class="card-body border-bottom">
                 <div class="d-flex justify-content-between text-muted small mb-2"><span>Pending review</span><strong class="text-dark">{{ $stats['pending_requests'] }}</strong></div>
-                <div class="d-flex justify-content-between text-muted small"><span>Approved awaiting allocation or PO</span><strong class="text-dark">{{ $stats['approved_requests'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Approved awaiting allocation or PO</span><strong class="text-dark">{{ $stats['approved_requests'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Demand SLA risk</span><strong class="{{ ($stats['overdue_software_requests'] + $stats['aging_software_requests']) > 0 ? 'text-danger' : 'text-dark' }}">{{ $stats['overdue_software_requests'] }} overdue, {{ $stats['aging_software_requests'] }} aging</strong></div>
             </div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
-                    <thead><tr><th class="ps-4">Employee</th><th>Software</th><th>Status</th><th class="text-end pe-4">Need</th></tr></thead>
+                    <thead><tr><th class="ps-4">Employee</th><th>Software</th><th>Status</th><th>SLA</th><th class="text-end pe-4">Need</th></tr></thead>
                     <tbody>
                         @forelse($softwareRequests as $softwareRequest)
                         <tr>
                             <td class="ps-4"><div class="fw-bold">{{ $softwareRequest->requester?->name ?? 'Unknown employee' }}</div><div class="text-muted small">{{ $softwareRequest->requester?->department?->name ?? $softwareRequest->requester?->employee_id ?? 'No department' }}</div></td>
                             <td><div class="fw-bold">{{ $softwareRequest->software?->name ?? 'Unknown software' }}</div><div class="text-muted small">{{ $softwareRequest->software?->vendor ?: 'Unknown publisher' }}</div></td>
                             <td><span class="badge bg-{{ $softwareRequest->status_badge }}">{{ $softwareRequest->status_label }}</span><div class="text-muted small">{{ ucfirst($softwareRequest->urgency) }} priority</div></td>
+                            <td><span class="badge bg-{{ $softwareRequest->sla_badge }}">{{ $softwareRequest->sla_label }}</span></td>
                             <td class="text-end pe-4">
                                 <div>{{ $softwareRequest->needed_by?->format('d-m-Y') ?? 'No date' }}</div>
                                 @if($softwareRequest->purchaseOrderItem)
@@ -297,7 +299,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="4" class="text-center text-muted py-4">No pending or approved software demand.</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted py-4">No pending or approved software demand.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

@@ -66,6 +66,15 @@ class SamDashboardController extends Controller
                 ->whereIn('status', ['pending', 'approved'])
                 ->whereIn('urgency', ['high', 'critical'])
                 ->count(),
+            'overdue_software_requests' => SoftwareRequest::where('organization_id', $organizationId)
+                ->whereIn('status', ['pending', 'approved'])
+                ->whereNotNull('needed_by')
+                ->where('needed_by', '<', $now->toDateString())
+                ->count(),
+            'aging_software_requests' => SoftwareRequest::where('organization_id', $organizationId)
+                ->whereIn('status', ['pending', 'approved'])
+                ->where('created_at', '<', $now->copy()->subDays(7))
+                ->count(),
             'open_software_po_items' => PurchaseOrderItem::where('item_type', 'software')
                 ->whereColumn('received_quantity', '<', 'quantity')
                 ->whereHas('purchaseOrder', fn ($query) => $query
@@ -203,6 +212,8 @@ class SamDashboardController extends Controller
         $softwareRequests = SoftwareRequest::where('organization_id', $organizationId)
             ->whereIn('status', ['pending', 'approved'])
             ->with(['requester.department', 'software', 'purchaseOrderItem.purchaseOrder'])
+            ->orderByRaw('CASE WHEN needed_by IS NOT NULL AND needed_by < ? THEN 0 ELSE 1 END', [$now->toDateString()])
+            ->orderByRaw('CASE WHEN created_at < ? THEN 0 ELSE 1 END', [$now->copy()->subDays(7)])
             ->orderByRaw("CASE WHEN urgency = 'critical' THEN 0 WHEN urgency = 'high' THEN 1 ELSE 2 END")
             ->orderByRaw('CASE WHEN needed_by IS NULL THEN 1 ELSE 0 END')
             ->orderBy('needed_by')
@@ -318,6 +329,7 @@ class SamDashboardController extends Controller
             'Compliance risk' => $riskRowCount === 0 ? 0 : min(20, $riskRowCount * 3),
             'Overdue remediation' => min(15, $stats['overdue_actions'] * 5),
             'Overdue renewals' => min(10, $stats['overdue_renewal_decisions'] * 4),
+            'Demand SLA' => min(10, ($stats['overdue_software_requests'] * 4) + ($stats['aging_software_requests'] * 2)),
             'Policy governance' => min(12, ($stats['unreviewed_policies'] + $stats['stale_policies'] + $stats['prohibited_installations']) * 2),
             'License evidence' => min(10, $stats['licenses_missing_evidence'] * 2),
             'Inventory data quality' => min(10, ($stats['unlinked_devices'] + $stats['unassigned_devices'] + $stats['devices_with_errors']) * 2),
