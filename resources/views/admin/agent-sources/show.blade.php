@@ -9,7 +9,7 @@
     $healthBadge = $deviceAgent->health_status === 'healthy' ? 'success' : ($deviceAgent->health_status === 'stale' ? 'warning' : 'danger');
     $canQueueCommands = (bool) $deviceAgent->credential?->is_active;
 @endphp
-<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2" data-tour="endpoint-header">
     <div><a href="{{ route('admin.agent-sources.index') }}" class="back-link"><i class="bi bi-arrow-left"></i> Endpoint Management</a><div class="d-flex align-items-center gap-2"><h4 class="mb-0">{{ $deviceAgent->hostname }}</h4><span class="badge bg-{{ $healthBadge }}">{{ ucfirst($deviceAgent->health_status) }}</span></div><p>{{ $deviceAgent->os_name ?: 'Unknown operating system' }} {{ $deviceAgent->os_version }}</p></div>
     <div class="d-flex align-items-center gap-2 flex-wrap">
         @if(auth()->user()->hasPermission('software.agents.manage'))
@@ -23,7 +23,7 @@
 </div>
 
 @if(auth()->user()->hasPermission('endpoint.device.control') || auth()->user()->hasPermission('endpoint.software.manage'))
-<div class="table-card mb-3">
+<div class="table-card mb-3" data-tour="endpoint-actions">
     <div class="card-header"><span class="fw-semibold">Endpoint Actions</span></div>
     <div class="card-body">
         @if(! $canQueueCommands)
@@ -40,7 +40,7 @@
         <div class="row g-3 align-items-stretch">
             @if(auth()->user()->hasPermission('endpoint.device.control'))
             <div class="col-lg-5">
-                <div class="border rounded-3 p-3 h-100">
+                <div class="border rounded-3 p-3 h-100" data-tour="device-controls">
                     <div class="fw-semibold mb-1"><i class="bi bi-shield-lock me-1 text-primary"></i>Device Controls</div>
                     <div class="text-muted small mb-3">Lock the active session immediately or schedule a controlled restart.</div>
                     <div class="d-flex gap-2 flex-wrap">
@@ -55,7 +55,7 @@
             @endif
             @if(auth()->user()->hasPermission('endpoint.software.manage'))
             <div class="col-lg-7">
-                <div class="border rounded-3 p-3 h-100">
+                <div class="border rounded-3 p-3 h-100" data-tour="managed-software">
                     <div class="fw-semibold mb-1"><i class="bi bi-box-arrow-down me-1 text-primary"></i>Managed Software</div>
                     <div class="text-muted small mb-3">Only catalog applications explicitly enabled for endpoint deployment are available.</div>
                     @if($managedSoftware->isNotEmpty())
@@ -88,7 +88,7 @@
 </div>
 @endif
 
-<div class="table-card mb-3">
+<div class="table-card mb-3" data-tour="command-history">
     <div class="card-header d-flex justify-content-between align-items-center"><span class="fw-semibold">Signed Command History</span><span class="badge bg-light text-dark">{{ $commands->total() }}</span></div>
     <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th class="ps-4">Command</th><th>Queued</th><th>Delivered</th><th>Executed</th><th>Status</th><th>Result</th><th class="text-end pe-4">Action</th></tr></thead><tbody>
     @forelse($commands as $command)<tr><td class="ps-4"><div class="fw-bold">{{ ucwords(str_replace('_', ' ', $command->command_type)) }}</div>@if(in_array($command->command_type, ['software_install', 'software_uninstall'], true))<div class="small">{{ data_get($command->payload, 'name', 'Managed software') }}</div><div class="text-muted small font-monospace">{{ data_get($command->payload, 'package_id', 'No package ID') }}</div>@endif<div class="text-muted small font-monospace">{{ $command->command_uuid }}</div></td><td>{{ $command->created_at->format('d M Y, H:i') }}<div class="text-muted small">{{ $command->createdBy?->name ?? 'System' }}</div></td><td>{{ $command->delivered_at?->format('d M Y, H:i') ?? '-' }}</td><td>{{ $command->executed_at?->format('d M Y, H:i') ?? '-' }}</td><td><span class="badge bg-{{ $command->status_badge }}">{{ ucfirst($command->status) }}</span></td><td><div class="small">{{ data_get($command->result, 'message') ?: ($command->error_message ?: 'No result yet') }}</div></td><td class="text-end pe-4">@if(in_array($command->status, ['queued','delivered']))<form method="POST" action="{{ route('admin.agent-sources.commands.cancel', [$deviceAgent, $command]) }}">@csrf @method('PATCH')<button class="btn btn-sm btn-outline-danger">Cancel</button></form>@else<span class="text-muted small">Closed</span>@endif</td></tr>
@@ -129,7 +129,7 @@
 <div class="table-card mb-3"><div class="card-header"><span class="fw-semibold">Storage</span></div><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th class="ps-4">Drive</th><th>Capacity</th><th>Used</th><th>Free</th><th>Usage</th></tr></thead><tbody>@foreach(data_get($hardware, 'disks', []) as $disk)@php $capacity=(float)data_get($disk,'capacity_bytes',0); $free=(float)data_get($disk,'free_bytes',0); $used=max(0,$capacity-$free); $percent=$capacity>0?round($used/$capacity*100):0; @endphp<tr><td class="ps-4 fw-bold">{{ data_get($disk, 'name') }}</td><td>{{ number_format($capacity/1073741824,1) }} GB</td><td>{{ number_format($used/1073741824,1) }} GB</td><td>{{ number_format($free/1073741824,1) }} GB</td><td><div class="progress" style="height:6px;width:130px"><div class="progress-bar {{ $percent>90?'bg-danger':($percent>75?'bg-warning':'bg-primary') }}" style="width:{{ $percent }}%"></div></div><div class="text-muted small">{{ $percent }}%</div></td></tr>@endforeach</tbody></table></div></div>
 @endif
 
-<div class="table-card">
+<div class="table-card" data-tour="software-inventory">
     <div class="card-header d-flex justify-content-between align-items-center"><span class="fw-semibold">Software Inventory</span><span class="badge bg-light text-dark">{{ $discoveries->total() }}</span></div>
     <div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th class="ps-4">Software</th><th>Version</th><th>Mapped Product</th><th>Last Used</th><th>Usage</th><th>Status</th></tr></thead><tbody>
     @forelse($discoveries as $item)<tr><td class="ps-4"><div class="fw-bold">{{ $item->raw_name }}</div><div class="text-muted small">{{ $item->raw_publisher ?: 'Unknown publisher' }}</div></td><td>{{ $item->raw_version ?: '-' }}</td><td>{{ $item->software?->name ?? 'Not mapped' }}</td><td>{{ $item->last_used_date?->format('d M Y') ?? 'No usage recorded' }}</td><td><div>{{ $item->usage_count ?? 0 }} launches</div><div class="text-muted small">{{ $item->total_runtime_minutes ?? 0 }} sampled minutes</div></td><td><span class="badge bg-{{ $item->is_installed ? 'success' : 'secondary' }}">{{ $item->is_installed ? 'Installed' : 'Removed' }}</span></td></tr>

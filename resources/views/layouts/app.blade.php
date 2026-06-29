@@ -1014,6 +1014,49 @@
         #sidebar.show { transform: translateX(0); }
         #main-content { margin-left: 0; }
     }
+
+    .guided-tour-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, .58);
+        z-index: 1990;
+    }
+    .guided-tour-highlight {
+        position: relative;
+        z-index: 2001 !important;
+        border-radius: 14px;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, .35), 0 18px 55px rgba(15, 23, 42, .28);
+        outline: 2px solid rgba(59, 130, 246, .8);
+        outline-offset: 3px;
+    }
+    .guided-tour-card {
+        position: fixed;
+        width: min(360px, calc(100vw - 32px));
+        background: #fff;
+        border: 1px solid #dbe5f0;
+        border-radius: 14px;
+        box-shadow: 0 22px 70px rgba(15, 23, 42, .28);
+        z-index: 2002;
+        padding: 1rem;
+    }
+    .guided-tour-progress {
+        color: #64748b;
+        font-size: var(--font-xs);
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .guided-tour-title {
+        color: #0f172a;
+        font-size: var(--font-lg);
+        font-weight: 800;
+        margin: .35rem 0 .45rem;
+    }
+    .guided-tour-body {
+        color: #475569;
+        font-size: var(--font-sm);
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
     </style>
     @stack('styles')
 </head>
@@ -1659,7 +1702,14 @@
             @php
                 $actionNotifications = \App\Support\ActionNotificationService::forUser(auth()->user());
                 $pageHelp = \App\Support\PageHelpRegistry::current();
+                $pageTourKey = request()->route()?->getName() ?? request()->path();
             @endphp
+            @if(!empty($pageHelp['tour']))
+            <button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" id="startPageTour">
+                <i class="bi bi-stars"></i>
+                <span class="d-none d-md-inline">Start Guide</span>
+            </button>
+            @endif
             <button type="button" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#globalPageHelpModal">
                 <i class="bi bi-question-circle"></i>
                 <span class="d-none d-md-inline">Page Help</span>
@@ -2021,6 +2071,160 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
     document.addEventListener('DOMContentLoaded', initDropZones);
     var obs = new MutationObserver(initDropZones);
     obs.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+
+<script>
+(function () {
+    var tourSteps = @json($pageHelp['tour'] ?? []);
+    var tourKey = @json('page-tour-complete:' . $pageTourKey);
+    var startButton = document.getElementById('startPageTour');
+    if (!startButton || !Array.isArray(tourSteps) || tourSteps.length === 0) return;
+
+    var currentIndex = 0;
+    var activeTarget = null;
+    var backdrop = null;
+    var card = null;
+
+    function startTour() {
+        currentIndex = 0;
+        ensureShell();
+        showStep();
+    }
+
+    function ensureShell() {
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.className = 'guided-tour-backdrop';
+            backdrop.addEventListener('click', finishTour);
+            document.body.appendChild(backdrop);
+        }
+        if (!card) {
+            card = document.createElement('div');
+            card.className = 'guided-tour-card';
+            card.setAttribute('role', 'dialog');
+            card.setAttribute('aria-live', 'polite');
+            document.body.appendChild(card);
+        }
+    }
+
+    function showStep() {
+        clearHighlight();
+        var step = tourSteps[currentIndex] || {};
+        activeTarget = step.target ? document.querySelector('[data-tour="' + cssEscape(step.target) + '"]') : null;
+        if (activeTarget) {
+            activeTarget.classList.add('guided-tour-highlight');
+            activeTarget.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        }
+
+        renderCard(step);
+        window.setTimeout(positionCard, activeTarget ? 260 : 0);
+    }
+
+    function renderCard(step) {
+        var isFirst = currentIndex === 0;
+        var isLast = currentIndex === tourSteps.length - 1;
+        card.innerHTML =
+            '<div class="guided-tour-progress">Step ' + (currentIndex + 1) + ' of ' + tourSteps.length + '</div>' +
+            '<div class="guided-tour-title">' + escapeHtml(step.title || 'Guide') + '</div>' +
+            '<div class="guided-tour-body">' + escapeHtml(step.body || '') + '</div>' +
+            '<div class="d-flex align-items-center justify-content-between gap-2">' +
+                '<button type="button" class="btn btn-link btn-sm text-muted px-0" data-tour-action="skip">Skip</button>' +
+                '<div class="d-flex gap-2">' +
+                    '<button type="button" class="btn btn-outline-secondary btn-sm" data-tour-action="back" ' + (isFirst ? 'disabled' : '') + '>Back</button>' +
+                    '<button type="button" class="btn btn-primary btn-sm" data-tour-action="next">' + (isLast ? 'Finish' : 'Next') + '</button>' +
+                '</div>' +
+            '</div>';
+        card.querySelector('[data-tour-action="skip"]').addEventListener('click', finishTour);
+        card.querySelector('[data-tour-action="back"]').addEventListener('click', previousStep);
+        card.querySelector('[data-tour-action="next"]').addEventListener('click', nextStep);
+    }
+
+    function positionCard() {
+        if (!card) return;
+        var margin = 16;
+        var cardRect = card.getBoundingClientRect();
+        var left = Math.max(margin, (window.innerWidth - cardRect.width) / 2);
+        var top = Math.max(margin, (window.innerHeight - cardRect.height) / 2);
+
+        if (activeTarget) {
+            var targetRect = activeTarget.getBoundingClientRect();
+            left = targetRect.right + margin;
+            top = targetRect.top;
+
+            if (left + cardRect.width > window.innerWidth - margin) {
+                left = targetRect.left - cardRect.width - margin;
+            }
+            if (left < margin) {
+                left = Math.min(window.innerWidth - cardRect.width - margin, Math.max(margin, targetRect.left));
+                top = targetRect.bottom + margin;
+            }
+            if (top + cardRect.height > window.innerHeight - margin) {
+                top = window.innerHeight - cardRect.height - margin;
+            }
+            if (top < margin) {
+                top = margin;
+            }
+        }
+
+        card.style.left = left + 'px';
+        card.style.top = top + 'px';
+    }
+
+    function nextStep() {
+        if (currentIndex >= tourSteps.length - 1) {
+            finishTour();
+            return;
+        }
+        currentIndex += 1;
+        showStep();
+    }
+
+    function previousStep() {
+        if (currentIndex === 0) return;
+        currentIndex -= 1;
+        showStep();
+    }
+
+    function finishTour() {
+        clearHighlight();
+        if (backdrop) backdrop.remove();
+        if (card) card.remove();
+        backdrop = null;
+        card = null;
+        try {
+            localStorage.setItem(tourKey, '1');
+        } catch (e) {}
+    }
+
+    function clearHighlight() {
+        if (activeTarget) {
+            activeTarget.classList.remove('guided-tour-highlight');
+            activeTarget = null;
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (char) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
+        });
+    }
+
+    function cssEscape(value) {
+        if (window.CSS && typeof window.CSS.escape === 'function') {
+            return window.CSS.escape(value);
+        }
+        return String(value).replace(/"/g, '\\"');
+    }
+
+    startButton.addEventListener('click', startTour);
+    window.addEventListener('resize', positionCard);
+    document.addEventListener('keydown', function (event) {
+        if (!card) return;
+        if (event.key === 'Escape') finishTour();
+        if (event.key === 'ArrowRight') nextStep();
+        if (event.key === 'ArrowLeft') previousStep();
+    });
 })();
 </script>
 

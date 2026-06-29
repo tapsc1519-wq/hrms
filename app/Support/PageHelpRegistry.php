@@ -234,6 +234,38 @@ class PageHelpRegistry
                     'Cancel' => 'Cancels a queued or delivered command before it is closed.',
                     'Revoke Device Access' => 'Revokes the device credential so the agent can no longer report or receive commands until re-enrolled.',
                 ],
+                'tour' => [
+                    [
+                        'target' => 'endpoint-header',
+                        'title' => 'Endpoint Identity',
+                        'body' => 'Start here to confirm hostname, OS, health, last seen, and whether this is the correct device.',
+                    ],
+                    [
+                        'target' => 'endpoint-actions',
+                        'title' => 'Endpoint Actions',
+                        'body' => 'This area contains secure commands you can queue for this device. Controls are disabled if the agent cannot receive commands.',
+                    ],
+                    [
+                        'target' => 'device-controls',
+                        'title' => 'Device Controls',
+                        'body' => 'Lock Session and Restart send signed commands to the Windows agent. They run after the next check-in.',
+                    ],
+                    [
+                        'target' => 'managed-software',
+                        'title' => 'Managed Software',
+                        'body' => 'Install and Remove use the software catalog WinGet Package ID. Only enabled catalog titles appear here.',
+                    ],
+                    [
+                        'target' => 'command-history',
+                        'title' => 'Command History',
+                        'body' => 'Every command is audited here with queued, delivered, executed, status, result, and package payload details.',
+                    ],
+                    [
+                        'target' => 'software-inventory',
+                        'title' => 'Software Inventory',
+                        'body' => 'Use this section to verify what software the agent reported and whether it is mapped to your catalog.',
+                    ],
+                ],
                 'next' => 'Offline or stale devices should be checked before relying on their software data for compliance decisions.',
             ],
             'admin.software-normalization.*' => [
