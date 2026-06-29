@@ -5,7 +5,7 @@
 @php $canManageAgents = auth()->user()->hasPermission('software.agents.manage'); @endphp
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2" data-tour="endpoint-list-header">
     <div><h4>Endpoint Management</h4><p>Monitor managed computers, deploy approved software, and review signed device actions.</p></div>
-    @if(auth()->user()->hasPermission('software.agents.manage'))<div class="d-flex gap-2 flex-wrap" data-tour="endpoint-installer-actions"><a href="{{ route('admin.agent-sources.windows-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-windows me-1"></i>Windows Installer</a><a href="{{ route('admin.agent-sources.unix-installer') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-apple me-1"></i>macOS/Linux Installer</a><a href="{{ route('admin.agent-sources.windows-package') }}" class="btn btn-outline-secondary btn-sm" title="Advanced PowerShell package"><i class="bi bi-file-zip me-1"></i>PowerShell Package</a><button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTokenModal"><i class="bi bi-key me-1"></i>Create Enrollment Token</button></div>@endif
+    @if(auth()->user()->hasPermission('software.agents.manage'))<div class="d-flex gap-2 flex-wrap" data-tour="endpoint-installer-actions"><button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#downloadAgentModal"><i class="bi bi-download me-1"></i>Download Agent</button><a href="{{ route('admin.agent-sources.windows-package') }}" class="btn btn-outline-secondary btn-sm" title="Advanced PowerShell package"><i class="bi bi-file-zip me-1"></i>PowerShell Package</a><button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTokenModal"><i class="bi bi-key me-1"></i>Create Enrollment Token</button></div>@endif
 </div>
 
 @if(session('new_agent_token'))
@@ -70,6 +70,65 @@
 </div>
 
 @if($canManageAgents)
+<div class="modal fade" id="downloadAgentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title mb-0">Download Device Agent</h5>
+                    <small class="text-muted">Select the operating system for this device.</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.agent-sources.windows-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark agent-download-option">
+                            <div class="fs-3 text-primary"><i class="bi bi-windows"></i></div>
+                            <div>
+                                <div class="fw-semibold">Windows</div>
+                                <div class="small text-muted">Download the Windows installer for managed PCs.</div>
+                                <span class="badge bg-primary mt-2">Download EXE</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.agent-sources.unix-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark agent-download-option">
+                            <div class="fs-3 text-primary"><i class="bi bi-apple"></i></div>
+                            <div>
+                                <div class="fw-semibold">macOS / Linux</div>
+                                <div class="small text-muted">Download the self-contained shell installer.</div>
+                                <span class="badge bg-primary mt-2">Download SH</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded-3 p-3 h-100 d-flex gap-3 bg-light text-muted">
+                            <div class="fs-3"><i class="bi bi-android2"></i></div>
+                            <div>
+                                <div class="fw-semibold">Android</div>
+                                <div class="small">Mobile device agent will be added in a future release.</div>
+                                <span class="badge bg-secondary mt-2">Coming soon</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded-3 p-3 h-100 d-flex gap-3 bg-light text-muted">
+                            <div class="fs-3"><i class="bi bi-phone"></i></div>
+                            <div>
+                                <div class="fw-semibold">iOS</div>
+                                <div class="small">Mobile device agent will be added in a future release.</div>
+                                <span class="badge bg-secondary mt-2">Coming soon</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info small mt-3 mb-0"><i class="bi bi-info-circle me-1"></i>Create an enrollment token before installing the agent on a new device.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <details class="table-card mb-4" data-tour="endpoint-deployment-setup" @if(session('new_agent_token')) open @endif>
     <summary class="card-header d-flex justify-content-between align-items-center" style="cursor:pointer"><span class="fw-semibold"><i class="bi bi-gear me-1"></i>Deployment Setup</span><span class="small text-muted">{{ $stats['active_tokens'] }} active enrollment {{ Str::plural('token', $stats['active_tokens']) }}</span></summary>
     <div class="card-body border-top"><div class="row g-3"><div class="col-lg-7"><label class="form-label">Inventory API Endpoint</label><div class="input-group"><input id="agentEndpoint" type="text" class="form-control font-monospace" value="{{ url('/api/v1/agent/check-in') }}" readonly><button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('agentEndpoint').value)" title="Copy endpoint"><i class="bi bi-copy"></i></button></div></div><div class="col-lg-5"><label class="form-label">Authentication</label><div class="form-control bg-light text-muted">Enrollment token, then a unique device key</div></div></div></div>

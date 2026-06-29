@@ -8,18 +8,74 @@
         <p>Install the company device agent so IT can keep your assigned device inventory current.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a href="{{ route('staff.devices.windows-installer') }}" class="btn btn-primary btn-sm">
-            <i class="bi bi-windows me-1"></i>Windows Agent
-        </a>
-        <a href="{{ route('staff.devices.unix-installer') }}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-apple me-1"></i>macOS/Linux Agent
-        </a>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#downloadAgentModal">
+            <i class="bi bi-download me-1"></i>Download Agent
+        </button>
         <form method="POST" action="{{ route('staff.devices.tokens.store') }}">
             @csrf
             <button class="btn btn-outline-primary btn-sm">
                 <i class="bi bi-key me-1"></i>Create Setup Token
             </button>
         </form>
+    </div>
+</div>
+
+<div class="modal fade" id="downloadAgentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title mb-0">Download Device Agent</h5>
+                    <small class="text-muted">Select the operating system for your device.</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a href="{{ route('staff.devices.windows-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark">
+                            <div class="fs-3 text-primary"><i class="bi bi-windows"></i></div>
+                            <div>
+                                <div class="fw-semibold">Windows</div>
+                                <div class="small text-muted">Download the Windows installer for your company PC.</div>
+                                <span class="badge bg-primary mt-2">Download EXE</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ route('staff.devices.unix-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark">
+                            <div class="fs-3 text-primary"><i class="bi bi-apple"></i></div>
+                            <div>
+                                <div class="fw-semibold">macOS / Linux</div>
+                                <div class="small text-muted">Download the self-contained shell installer.</div>
+                                <span class="badge bg-primary mt-2">Download SH</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded-3 p-3 h-100 d-flex gap-3 bg-light text-muted">
+                            <div class="fs-3"><i class="bi bi-android2"></i></div>
+                            <div>
+                                <div class="fw-semibold">Android</div>
+                                <div class="small">Mobile device agent will be added in a future release.</div>
+                                <span class="badge bg-secondary mt-2">Coming soon</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded-3 p-3 h-100 d-flex gap-3 bg-light text-muted">
+                            <div class="fs-3"><i class="bi bi-phone"></i></div>
+                            <div>
+                                <div class="fw-semibold">iOS</div>
+                                <div class="small">Mobile device agent will be added in a future release.</div>
+                                <span class="badge bg-secondary mt-2">Coming soon</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info small mt-3 mb-0"><i class="bi bi-info-circle me-1"></i>Create a setup token before installing the agent on your device.</div>
+            </div>
+        </div>
     </div>
 </div>
 

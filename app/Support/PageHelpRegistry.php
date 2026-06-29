@@ -278,8 +278,7 @@ class PageHelpRegistry
                     'My Reported Devices' => 'Devices that checked in using your employee-bound token or are otherwise linked to your account.',
                 ],
                 'actions' => [
-                    'Windows Agent' => 'Downloads the Windows installer for this portal.',
-                    'macOS/Linux Agent' => 'Downloads the self-contained macOS and Linux installer for this portal.',
+                    'Download Agent' => 'Opens the operating-system selector for Windows, macOS, and Linux installers.',
                     'Create Setup Token' => 'Creates a 24-hour one-time enrollment token linked to your employee account.',
                     'Copy' => 'Copies the endpoint or setup token for pasting into the installer.',
                 ],
@@ -311,7 +310,7 @@ class PageHelpRegistry
                 'how' => [
                     'Filter Healthy, Stale, or Offline devices and resolve computers that are not linked to an asset or employee.',
                     'Select devices and queue a signed inventory refresh when current data is required.',
-                    'Download the Windows installer or macOS/Linux installer and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
+                    'Use Download Agent to pick the operating system installer, then enroll with a short-lived setup token; every enrolled computer receives its own revocable device key.',
                       'Review the agent version before relying on newly introduced collection features.',
                       'Open a device to install or remove approved WinGet packages, lock its active session, or schedule a restart.',
                 ],
@@ -323,8 +322,7 @@ class PageHelpRegistry
                     'Software Inventory' => 'Shows software discovered on that device and whether each record is mapped to the catalog.',
                 ],
                 'actions' => [
-                    'Windows Installer' => 'Downloads the installer used to enroll Windows devices into this portal.',
-                    'macOS/Linux Installer' => 'Downloads the self-contained shell installer used to enroll macOS and Linux devices into this portal.',
+                    'Download Agent' => 'Opens the operating-system selector for Windows, macOS, and Linux installers.',
                     'Create Enrollment Token' => 'Creates a short-lived setup token for agent installation.',
                     'Refresh Selected' => 'Queues inventory refresh commands for selected devices.',
                     'Link' => 'Connects a reported endpoint to the correct asset and employee.',
@@ -374,7 +372,7 @@ class PageHelpRegistry
                 'how' => [
                     'Filter Healthy, Stale, or Offline devices and resolve computers that are not linked to an asset or employee.',
                     'Select devices and queue a signed inventory refresh when current data is required.',
-                    'Download the Windows installer or macOS/Linux installer and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
+                    'Use Download Agent to pick the operating system installer, then enroll with a short-lived setup token; every enrolled computer receives its own revocable device key.',
                       'Review the agent version before relying on newly introduced collection features.',
                       'Open a device to install or remove approved WinGet packages, lock its active session, or schedule a restart.',
                 ],
