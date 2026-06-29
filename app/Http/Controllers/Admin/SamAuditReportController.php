@@ -196,14 +196,23 @@ class SamAuditReportController extends Controller
 
     private function writeCompliance(string $directory, int $organizationId): void
     {
-        $this->csv($directory, '02-compliance-snapshot.csv', ['Software ID','Software','Policy','License Metric','Active Installs','Discovered Users','Discovered Devices','Active Exceptions','Policy Violations','Required Seats','Purchased Seats','Active Allocations','Missing Seats','Allocation Mismatches','Status','Risk Score','Risk Level','Estimated Exposure'], function ($handle) use ($organizationId) {
+        $this->csv($directory, '02-compliance-snapshot.csv', ['Software ID','Software','Policy','License Metric','Active Installs','Discovered Users','Discovered Devices','Active Exceptions','Expiring Exceptions','Expired Exceptions','Policy Violations','Required Seats','Purchased Seats','Active Allocations','Missing Seats','Allocation Mismatches','Status','Risk Score','Risk Level','Estimated Exposure'], function ($handle) use ($organizationId) {
             Software::where('organization_id', $organizationId)
                 ->with(['licenses.activeAssignments','discoveries' => fn ($q) => $q->where('status','mapped')->where('is_installed',true)->with('activePolicyException')])
+                ->withCount([
+                    'policyExceptions as expiring_policy_exceptions_count' => fn ($query) => $query
+                        ->where('status', 'approved')
+                        ->whereDate('expires_at', '>=', today())
+                        ->whereDate('expires_at', '<=', today()->addDays(14)),
+                    'policyExceptions as expired_policy_exceptions_count' => fn ($query) => $query
+                        ->where('status', 'approved')
+                        ->whereDate('expires_at', '<', today()),
+                ])
                 ->orderBy('id')->chunkById(100, function ($items) use ($handle) {
                     foreach ($items as $software) {
                         $row = $this->complianceRow($software);
                         if ($row['installs'] === 0 && $row['purchased'] === 0 && $row['allocated'] === 0) continue;
-                        fputcsv($handle, [$software->id,$software->name,$software->policy_status,$software->license_metric,$row['installs'],$row['users'],$row['devices'],$row['exceptions'],$row['policy_violations'],$row['required'],$row['purchased'],$row['allocated'],$row['missing'],$row['mismatches'],$row['status'],$row['risk_score'],$row['risk_level'],$row['exposure']]);
+                        fputcsv($handle, [$software->id,$software->name,$software->policy_status,$software->license_metric,$row['installs'],$row['users'],$row['devices'],$row['exceptions'],$row['expiring_exceptions'],$row['expired_exceptions'],$row['policy_violations'],$row['required'],$row['purchased'],$row['allocated'],$row['missing'],$row['mismatches'],$row['status'],$row['risk_score'],$row['risk_level'],$row['exposure']]);
                     }
                 });
         });
@@ -908,7 +917,7 @@ class SamAuditReportController extends Controller
         $averageCost = $seatCount > 0 ? (float) $validLicenses->sum(fn ($license) => $license->total_cost) / $seatCount : 0;
         $exposure = $missing * $averageCost;
         $risk = $this->riskScore($software, $required, $missing, $exposure, $status);
-        return ['installs'=>$discoveries->count(),'users'=>$userIds->count(),'devices'=>$assetIds->count(),'exceptions'=>$exceptions,'policy_violations'=>$policyViolations,'required'=>$required,'purchased'=>$purchased,'allocated'=>$assignments->count(),'missing'=>$missing,'mismatches'=>$mismatches,'status'=>$status,'risk_score'=>$risk,'risk_level'=>$risk>=70?'high':($risk>=35?'medium':'low'),'exposure'=>$exposure];
+        return ['installs'=>$discoveries->count(),'users'=>$userIds->count(),'devices'=>$assetIds->count(),'exceptions'=>$exceptions,'expiring_exceptions'=>(int) ($software->expiring_policy_exceptions_count ?? 0),'expired_exceptions'=>(int) ($software->expired_policy_exceptions_count ?? 0),'policy_violations'=>$policyViolations,'required'=>$required,'purchased'=>$purchased,'allocated'=>$assignments->count(),'missing'=>$missing,'mismatches'=>$mismatches,'status'=>$status,'risk_score'=>$risk,'risk_level'=>$risk>=70?'high':($risk>=35?'medium':'low'),'exposure'=>$exposure];
     }
 
     private function complianceStatus(Software $software, int $installs, int $required, int $purchased, int $expired, int $mismatches, int $policyViolations): string
