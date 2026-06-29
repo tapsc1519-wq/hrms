@@ -128,17 +128,31 @@
                     </div>
                     <div class="col-md-7">
                         <label class="form-label">WinGet Package ID</label>
-                        <input type="text" name="winget_package_id" value="{{ old('winget_package_id') }}"
+                        <input type="text" id="wingetPackageId" name="winget_package_id" value="{{ old('winget_package_id') }}"
                                class="form-control @error('winget_package_id') is-invalid @enderror"
                                placeholder="e.g. Microsoft.VisualStudioCode">
-                        <div class="form-text">Exact package ID used for controlled Windows installation and removal.</div>
+                        <div class="form-text">
+                            Exact ID used by the agent for install/uninstall. Examples: Google.Chrome, Microsoft.VisualStudioCode, Mozilla.Firefox, 7zip.7zip.
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                            <code class="small">winget search "{{ old('name') ?: 'software name' }}"</code>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="copyWingetSearch">
+                                <i class="bi bi-clipboard me-1"></i>Copy command
+                            </button>
+                        </div>
                         @error('winget_package_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-5 d-flex align-items-end">
                         <label class="d-flex align-items-center gap-2 border rounded-3 px-3 py-2 w-100" style="cursor:pointer;background:#f8fafc">
-                            <input type="checkbox" name="endpoint_management_enabled" value="1" class="form-check-input m-0" @checked(old('endpoint_management_enabled'))>
+                            <input type="checkbox" id="endpointManagementEnabled" name="endpoint_management_enabled" value="1" class="form-check-input m-0" @checked(old('endpoint_management_enabled'))>
                             <span class="fw-bold">Allow endpoint deployment</span>
                         </label>
+                    </div>
+                    <div class="col-12">
+                        <div id="endpointDeploymentWarning" class="alert alert-warning small mb-0 d-none">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Enter a WinGet Package ID before enabling endpoint deployment.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -199,5 +213,31 @@ function previewIcon(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    var endpointCheckbox = document.getElementById('endpointManagementEnabled');
+    var packageInput = document.getElementById('wingetPackageId');
+    var warning = document.getElementById('endpointDeploymentWarning');
+    var copyButton = document.getElementById('copyWingetSearch');
+    var softwareNameInput = document.querySelector('input[name="name"]');
+
+    function refreshEndpointWarning() {
+        if (!endpointCheckbox || !packageInput || !warning) return;
+        warning.classList.toggle('d-none', !(endpointCheckbox.checked && packageInput.value.trim() === ''));
+    }
+
+    endpointCheckbox?.addEventListener('change', refreshEndpointWarning);
+    packageInput?.addEventListener('input', refreshEndpointWarning);
+    refreshEndpointWarning();
+
+    copyButton?.addEventListener('click', function () {
+        var softwareName = softwareNameInput?.value.trim() || 'software name';
+        navigator.clipboard?.writeText('winget search "' + softwareName + '"');
+        copyButton.innerHTML = '<i class="bi bi-check2 me-1"></i>Copied';
+        setTimeout(function () {
+            copyButton.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy command';
+        }, 1600);
+    });
+});
 </script>
 @endpush
