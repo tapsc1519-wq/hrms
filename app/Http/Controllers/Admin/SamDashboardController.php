@@ -79,6 +79,19 @@ class SamDashboardController extends Controller
                 ->get()
                 ->sum(fn ($item) => $item->pending_quantity),
             'active_licenses' => SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->count(),
+            'licenses_missing_evidence' => SoftwareLicense::where('organization_id', $organizationId)
+                ->where('status', 'active')
+                ->where(fn ($query) => $query
+                    ->whereNull('evidence_document')
+                    ->orWhereNull('invoice_number')
+                    ->orWhereNull('po_number')
+                    ->orWhereNull('vendor_id'))
+                ->count(),
+            'licenses_missing_cost' => SoftwareLicense::where('organization_id', $organizationId)
+                ->where('status', 'active')
+                ->whereNull('purchase_price')
+                ->whereNull('unit_cost')
+                ->count(),
             'expiring_licenses' => SoftwareLicense::where('organization_id', $organizationId)
                 ->where('status', 'active')
                 ->whereNotNull('expiry_date')
@@ -215,6 +228,23 @@ class SamDashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $licenseEvidenceGaps = SoftwareLicense::where('organization_id', $organizationId)
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('evidence_document')
+                    ->orWhereNull('invoice_number')
+                    ->orWhereNull('po_number')
+                    ->orWhereNull('vendor_id')
+                    ->orWhereNull('purchase_date')
+                    ->orWhere(function ($costQuery) {
+                        $costQuery->whereNull('purchase_price')->whereNull('unit_cost');
+                    });
+            })
+            ->with(['software', 'vendor'])
+            ->latest('id')
+            ->limit(8)
+            ->get();
+
         $coverage = [
             'normalized_percent' => $stats['installed_records'] > 0
                 ? (int) round(($stats['mapped_records'] / $stats['installed_records']) * 100)
@@ -235,7 +265,8 @@ class SamDashboardController extends Controller
             'softwareRequests',
             'softwareProcurement',
             'inventoryGaps',
-            'policyGaps'
+            'policyGaps',
+            'licenseEvidenceGaps'
         ));
     }
 

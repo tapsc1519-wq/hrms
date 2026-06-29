@@ -384,5 +384,44 @@
             </div>
         </div>
     </div>
+    <div class="col-xl-6">
+        <div class="table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">License Evidence Quality</span>
+                <a href="{{ route('admin.software-licenses.index') }}" class="btn btn-sm btn-outline-primary">Licenses</a>
+            </div>
+            <div class="card-body border-bottom">
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Active licenses missing proof fields</span><strong class="text-dark">{{ $stats['licenses_missing_evidence'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Active licenses missing cost</span><strong class="text-dark">{{ $stats['licenses_missing_cost'] }}</strong></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th class="ps-4">License</th><th>Proof Gaps</th><th>Seats</th><th class="text-end pe-4">Renewal</th></tr></thead>
+                    <tbody>
+                        @forelse($licenseEvidenceGaps as $license)
+                        @php
+                            $proofGaps = collect([
+                                $license->evidence_document ? null : 'Evidence',
+                                $license->invoice_number ? null : 'Invoice',
+                                $license->po_number ? null : 'PO',
+                                $license->vendor_id ? null : 'Supplier',
+                                $license->purchase_date ? null : 'Purchase date',
+                                ($license->purchase_price || $license->unit_cost) ? null : 'Cost',
+                            ])->filter();
+                        @endphp
+                        <tr>
+                            <td class="ps-4"><div class="fw-bold">{{ $license->software?->name ?? 'Unknown software' }}</div><div class="text-muted small">{{ $license->purchase_batch ?: $license->license_type_label }}</div></td>
+                            <td><span class="badge bg-warning text-dark">{{ $proofGaps->implode(', ') }}</span><div class="text-muted small">{{ $license->vendor?->name ?? 'No supplier' }}</div></td>
+                            <td>{{ $license->used_seats }} / {{ $license->seats }}</td>
+                            <td class="text-end pe-4">{{ ($license->renewal_date ?? $license->expiry_date)?->format('d-m-Y') ?? '-' }}</td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="text-center text-muted py-4">No active license evidence gaps found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

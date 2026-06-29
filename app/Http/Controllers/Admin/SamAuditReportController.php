@@ -47,6 +47,14 @@ class SamAuditReportController extends Controller
                     ->orWhere('policy_reviewed_at', '<', now()->subYear()))
                 ->count(),
             'license_seats' => SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->sum('seats'),
+            'license_evidence_gaps' => SoftwareLicense::where('organization_id', $organizationId)
+                ->where('status', 'active')
+                ->where(fn ($query) => $query
+                    ->whereNull('evidence_document')
+                    ->orWhereNull('invoice_number')
+                    ->orWhereNull('po_number')
+                    ->orWhereNull('vendor_id'))
+                ->count(),
             'software_requests' => SoftwareRequest::where('organization_id', $organizationId)
                 ->whereIn('status', ['pending', 'approved'])
                 ->count(),
@@ -96,6 +104,7 @@ class SamAuditReportController extends Controller
             $this->writeSoftwareProcurement($directory, $organizationId, $activityFrom);
             $this->writeInventoryQuality($directory, $organizationId);
             $this->writePolicyGovernance($directory, $organizationId);
+            $this->writeLicenseEvidenceQuality($directory, $organizationId);
             File::put($directory.DIRECTORY_SEPARATOR.'README.txt', $this->readme($organization, $activityFrom, $includeRemoved, $generatedAt));
 
             $zip = new ZipArchive();
@@ -129,6 +138,7 @@ class SamAuditReportController extends Controller
             ['Inventory Data Quality Gaps', DeviceAgent::where('organization_id', $organizationId)->where(fn ($q) => $q->whereNull('asset_id')->orWhereNull('user_id')->orWhereNull('last_seen_at')->orWhere('last_seen_at', '<', now()->subHours(24))->orWhereNotNull('last_error'))->count()],
             ['Policy Governance Gaps', Software::where('organization_id', $organizationId)->where(fn ($q) => $q->where('policy_status', 'unreviewed')->orWhereNull('policy_reviewed_at')->orWhere('policy_reviewed_at', '<', now()->subYear()))->count()],
             ['Active License Seats', SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->sum('seats')],
+            ['License Evidence Gaps', SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->where(fn ($q) => $q->whereNull('evidence_document')->orWhereNull('invoice_number')->orWhereNull('po_number')->orWhereNull('vendor_id'))->count()],
             ['Active Allocations', SoftwareAssignment::where('status', 'active')->whereHas('license', fn ($q) => $q->where('organization_id', $organizationId))->count()],
             ['Open Software Requests', SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->count()],
             ['Software Purchase Order Lines', PurchaseOrderItem::where('item_type', 'software')->whereHas('purchaseOrder', fn ($q) => $q->where('organization_id', $organizationId))->count()],
@@ -487,6 +497,62 @@ class SamAuditReportController extends Controller
         });
     }
 
+    private function writeLicenseEvidenceQuality(string $directory, int $organizationId): void
+    {
+        $headers = ['License ID','Software','Publisher','License Type','Seats','Used Seats','Available Seats','Supplier','PO Number','Invoice Number','Agreement Number','Purchase Date','Expiry Date','Renewal Date','Unit Cost','Total Cost','Evidence Document','Evidence Issues'];
+
+        $this->csv($directory, '16-license-evidence-quality.csv', $headers, function ($handle) use ($organizationId) {
+            SoftwareLicense::where('organization_id', $organizationId)
+                ->where('status', 'active')
+                ->where(function ($query) {
+                    $query->whereNull('evidence_document')
+                        ->orWhereNull('invoice_number')
+                        ->orWhereNull('po_number')
+                        ->orWhereNull('vendor_id')
+                        ->orWhereNull('purchase_date')
+                        ->orWhere(function ($costQuery) {
+                            $costQuery->whereNull('purchase_price')->whereNull('unit_cost');
+                        });
+                })
+                ->with(['software', 'vendor'])
+                ->orderBy('id')
+                ->chunkById(500, function ($items) use ($handle) {
+                    foreach ($items as $item) {
+                        $issues = collect([
+                            $item->vendor_id ? null : 'Missing supplier',
+                            $item->po_number ? null : 'Missing PO number',
+                            $item->invoice_number ? null : 'Missing invoice number',
+                            $item->agreement_number ? null : 'Missing agreement number',
+                            $item->purchase_date ? null : 'Missing purchase date',
+                            ($item->purchase_price || $item->unit_cost) ? null : 'Missing cost',
+                            $item->evidence_document ? null : 'Missing evidence document',
+                        ])->filter()->implode('; ');
+
+                        fputcsv($handle, [
+                            $item->id,
+                            $item->software?->name,
+                            $item->software?->vendor,
+                            $item->license_type_label,
+                            $item->seats,
+                            $item->used_seats,
+                            $item->available_seats,
+                            $item->vendor?->name,
+                            $item->po_number,
+                            $item->invoice_number,
+                            $item->agreement_number,
+                            $item->purchase_date?->toDateString(),
+                            $item->expiry_date?->toDateString(),
+                            $item->renewal_date?->toDateString(),
+                            $item->unit_cost,
+                            $item->total_cost,
+                            $item->evidence_document,
+                            $issues,
+                        ]);
+                    }
+                });
+        });
+    }
+
     private function csv(string $directory, string $filename, array $headers, Closure $writer): void
     {
         $handle = fopen($directory.DIRECTORY_SEPARATOR.$filename, 'wb');
@@ -559,6 +625,6 @@ class SamAuditReportController extends Controller
 
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }
