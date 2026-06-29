@@ -592,6 +592,13 @@
         font-size: var(--font-sm);
         line-height: 1.3;
     }
+    #main-content nav[role="navigation"][aria-label*="Pagination"] svg,
+    #main-content nav[role="navigation"][aria-label*="pagination"] svg {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        vertical-align: -.125em;
+    }
     .payroll-component-item {
         padding-top: .8rem !important;
         padding-bottom: .8rem !important;
