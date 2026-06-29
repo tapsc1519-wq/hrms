@@ -105,7 +105,20 @@
                                 </div>
                                 @if($item->softwareRequests->isNotEmpty())
                                 <div class="col-12">
-                                    <div class="small text-primary"><i class="bi bi-people me-1"></i>{{ $item->softwareRequests->where('status', 'approved')->count() }} approved employee request(s) are waiting for these seats.</div>
+                                    <div class="border rounded p-2 bg-light">
+                                        <div class="small text-primary mb-1"><i class="bi bi-people me-1"></i>{{ $item->open_software_request_count }} open employee request(s) are linked to this line.</div>
+                                        <div class="d-flex gap-2 flex-wrap small">
+                                            <span class="badge bg-light text-dark border">{{ $item->linked_software_request_count }} linked</span>
+                                            <span class="badge bg-success">{{ $item->fulfilled_software_request_count }} fulfilled</span>
+                                            <span class="badge bg-{{ $item->unfulfilled_software_request_count > 0 ? 'warning text-dark' : 'light text-dark border' }}">{{ $item->unfulfilled_software_request_count }} waiting</span>
+                                            <span class="badge bg-primary">{{ $item->received_software_seat_count }} seats already received</span>
+                                        </div>
+                                        @if($item->softwareRequests->where('status', 'approved')->isNotEmpty())
+                                            <div class="text-muted small mt-2">
+                                                Receiving seats allocates first to the oldest approved requests by needed-by date.
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                                 @endif
                                 @endif

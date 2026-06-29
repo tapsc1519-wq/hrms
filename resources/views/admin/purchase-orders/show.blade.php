@@ -132,20 +132,58 @@
         @if($purchaseOrder->items->where('item_type', 'software')->isNotEmpty())
         <div class="table-card mb-3">
             <div class="card-header"><span class="fw-600">Software Demand and Allocations</span></div>
-            <div class="table-responsive">
-                <table class="table align-middle mb-0" style="font-size:.82rem">
-                    <thead><tr><th class="ps-3">Software</th><th>Employees Requested</th><th>Seats Received</th><th>Requests Fulfilled</th></tr></thead>
-                    <tbody>
-                    @foreach($purchaseOrder->items->where('item_type', 'software') as $item)
-                        <tr>
-                            <td class="ps-3 fw-semibold">{{ $item->software?->name ?? $item->item_name }}</td>
-                            <td>{{ $item->softwareRequests->count() }}</td>
-                            <td>{{ $item->softwareLicenses->sum('seats') }}</td>
-                            <td>{{ $item->softwareRequests->where('status', 'fulfilled')->count() }}</td>
-                        </tr>
-                    @endforeach
-                    </tbody>
-                </table>
+            <div class="card-body p-0">
+                @foreach($purchaseOrder->items->where('item_type', 'software') as $item)
+                <div class="border-bottom p-3">
+                    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-2">
+                        <div>
+                            <div class="fw-bold">{{ $item->software?->name ?? $item->item_name }}</div>
+                            <div class="text-muted small">{{ $item->license_type ?: 'software' }} &middot; {{ $item->subscription_period ?: 'term not set' }}</div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <span class="badge bg-light text-dark">{{ $item->linked_software_request_count }} linked</span>
+                            <span class="badge bg-success">{{ $item->fulfilled_software_request_count }} fulfilled</span>
+                            <span class="badge bg-{{ $item->unfulfilled_software_request_count > 0 ? 'warning text-dark' : 'light text-dark' }}">{{ $item->unfulfilled_software_request_count }} waiting</span>
+                            <span class="badge bg-primary">{{ $item->received_software_seat_count }} seats received</span>
+                        </div>
+                    </div>
+
+                    @if($item->softwareRequests->isNotEmpty())
+                    <div class="table-responsive border rounded">
+                        <table class="table align-middle mb-0" style="font-size:.82rem">
+                            <thead class="table-light"><tr><th>Employee</th><th>Need</th><th>SLA</th><th>Status</th><th class="text-end">Allocation</th></tr></thead>
+                            <tbody>
+                            @foreach($item->softwareRequests->sortBy([['status', 'asc'], ['needed_by', 'asc'], ['created_at', 'asc']]) as $softwareRequest)
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">{{ $softwareRequest->requester?->name ?? 'Unknown employee' }}</div>
+                                        <div class="text-muted small">{{ $softwareRequest->requester?->department?->name ?? $softwareRequest->requester?->employee_id ?? 'No department' }}</div>
+                                    </td>
+                                    <td>
+                                        <div>{{ $softwareRequest->needed_by?->format('d-m-Y') ?? 'No date' }}</div>
+                                        <div class="text-muted small">{{ ucfirst($softwareRequest->urgency) }} priority</div>
+                                    </td>
+                                    <td><span class="badge bg-{{ $softwareRequest->sla_badge }}">{{ $softwareRequest->sla_label }}</span><div class="text-muted small">{{ $softwareRequest->sla_issue }}</div></td>
+                                    <td><span class="badge bg-{{ $softwareRequest->status_badge }}">{{ $softwareRequest->status_label }}</span></td>
+                                    <td class="text-end">
+                                        @if($softwareRequest->assignment && $softwareRequest->license)
+                                            <a href="{{ route('admin.software-licenses.show', $softwareRequest->license) }}" class="text-decoration-none">License #{{ $softwareRequest->software_license_id }}</a>
+                                        @elseif($softwareRequest->assignment)
+                                            License #{{ $softwareRequest->software_license_id }}
+                                        @else
+                                            <span class="text-muted">Pending receipt</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @else
+                    <div class="text-muted small">No employee software requests are linked to this PO line.</div>
+                    @endif
+                </div>
+                @endforeach
             </div>
         </div>
         @endif

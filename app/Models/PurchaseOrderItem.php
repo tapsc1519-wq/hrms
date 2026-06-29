@@ -54,4 +54,29 @@ class PurchaseOrderItem extends Model
     {
         return max(0, $this->quantity - $this->received_quantity);
     }
+
+    public function getLinkedSoftwareRequestCountAttribute(): int
+    {
+        return $this->softwareRequests->count();
+    }
+
+    public function getFulfilledSoftwareRequestCountAttribute(): int
+    {
+        return $this->softwareRequests->where('status', 'fulfilled')->count();
+    }
+
+    public function getOpenSoftwareRequestCountAttribute(): int
+    {
+        return $this->softwareRequests->whereIn('status', ['pending', 'approved'])->count();
+    }
+
+    public function getReceivedSoftwareSeatCountAttribute(): int
+    {
+        return (int) $this->softwareLicenses->sum('seats');
+    }
+
+    public function getUnfulfilledSoftwareRequestCountAttribute(): int
+    {
+        return max(0, $this->linked_software_request_count - $this->fulfilled_software_request_count);
+    }
 }

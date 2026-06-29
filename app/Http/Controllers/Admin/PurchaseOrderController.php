@@ -217,7 +217,9 @@ class PurchaseOrderController extends Controller
             'supplier',
             'items.category',
             'items.software',
-            'items.softwareRequests.requester',
+            'items.softwareRequests.requester.department',
+            'items.softwareRequests.assignment',
+            'items.softwareRequests.license',
             'items.softwareLicenses',
             'createdBy',
             'approvedBy',
@@ -233,7 +235,7 @@ class PurchaseOrderController extends Controller
         abort_if($purchaseOrder->organization_id !== $this->orgId(), 403);
         abort_if(!in_array($purchaseOrder->status, ['sent', 'confirmed', 'partially_received'], true), 422, 'This purchase order cannot receive items.');
 
-        $purchaseOrder->load(['supplier', 'items.category', 'items.software', 'items.softwareRequests.requester']);
+        $purchaseOrder->load(['supplier', 'items.category', 'items.software', 'items.softwareRequests.requester.department', 'items.softwareLicenses']);
         abort_if($purchaseOrder->items->every(fn($item) => $item->pending_quantity === 0), 422, 'All purchase order items have already been received.');
 
         $facilities = Facility::where('organization_id', $this->orgId())
