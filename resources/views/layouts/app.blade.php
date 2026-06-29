@@ -2247,12 +2247,12 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
         var steps = [];
         var used = [];
 
-        addStep(steps, used, '.page-header', pageHelpData.title || 'Page Overview', pageHelpData.what || 'Start here to understand the purpose of this page and the main actions available.');
-        addStep(steps, used, '.stat-card-gradient, .stat-card, .summary-card', 'Key Summary', 'These summary cards show the most important counts or status indicators for this page.');
+        addStep(steps, used, '.page-header, .suite-hero, .employee-hero', pageHelpData.title || 'Page Overview', pageHelpData.what || 'Start here to understand the purpose of this page and the main actions available.');
+        addStep(steps, used, '.stat-card-gradient, .stat-card, .summary-card, .module-card, .mini-stat, .attention-item', 'Key Summary', 'These summary cards show the most important counts or status indicators for this page.');
         addStep(steps, used, '.table-card form[method="GET"], form[method="GET"]', 'Filters and Search', 'Use these controls to narrow records before reviewing, exporting, or taking action.');
-        addStep(steps, used, '.table-card .card-header .btn, .page-header .btn, .content-area > .d-flex .btn', 'Page Actions', firstActionDescription());
+        addStep(steps, used, '.table-card .card-header .btn, .page-header .btn, .suite-card .btn, .dash-card .btn, .content-area > .d-flex .btn', 'Page Actions', firstActionDescription());
 
-        Array.from(document.querySelectorAll('.table-card')).slice(0, 4).forEach(function (cardElement, index) {
+        Array.from(document.querySelectorAll('.table-card, .suite-card, .dash-card')).slice(0, 5).forEach(function (cardElement, index) {
             var title = cardTitle(cardElement) || (index === 0 ? 'Main Records' : 'Page Section');
             addElementStep(steps, used, cardElement, title, sectionDescription(title) || 'Review this section for related records, details, and available actions.');
         });
@@ -2290,7 +2290,7 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
     }
 
     function cardTitle(cardElement) {
-        var header = cardElement.querySelector('.card-header .fw-semibold, .card-header, h4, h5');
+        var header = cardElement.querySelector('.card-header .fw-semibold, .card-header, .panel-title, .section-title, .module-title, h4, h5');
         return header ? header.textContent.replace(/\s+/g, ' ').trim() : '';
     }
 

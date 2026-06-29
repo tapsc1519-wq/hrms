@@ -47,7 +47,82 @@ class PageHelpRegistry
                     'Open the module links to work on detailed records.',
                     'Check pending tasks before starting daily operations.',
                 ],
+                'sections' => [
+                    'Command Center' => 'Shows enabled modules, pending actions, and the current working date.',
+                    'Module Cards' => 'Shows each enabled module with its main count, secondary count, and Open action.',
+                    'Operational Health' => 'Summarizes daily status and pending work across enabled modules.',
+                    'Dashboard Panels' => 'Shows charts, recent activity, requests, tickets, and upcoming operational items.',
+                ],
+                'actions' => [
+                    'Open' => 'Opens the selected module dashboard or work area.',
+                    'Start Guide' => 'Walks through the key dashboard areas step by step.',
+                    'Page Help' => 'Shows the written reference for the current page.',
+                ],
+                'tour' => [
+                    [
+                        'selector' => '.suite-hero',
+                        'title' => 'Command Center',
+                        'body' => 'Start here for the organization name, enabled module count, pending actions, and current date.',
+                    ],
+                    [
+                        'selector' => '.module-card',
+                        'title' => 'Module Cards',
+                        'body' => 'Each card summarizes one enabled module. Use Open to jump directly into that area.',
+                    ],
+                    [
+                        'selector' => '.suite-card .panel-title',
+                        'title' => 'Operational Panels',
+                        'body' => 'Dashboard panels group important health, trend, and action information so you can decide what needs attention first.',
+                    ],
+                    [
+                        'selector' => '.mini-stat',
+                        'title' => 'Quick Counts',
+                        'body' => 'These compact numbers highlight daily status, pending work, and operational totals.',
+                    ],
+                    [
+                        'selector' => '#globalPageHelpButton',
+                        'title' => 'Page Help',
+                        'body' => 'Use Page Help anytime for a written reference explaining this page and its actions.',
+                    ],
+                ],
                 'next' => 'Start with alerts, pending approvals, or items that show a high count.',
+            ],
+            'staff.dashboard' => [
+                'title' => 'My Dashboard Help',
+                'what' => 'My Dashboard gives employees a quick view of attendance, actions needing attention, assigned items, requests, and shortcuts.',
+                'how' => [
+                    'Start with your attendance or pending attention items.',
+                    'Use quick cards to jump to profile, assets, software, tickets, or requests.',
+                    'Review recent lists to know what has changed in your account.',
+                ],
+                'tour' => [
+                    [
+                        'selector' => '.employee-hero',
+                        'title' => 'Employee Overview',
+                        'body' => 'Start here for your employee dashboard summary and date context.',
+                    ],
+                    [
+                        'selector' => '.dash-card',
+                        'title' => 'Dashboard Cards',
+                        'body' => 'Cards show attendance, attention items, quick links, and recent activity.',
+                    ],
+                    [
+                        'selector' => '.attention-item',
+                        'title' => 'Needs Attention',
+                        'body' => 'These items point to work that may require your response, upload, confirmation, or review.',
+                    ],
+                    [
+                        'selector' => '.quick-card',
+                        'title' => 'Quick Links',
+                        'body' => 'Use these shortcuts to open common employee self-service pages quickly.',
+                    ],
+                    [
+                        'selector' => '#globalPageHelpButton',
+                        'title' => 'Page Help',
+                        'body' => 'Use Page Help anytime for a written reference explaining this page and its actions.',
+                    ],
+                ],
+                'next' => 'Handle urgent attention items first, then use quick links for routine self-service work.',
             ],
             'admin.assets.*' => [
                 'title' => 'Assets Help',
