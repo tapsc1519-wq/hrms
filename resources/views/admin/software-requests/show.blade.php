@@ -7,6 +7,7 @@
         <div class="d-flex align-items-center gap-2 mb-1">
             <h4 class="mb-0">Software Request #{{ $softwareRequest->id }}</h4>
             <span class="badge bg-{{ $softwareRequest->status_badge }}">{{ $softwareRequest->status_label }}</span>
+            <span class="badge bg-{{ $softwareRequest->sla_badge }}">{{ $softwareRequest->sla_label }}</span>
         </div>
         <p>Review the employee's need, make a decision, and allocate the correct license.</p>
     </div>

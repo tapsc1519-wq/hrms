@@ -36,6 +36,14 @@ class SoftwareRequestController extends Controller
             $query->where('urgency', $request->urgency);
         }
 
+        if ($request->sla === 'overdue') {
+            $query->whereIn('status', ['pending', 'approved'])->whereNotNull('needed_by')->whereDate('needed_by', '<', today());
+        } elseif ($request->sla === 'due_soon') {
+            $query->whereIn('status', ['pending', 'approved'])->whereBetween('needed_by', [today(), today()->addDays(7)]);
+        } elseif ($request->sla === 'aging') {
+            $query->whereIn('status', ['pending', 'approved'])->where('created_at', '<', now()->subDays(7));
+        }
+
         $requests = $query->paginate(25)->withQueryString();
         $stats = [
             'pending' => (clone $base)->where('status', 'pending')->count(),
@@ -43,6 +51,10 @@ class SoftwareRequestController extends Controller
             'fulfilled' => (clone $base)->where('status', 'fulfilled')->count(),
             'urgent' => (clone $base)->whereIn('status', ['pending', 'approved'])
                 ->whereIn('urgency', ['high', 'critical'])->count(),
+            'overdue' => (clone $base)->whereIn('status', ['pending', 'approved'])
+                ->whereNotNull('needed_by')->whereDate('needed_by', '<', today())->count(),
+            'aging' => (clone $base)->whereIn('status', ['pending', 'approved'])
+                ->where('created_at', '<', now()->subDays(7))->count(),
         ];
 
         return view('admin.software-requests.index', compact('requests', 'stats'));

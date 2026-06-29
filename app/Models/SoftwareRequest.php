@@ -88,4 +88,38 @@ class SoftwareRequest extends Model
             default => 'primary',
         };
     }
+
+    public function getIsOpenAttribute(): bool
+    {
+        return in_array($this->status, ['pending', 'approved'], true);
+    }
+
+    public function getIsOverdueAttribute(): bool
+    {
+        return $this->is_open && $this->needed_by && $this->needed_by->isPast();
+    }
+
+    public function getIsAgingAttribute(): bool
+    {
+        return $this->is_open && $this->created_at->lt(now()->subDays(7));
+    }
+
+    public function getSlaLabelAttribute(): string
+    {
+        if (! $this->is_open) return 'Closed';
+        if ($this->is_overdue) return 'Overdue';
+        if ($this->needed_by && $this->needed_by->lte(today()->addDays(7))) return 'Due Soon';
+        if ($this->is_aging) return 'Aging';
+        return 'On Track';
+    }
+
+    public function getSlaBadgeAttribute(): string
+    {
+        return match ($this->sla_label) {
+            'Overdue' => 'danger',
+            'Due Soon', 'Aging' => 'warning',
+            'Closed' => 'secondary',
+            default => 'success',
+        };
+    }
 }

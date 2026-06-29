@@ -16,7 +16,7 @@
     @foreach([
         ['Pending Review', $stats['pending'], 'grad-orange', 'Waiting for a decision'],
         ['Approved', $stats['approved'], 'grad-blue', 'Waiting for allocation'],
-        ['Urgent Open', $stats['urgent'], 'grad-red', 'High or critical priority'],
+        ['SLA Risk', $stats['overdue'] + $stats['aging'], 'grad-red', $stats['overdue'].' overdue, '.$stats['aging'].' aging'],
         ['Allocated', $stats['fulfilled'], 'grad-green', 'Completed requests'],
     ] as [$label, $value, $color, $sub])
     <div class="col-sm-6 col-xl-3">
@@ -54,8 +54,17 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-sm-5 col-lg-2">
+                <label class="form-label">SLA</label>
+                <select name="sla" class="form-select">
+                    <option value="">All SLA states</option>
+                    <option value="overdue" @selected(request('sla') === 'overdue')>Overdue</option>
+                    <option value="due_soon" @selected(request('sla') === 'due_soon')>Due Soon</option>
+                    <option value="aging" @selected(request('sla') === 'aging')>Aging</option>
+                </select>
+            </div>
             <div class="col-auto"><button class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Filter</button></div>
-            @if(request()->hasAny(['search', 'status', 'urgency']))
+            @if(request()->hasAny(['search', 'status', 'urgency', 'sla']))
                 <div class="col-auto"><a href="{{ route('admin.software-requests.index') }}" class="btn btn-outline-secondary">Clear</a></div>
             @endif
         </form>
@@ -77,6 +86,7 @@
                     <th>Needed By</th>
                     <th>Urgency</th>
                     <th>Status</th>
+                    <th>SLA</th>
                     <th>Age</th>
                     <th class="text-end pe-4">Action</th>
                 </tr>
@@ -105,13 +115,14 @@
                     <td>{{ $softwareRequest->needed_by?->format('d M Y') ?? 'No fixed date' }}</td>
                     <td><span class="badge bg-{{ $softwareRequest->urgency_badge }}">{{ ucfirst($softwareRequest->urgency) }}</span></td>
                     <td><span class="badge bg-{{ $softwareRequest->status_badge }}">{{ $softwareRequest->status_label }}</span></td>
+                    <td><span class="badge bg-{{ $softwareRequest->sla_badge }}">{{ $softwareRequest->sla_label }}</span></td>
                     <td><div>{{ $softwareRequest->created_at->diffForHumans() }}</div><div class="text-muted small">#{{ $softwareRequest->id }}</div></td>
                     <td class="text-end pe-4">
                         <a href="{{ route('admin.software-requests.show', $softwareRequest) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye me-1"></i>Review</a>
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="8" class="text-center text-muted py-5"><i class="bi bi-person-check fs-1 d-block mb-2 opacity-25"></i>No software requests match these filters.</td></tr>
+                <tr><td colspan="9" class="text-center text-muted py-5"><i class="bi bi-person-check fs-1 d-block mb-2 opacity-25"></i>No software requests match these filters.</td></tr>
                 @endforelse
             </tbody>
         </table>
