@@ -1832,6 +1832,22 @@
                         @endforeach
                     </ul>
                 @endif
+                @if(!empty($pageHelp['sections']))
+                    <div class="help-panel-section-title mt-3 mb-2">What you can find here</div>
+                    <ul>
+                        @foreach($pageHelp['sections'] as $section => $description)
+                            <li><strong>{{ $section }}:</strong> {{ $description }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+                @if(!empty($pageHelp['actions']))
+                    <div class="help-panel-section-title mt-3 mb-2">What buttons do</div>
+                    <ul>
+                        @foreach($pageHelp['actions'] as $button => $description)
+                            <li><strong>{{ $button }}:</strong> {{ $description }}</li>
+                        @endforeach
+                    </ul>
+                @endif
                 @if(!empty($pageHelp['next']))
                     <div class="mt-3"><strong>Next:</strong> {{ $pageHelp['next'] }}</div>
                 @endif
