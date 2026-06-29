@@ -398,6 +398,76 @@ class SoftwareDiscoveryController extends Controller
         return back()->with('success', $updated.' matching '.str('installation')->plural($updated).' ignored.');
     }
 
+    public function recognitionRules(Request $request)
+    {
+        $organizationId = $this->orgId();
+        $perPage = in_array((int) $request->input('per_page'), [25, 50, 100], true) ? (int) $request->input('per_page') : 25;
+        $query = SoftwareRecognitionRule::where('organization_id', $organizationId)
+            ->with(['software', 'approvedBy'])
+            ->when($request->filled('software_id'), fn ($q) => $q->where('software_id', $request->software_id))
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = trim($request->search);
+                $q->where(fn ($rule) => $rule->where('raw_name_pattern', 'like', "%{$search}%")
+                    ->orWhere('raw_publisher_pattern', 'like', "%{$search}%")
+                    ->orWhereHas('software', fn ($software) => $software->where('name', 'like', "%{$search}%")->orWhere('vendor', 'like', "%{$search}%")));
+            })
+            ->latest();
+
+        $rules = $query->paginate($perPage)->withQueryString();
+        $software = Software::where('organization_id', $organizationId)->orderBy('name')->get(['id', 'name', 'vendor', 'edition']);
+        $allRules = SoftwareRecognitionRule::where('organization_id', $organizationId)->get();
+        $stats = [
+            'rules' => $allRules->count(),
+            'publisher_scoped' => $allRules->filter(fn ($rule) => filled($rule->raw_publisher_pattern))->count(),
+            'avg_confidence' => (int) round($allRules->avg('confidence_score') ?? 0),
+            'mapped_titles' => $allRules->pluck('software_id')->unique()->count(),
+        ];
+
+        return view('admin.software-discovery.recognition-rules', compact('rules', 'software', 'stats', 'perPage'));
+    }
+
+    public function storeRecognitionRule(Request $request)
+    {
+        $data = $request->validate([
+            'software_id' => ['required', 'integer'],
+            'raw_name_pattern' => ['required', 'string', 'max:255'],
+            'raw_publisher_pattern' => ['nullable', 'string', 'max:255'],
+            'confidence_score' => ['required', 'integer', 'min:1', 'max:100'],
+        ]);
+        $software = Software::where('organization_id', $this->orgId())->findOrFail($data['software_id']);
+        $publisher = filled($data['raw_publisher_pattern'] ?? null) ? $data['raw_publisher_pattern'] : null;
+
+        $rule = SoftwareRecognitionRule::firstOrCreate([
+            'organization_id' => $this->orgId(),
+            'software_id' => $software->id,
+            'raw_name_pattern' => trim($data['raw_name_pattern']),
+            'raw_publisher_pattern' => $publisher ? trim($publisher) : null,
+        ], [
+            'confidence_score' => $data['confidence_score'],
+            'approved_by' => auth()->id(),
+        ]);
+
+        if (! $rule->wasRecentlyCreated) {
+            $rule->update([
+                'confidence_score' => $data['confidence_score'],
+                'approved_by' => auth()->id(),
+            ]);
+        }
+
+        $this->recognitionService->forgetOrganization($this->orgId());
+
+        return back()->with('success', 'Recognition rule saved for '.$software->name.'.');
+    }
+
+    public function destroyRecognitionRule(SoftwareRecognitionRule $rule)
+    {
+        abort_if($rule->organization_id !== $this->orgId(), 403);
+        $rule->delete();
+        $this->recognitionService->forgetOrganization($this->orgId());
+
+        return back()->with('success', 'Recognition rule deleted.');
+    }
+
     private function signatureQuery(string $rawName, ?string $publisher)
     {
         return SoftwareDiscovery::where('organization_id', $this->orgId())

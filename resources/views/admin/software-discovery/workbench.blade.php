@@ -4,7 +4,12 @@
 @section('content')
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
     <div><h4>Normalization Workbench</h4><p>Review unknown software once and apply the decision across every matching installation.</p></div>
-    <a href="{{ route('admin.software-discovery.index') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-hdd-network me-1"></i>Discovery Inventory</a>
+    <div class="d-flex gap-2 flex-wrap">
+        @if(auth()->user()->hasPermission('software.manage'))
+        <a href="{{ route('admin.software-recognition-rules.index') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-diagram-3 me-1"></i>Recognition Rules</a>
+        @endif
+        <a href="{{ route('admin.software-discovery.index') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-hdd-network me-1"></i>Discovery Inventory</a>
+    </div>
 </div>
 
 <div class="row g-3 mb-3">

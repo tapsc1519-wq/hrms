@@ -240,6 +240,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::post('software-discovery/import', [SoftwareDiscoveryController::class, 'storeImport'])->name('software-discovery.import.store');
     Route::get('software-discovery/template', [SoftwareDiscoveryController::class, 'template'])->name('software-discovery.template');
     Route::get('software-normalization', [SoftwareDiscoveryController::class, 'workbench'])->name('software-normalization.index');
+    Route::get('software-recognition-rules', [SoftwareDiscoveryController::class, 'recognitionRules'])->middleware('permission:software.manage')->name('software-recognition-rules.index');
+    Route::post('software-recognition-rules', [SoftwareDiscoveryController::class, 'storeRecognitionRule'])->middleware('permission:software.manage')->name('software-recognition-rules.store');
+    Route::delete('software-recognition-rules/{rule}', [SoftwareDiscoveryController::class, 'destroyRecognitionRule'])->middleware('permission:software.manage')->name('software-recognition-rules.destroy');
     Route::patch('software-normalization/map-group', [SoftwareDiscoveryController::class, 'normalizeGroup'])->name('software-normalization.map-group');
     Route::post('software-normalization/create-and-map-group', [SoftwareDiscoveryController::class, 'createAndNormalizeGroup'])->name('software-normalization.create-and-map-group');
     Route::patch('software-normalization/ignore-group', [SoftwareDiscoveryController::class, 'ignoreGroup'])->name('software-normalization.ignore-group');
