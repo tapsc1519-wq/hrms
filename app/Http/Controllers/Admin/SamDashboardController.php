@@ -33,6 +33,9 @@ class SamDashboardController extends Controller
             'offline_devices' => (clone $deviceBase)
                 ->where(fn ($query) => $query->whereNull('last_seen_at')->orWhere('last_seen_at', '<', $now->copy()->subDays(7)))
                 ->count(),
+            'unlinked_devices' => (clone $deviceBase)->whereNull('asset_id')->count(),
+            'unassigned_devices' => (clone $deviceBase)->whereNull('user_id')->count(),
+            'devices_with_errors' => (clone $deviceBase)->whereNotNull('last_error')->count(),
             'installed_records' => (clone $discoveryBase)->count(),
             'unknown_records' => (clone $discoveryBase)->where('status', 'unknown')->count(),
             'mapped_records' => (clone $discoveryBase)->where('status', 'mapped')->count(),
@@ -167,6 +170,21 @@ class SamDashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $inventoryGaps = DeviceAgent::where('organization_id', $organizationId)
+            ->where(function ($query) use ($now) {
+                $query->whereNull('asset_id')
+                    ->orWhereNull('user_id')
+                    ->orWhereNull('last_seen_at')
+                    ->orWhere('last_seen_at', '<', $now->copy()->subHours(24))
+                    ->orWhereNotNull('last_error');
+            })
+            ->with(['asset', 'user'])
+            ->orderByRaw('CASE WHEN last_seen_at IS NULL THEN 0 WHEN last_seen_at < ? THEN 1 ELSE 2 END', [$now->copy()->subDays(7)])
+            ->latest('last_error_at')
+            ->latest('id')
+            ->limit(8)
+            ->get();
+
         $coverage = [
             'normalized_percent' => $stats['installed_records'] > 0
                 ? (int) round(($stats['mapped_records'] / $stats['installed_records']) * 100)
@@ -185,7 +203,8 @@ class SamDashboardController extends Controller
             'openActions',
             'usageReviews',
             'softwareRequests',
-            'softwareProcurement'
+            'softwareProcurement',
+            'inventoryGaps'
         ));
     }
 

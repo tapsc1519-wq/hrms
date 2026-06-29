@@ -32,6 +32,14 @@ class SamAuditReportController extends Controller
         $stats = [
             'catalog' => Software::where('organization_id', $organizationId)->count(),
             'installations' => SoftwareDiscovery::where('organization_id', $organizationId)->where('is_installed', true)->count(),
+            'inventory_gaps' => DeviceAgent::where('organization_id', $organizationId)
+                ->where(fn ($query) => $query
+                    ->whereNull('asset_id')
+                    ->orWhereNull('user_id')
+                    ->orWhereNull('last_seen_at')
+                    ->orWhere('last_seen_at', '<', now()->subHours(24))
+                    ->orWhereNotNull('last_error'))
+                ->count(),
             'license_seats' => SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->sum('seats'),
             'software_requests' => SoftwareRequest::where('organization_id', $organizationId)
                 ->whereIn('status', ['pending', 'approved'])
@@ -80,6 +88,7 @@ class SamAuditReportController extends Controller
             $this->writeUsageReviews($directory, $organizationId, $activityFrom);
             $this->writeSoftwareRequests($directory, $organizationId, $activityFrom);
             $this->writeSoftwareProcurement($directory, $organizationId, $activityFrom);
+            $this->writeInventoryQuality($directory, $organizationId);
             File::put($directory.DIRECTORY_SEPARATOR.'README.txt', $this->readme($organization, $activityFrom, $includeRemoved, $generatedAt));
 
             $zip = new ZipArchive();
@@ -110,6 +119,7 @@ class SamAuditReportController extends Controller
             ['Active Installations', SoftwareDiscovery::where('organization_id', $organizationId)->where('is_installed', true)->count()],
             ['Unknown Installations', SoftwareDiscovery::where('organization_id', $organizationId)->where('is_installed', true)->where('status', 'unknown')->count()],
             ['Enrolled Devices', DeviceAgent::where('organization_id', $organizationId)->count()],
+            ['Inventory Data Quality Gaps', DeviceAgent::where('organization_id', $organizationId)->where(fn ($q) => $q->whereNull('asset_id')->orWhereNull('user_id')->orWhereNull('last_seen_at')->orWhere('last_seen_at', '<', now()->subHours(24))->orWhereNotNull('last_error'))->count()],
             ['Active License Seats', SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->sum('seats')],
             ['Active Allocations', SoftwareAssignment::where('status', 'active')->whereHas('license', fn ($q) => $q->where('organization_id', $organizationId))->count()],
             ['Open Software Requests', SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->count()],
@@ -373,6 +383,52 @@ class SamAuditReportController extends Controller
         });
     }
 
+    private function writeInventoryQuality(string $directory, int $organizationId): void
+    {
+        $headers = ['Device ID','Device UUID','Hostname','Serial Number','Asset Tag','Employee Code','Employee','Health','Agent Version','Last Seen','Last Inventory','Last Error','Last Error At','Quality Issues'];
+
+        $this->csv($directory, '14-inventory-data-quality.csv', $headers, function ($handle) use ($organizationId) {
+            DeviceAgent::where('organization_id', $organizationId)
+                ->where(fn ($query) => $query
+                    ->whereNull('asset_id')
+                    ->orWhereNull('user_id')
+                    ->orWhereNull('last_seen_at')
+                    ->orWhere('last_seen_at', '<', now()->subHours(24))
+                    ->orWhereNotNull('last_error'))
+                ->with(['asset', 'user'])
+                ->orderBy('hostname')
+                ->chunkById(500, function ($items) use ($handle) {
+                    foreach ($items as $item) {
+                        $issues = collect([
+                            $item->asset_id ? null : 'No asset link',
+                            $item->user_id ? null : 'No employee link',
+                            $item->last_seen_at ? null : 'Never seen',
+                            $item->last_seen_at && $item->last_seen_at->lt(now()->subDays(7)) ? 'Offline over 7 days' : null,
+                            $item->last_seen_at && $item->last_seen_at->between(now()->subDays(7), now()->subHours(24)) ? 'Stale over 24 hours' : null,
+                            $item->last_error ? 'Agent error' : null,
+                        ])->filter()->implode('; ');
+
+                        fputcsv($handle, [
+                            $item->id,
+                            $item->device_uuid,
+                            $item->hostname,
+                            $item->serial_number,
+                            $item->asset?->asset_tag,
+                            $item->user?->employee_id,
+                            $item->user?->name,
+                            $item->health_status,
+                            $item->agent_version,
+                            $item->last_seen_at?->toIso8601String(),
+                            $item->last_inventory_at?->toIso8601String(),
+                            $item->last_error,
+                            $item->last_error_at?->toIso8601String(),
+                            $issues,
+                        ]);
+                    }
+                });
+        });
+    }
+
     private function csv(string $directory, string $filename, array $headers, Closure $writer): void
     {
         $handle = fopen($directory.DIRECTORY_SEPARATOR.$filename, 'wb');
@@ -445,6 +501,6 @@ class SamAuditReportController extends Controller
 
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }

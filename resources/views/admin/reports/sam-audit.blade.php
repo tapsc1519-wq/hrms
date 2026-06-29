@@ -8,6 +8,7 @@
     @foreach([
         ['Catalog Titles', $stats['catalog'], 'grad-blue', 'Normalized software register'],
         ['Active Installations', $stats['installations'], 'grad-purple', 'Current discovery evidence'],
+        ['Inventory Gaps', $stats['inventory_gaps'], 'grad-orange', 'Endpoint records needing cleanup'],
         ['License Seats', $stats['license_seats'], 'grad-green', 'Active purchased entitlement'],
         ['Open Requests', $stats['software_requests'], 'grad-blue', 'Pending or approved demand'],
         ['Software PO Lines', $stats['software_po_items'], 'grad-green', 'Procurement and receiving evidence'],
@@ -35,6 +36,7 @@
             ['License Allocations','Employee allocations, assignment dates, returns and responsible administrator.'],
             ['Discovered Installations','Device-level software evidence, versions, mapping and usage information.'],
             ['Device Coverage','Agent health, inventory recency and asset or employee matching.'],
+            ['Inventory Data Quality','Endpoint records missing asset or employee links, stale/offline devices, and agent errors affecting SAM confidence.'],
             ['Recognition Rules','Approved rules used to normalize raw software evidence.'],
             ['Policy Exceptions','Time-bound approvals, reasons, conditions and revocation history.'],
             ['Remediation Actions','Compliance tasks, ownership, due dates, completion and audit notes.'],

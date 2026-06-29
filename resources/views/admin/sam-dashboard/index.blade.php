@@ -315,5 +315,44 @@
             </div>
         </div>
     </div>
+    <div class="col-xl-6">
+        <div class="table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Inventory Data Quality</span>
+                @if(auth()->user()->hasPermission('endpoint.view'))
+                    <a href="{{ route('admin.agent-sources.index') }}" class="btn btn-sm btn-outline-primary">Endpoints</a>
+                @endif
+            </div>
+            <div class="card-body border-bottom">
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Devices without asset link</span><strong class="text-dark">{{ $stats['unlinked_devices'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Devices without employee</span><strong class="text-dark">{{ $stats['unassigned_devices'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Agents reporting errors</span><strong class="text-dark">{{ $stats['devices_with_errors'] }}</strong></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th class="ps-4">Device</th><th>Linkage</th><th>Health</th><th class="text-end pe-4">Last Seen</th></tr></thead>
+                    <tbody>
+                        @forelse($inventoryGaps as $device)
+                        <tr>
+                            <td class="ps-4"><div class="fw-bold">{{ $device->hostname ?: $device->device_uuid }}</div><div class="text-muted small">{{ $device->serial_number ?: 'No serial number' }}</div></td>
+                            <td>
+                                @if($device->asset && $device->user)
+                                    <span class="badge bg-success">Linked</span>
+                                @else
+                                    <span class="badge bg-warning text-dark">{{ !$device->asset ? 'No Asset' : 'No Employee' }}</span>
+                                @endif
+                                @if($device->last_error)<div class="text-danger small">{{ Str::limit($device->last_error, 45) }}</div>@endif
+                            </td>
+                            <td><span class="badge bg-{{ $device->health_status === 'healthy' ? 'success' : ($device->health_status === 'stale' ? 'warning text-dark' : 'danger') }}">{{ ucfirst($device->health_status) }}</span><div class="text-muted small">Agent {{ $device->agent_version ?: '-' }}</div></td>
+                            <td class="text-end pe-4">{{ $device->last_seen_at?->diffForHumans() ?? 'Never' }}</td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="text-center text-muted py-4">No inventory data quality gaps found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
