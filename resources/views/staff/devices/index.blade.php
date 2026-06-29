@@ -11,7 +11,7 @@
         <a href="{{ route('staff.devices.windows-installer') }}" class="btn btn-primary btn-sm">
             <i class="bi bi-windows me-1"></i>Windows Agent
         </a>
-        <a href="{{ route('staff.devices.unix-package') }}" class="btn btn-outline-primary btn-sm">
+        <a href="{{ route('staff.devices.unix-installer') }}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-apple me-1"></i>macOS/Linux Agent
         </a>
         <form method="POST" action="{{ route('staff.devices.tokens.store') }}">
@@ -43,7 +43,7 @@
                 <div class="row g-3">
                     @foreach([
                         ['Create setup token', 'Generate a token from this page. It is tied to your employee account and expires in 24 hours.'],
-                        ['Download installer', 'Choose the Windows installer or the macOS/Linux package for your company device.'],
+                        ['Download installer', 'Choose the Windows installer or the macOS/Linux installer for your company device.'],
                         ['Paste endpoint and token', 'Use the API endpoint below and paste your one-time setup token during installation.'],
                         ['Wait for check-in', 'After the first successful check-in, your device appears here and in admin Endpoint Management.'],
                     ] as [$title, $description])
@@ -64,7 +64,7 @@
                             <i class="bi bi-copy"></i>
                         </button>
                     </div>
-                    <div class="form-text">Current Windows agent version: v{{ $currentVersion }}. macOS/Linux package uses the same API endpoint and setup token.</div>
+                    <div class="form-text">Current Windows agent version: v{{ $currentVersion }}. macOS/Linux installer uses the same API endpoint and setup token.</div>
                 </div>
             </div>
         </div>

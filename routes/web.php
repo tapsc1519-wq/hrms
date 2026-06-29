@@ -224,6 +224,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::get('agent-sources', [AgentSourceController::class, 'index'])->middleware('permission:endpoint.view')->name('agent-sources.index');
     Route::get('agent-sources/windows-package', [AgentSourceController::class, 'downloadWindowsPackage'])->middleware('permission:software.agents.manage')->name('agent-sources.windows-package');
     Route::get('agent-sources/windows-installer', [AgentSourceController::class, 'downloadWindowsInstaller'])->middleware('permission:software.agents.manage')->name('agent-sources.windows-installer');
+    Route::get('agent-sources/unix-installer', [AgentSourceController::class, 'downloadUnixInstaller'])->middleware('permission:software.agents.manage')->name('agent-sources.unix-installer');
     Route::get('agent-sources/unix-package', [AgentSourceController::class, 'downloadUnixPackage'])->middleware('permission:software.agents.manage')->name('agent-sources.unix-package');
     Route::post('agent-sources/tokens', [AgentSourceController::class, 'createToken'])->middleware('permission:software.agents.manage')->name('agent-sources.tokens.store');
     Route::patch('agent-sources/tokens/{token}/revoke', [AgentSourceController::class, 'revokeToken'])->middleware('permission:software.agents.manage')->name('agent-sources.tokens.revoke');
@@ -409,6 +410,7 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'role:staff'])->grou
     Route::get('my-software', [StaffSoftwareController::class, 'index'])->name('my-software.index');
     Route::get('my-device', [StaffDeviceController::class, 'index'])->name('devices.index');
     Route::get('my-device/windows-installer', [StaffDeviceController::class, 'downloadWindowsInstaller'])->name('devices.windows-installer');
+    Route::get('my-device/unix-installer', [StaffDeviceController::class, 'downloadUnixInstaller'])->name('devices.unix-installer');
     Route::get('my-device/unix-package', [StaffDeviceController::class, 'downloadUnixPackage'])->name('devices.unix-package');
     Route::post('my-device/tokens', [StaffDeviceController::class, 'createToken'])->name('devices.tokens.store');
     Route::get('software-requests', [StaffSoftwareController::class, 'requests'])->name('software-requests.index');

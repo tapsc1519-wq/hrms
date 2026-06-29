@@ -268,7 +268,7 @@ class PageHelpRegistry
                 'what' => 'My Device lets employees install the Windows, macOS, or Linux device agent from their own account so IT can automatically link the reported device to the correct employee.',
                 'how' => [
                     'Create a setup token from this page and copy it immediately.',
-                    'Download and run the correct agent package for your company device.',
+                    'Download and run the correct agent installer for your company device.',
                     'Paste the API endpoint and setup token during installation.',
                     'After the first check-in, confirm your device appears under My Reported Devices.',
                 ],
@@ -279,7 +279,7 @@ class PageHelpRegistry
                 ],
                 'actions' => [
                     'Windows Agent' => 'Downloads the Windows installer for this portal.',
-                    'macOS/Linux Agent' => 'Downloads the Python-based macOS and Linux package for this portal.',
+                    'macOS/Linux Agent' => 'Downloads the self-contained macOS and Linux installer for this portal.',
                     'Create Setup Token' => 'Creates a 24-hour one-time enrollment token linked to your employee account.',
                     'Copy' => 'Copies the endpoint or setup token for pasting into the installer.',
                 ],
@@ -311,7 +311,7 @@ class PageHelpRegistry
                 'how' => [
                     'Filter Healthy, Stale, or Offline devices and resolve computers that are not linked to an asset or employee.',
                     'Select devices and queue a signed inventory refresh when current data is required.',
-                    'Download the Windows installer or macOS/Linux package and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
+                    'Download the Windows installer or macOS/Linux installer and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
                       'Review the agent version before relying on newly introduced collection features.',
                       'Open a device to install or remove approved WinGet packages, lock its active session, or schedule a restart.',
                 ],
@@ -324,7 +324,7 @@ class PageHelpRegistry
                 ],
                 'actions' => [
                     'Windows Installer' => 'Downloads the installer used to enroll Windows devices into this portal.',
-                    'macOS/Linux Package' => 'Downloads the Python-based package used to enroll macOS and Linux devices into this portal.',
+                    'macOS/Linux Installer' => 'Downloads the self-contained shell installer used to enroll macOS and Linux devices into this portal.',
                     'Create Enrollment Token' => 'Creates a short-lived setup token for agent installation.',
                     'Refresh Selected' => 'Queues inventory refresh commands for selected devices.',
                     'Link' => 'Connects a reported endpoint to the correct asset and employee.',
@@ -338,7 +338,7 @@ class PageHelpRegistry
                     [
                         'target' => 'endpoint-installer-actions',
                         'title' => 'Installer and Enrollment',
-                        'body' => 'Use these actions to download the correct agent package and create enrollment tokens for new device setup.',
+                        'body' => 'Use these actions to download the correct agent installer and create enrollment tokens for new device setup.',
                     ],
                     [
                         'target' => 'endpoint-health-summary',
@@ -374,7 +374,7 @@ class PageHelpRegistry
                 'how' => [
                     'Filter Healthy, Stale, or Offline devices and resolve computers that are not linked to an asset or employee.',
                     'Select devices and queue a signed inventory refresh when current data is required.',
-                    'Download the Windows installer or macOS/Linux package and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
+                    'Download the Windows installer or macOS/Linux installer and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
                       'Review the agent version before relying on newly introduced collection features.',
                       'Open a device to install or remove approved WinGet packages, lock its active session, or schedule a restart.',
                 ],

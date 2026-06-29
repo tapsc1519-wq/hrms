@@ -9,6 +9,7 @@ use App\Models\Asset;
 use App\Models\DeviceAgent;
 use App\Models\Software;
 use App\Models\User;
+use App\Support\AgentPackageBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
@@ -99,6 +100,14 @@ class AgentSourceController extends Controller
     public function downloadUnixPackage()
     {
         return $this->downloadAgentPackage('unix', ['opsbridge_agent.py', 'install.sh', 'uninstall.sh', 'README.md'], 'opsbridge-macos-linux-agent.zip');
+    }
+
+    public function downloadUnixInstaller()
+    {
+        return response(AgentPackageBuilder::unixInstallerScript(), 200, [
+            'Content-Type' => 'text/x-shellscript',
+            'Content-Disposition' => 'attachment; filename="OpsBridge-Agent-Installer.sh"',
+        ]);
     }
 
     public function downloadWindowsInstaller()

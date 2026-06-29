@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\AgentApiToken;
 use App\Models\DeviceAgent;
+use App\Support\AgentPackageBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -78,5 +79,13 @@ class DeviceController extends Controller
         $zip->close();
 
         return response()->download($zipPath, 'opsbridge-macos-linux-agent.zip')->deleteFileAfterSend(true);
+    }
+
+    public function downloadUnixInstaller()
+    {
+        return response(AgentPackageBuilder::unixInstallerScript(), 200, [
+            'Content-Type' => 'text/x-shellscript',
+            'Content-Disposition' => 'attachment; filename="OpsBridge-Agent-Installer.sh"',
+        ]);
     }
 }
