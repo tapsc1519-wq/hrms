@@ -1705,13 +1705,11 @@
                 $pageHelp = \App\Support\PageHelpRegistry::current();
                 $pageTourKey = request()->route()?->getName() ?? request()->path();
             @endphp
-            @if(!empty($pageHelp['tour']))
             <button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" id="startPageTour">
                 <i class="bi bi-stars"></i>
                 <span class="d-none d-md-inline">Start Guide</span>
             </button>
-            @endif
-            <button type="button" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#globalPageHelpModal">
+            <button type="button" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1" id="globalPageHelpButton" data-bs-toggle="modal" data-bs-target="#globalPageHelpModal">
                 <i class="bi bi-question-circle"></i>
                 <span class="d-none d-md-inline">Page Help</span>
             </button>
@@ -2077,10 +2075,18 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
 
 <script>
 (function () {
-    var tourSteps = @json($pageHelp['tour'] ?? []);
+    var configuredTourSteps = @json($pageHelp['tour'] ?? []);
+    var pageHelpData = @json([
+        'title' => $pageHelp['title'] ?? 'Page Guide',
+        'what' => $pageHelp['what'] ?? '',
+        'sections' => $pageHelp['sections'] ?? [],
+        'actions' => $pageHelp['actions'] ?? [],
+        'next' => $pageHelp['next'] ?? '',
+    ]);
+    var tourSteps = normalizeConfiguredSteps(configuredTourSteps);
     var tourKey = @json('page-tour-complete:' . $pageTourKey);
     var startButton = document.getElementById('startPageTour');
-    if (!startButton || !Array.isArray(tourSteps) || tourSteps.length === 0) return;
+    if (!startButton) return;
 
     var currentIndex = 0;
     var activeTarget = null;
@@ -2088,6 +2094,11 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
     var card = null;
 
     function startTour() {
+        tourSteps = normalizeConfiguredSteps(configuredTourSteps);
+        if (tourSteps.length === 0) {
+            tourSteps = buildAutomaticTour();
+        }
+        if (tourSteps.length === 0) return;
         currentIndex = 0;
         ensureShell();
         showStep();
@@ -2201,7 +2212,7 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
         var attempts = 0;
         while (attempts < tourSteps.length) {
             var step = tourSteps[currentIndex] || {};
-            if (!step.target || getTarget(step)) {
+            if (getTarget(step)) {
                 return true;
             }
             currentIndex += direction;
@@ -2214,7 +2225,84 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
     }
 
     function getTarget(step) {
+        if (step.selector) {
+            return document.querySelector(step.selector);
+        }
         return step.target ? document.querySelector('[data-tour="' + cssEscape(step.target) + '"]') : null;
+    }
+
+    function normalizeConfiguredSteps(steps) {
+        if (!Array.isArray(steps)) return [];
+        return steps.filter(function (step) {
+            return step && (step.target || step.selector);
+        });
+    }
+
+    function buildAutomaticTour() {
+        var steps = [];
+        var used = [];
+
+        addStep(steps, used, '.page-header', pageHelpData.title || 'Page Overview', pageHelpData.what || 'Start here to understand the purpose of this page and the main actions available.');
+        addStep(steps, used, '.stat-card-gradient, .stat-card, .summary-card', 'Key Summary', 'These summary cards show the most important counts or status indicators for this page.');
+        addStep(steps, used, '.table-card form[method="GET"], form[method="GET"]', 'Filters and Search', 'Use these controls to narrow records before reviewing, exporting, or taking action.');
+        addStep(steps, used, '.table-card .card-header .btn, .page-header .btn, .content-area > .d-flex .btn', 'Page Actions', firstActionDescription());
+
+        Array.from(document.querySelectorAll('.table-card')).slice(0, 4).forEach(function (cardElement, index) {
+            var title = cardTitle(cardElement) || (index === 0 ? 'Main Records' : 'Page Section');
+            addElementStep(steps, used, cardElement, title, sectionDescription(title) || 'Review this section for related records, details, and available actions.');
+        });
+
+        addStep(steps, used, '.content-area form:not([method="GET"])', 'Form Details', 'Complete the required information here, then use the available save or submit action when ready.');
+        addStep(steps, used, '#globalPageHelpButton', 'Page Help', 'Use Page Help anytime for a written reference of what this page contains and what each action means.');
+
+        return steps.slice(0, 8);
+    }
+
+    function addStep(steps, used, selector, title, body) {
+        var element = document.querySelector(selector);
+        if (!element) return;
+        addElementStep(steps, used, element, title, body);
+    }
+
+    function addElementStep(steps, used, element, title, body) {
+        if (!element || used.indexOf(element) !== -1 || !isVisible(element)) return;
+        var generatedId = element.getAttribute('data-auto-tour');
+        if (!generatedId) {
+            generatedId = 'auto-' + (used.length + 1);
+            element.setAttribute('data-auto-tour', generatedId);
+        }
+        used.push(element);
+        steps.push({
+            selector: '[data-auto-tour="' + generatedId + '"]',
+            title: title,
+            body: body
+        });
+    }
+
+    function isVisible(element) {
+        var rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+    }
+
+    function cardTitle(cardElement) {
+        var header = cardElement.querySelector('.card-header .fw-semibold, .card-header, h4, h5');
+        return header ? header.textContent.replace(/\s+/g, ' ').trim() : '';
+    }
+
+    function sectionDescription(title) {
+        var sections = pageHelpData.sections || {};
+        if (sections[title]) return sections[title];
+        var lowerTitle = String(title || '').toLowerCase();
+        var match = Object.keys(sections).find(function (key) {
+            return lowerTitle.indexOf(key.toLowerCase()) !== -1 || key.toLowerCase().indexOf(lowerTitle) !== -1;
+        });
+        return match ? sections[match] : '';
+    }
+
+    function firstActionDescription() {
+        var actions = pageHelpData.actions || {};
+        var firstKey = Object.keys(actions)[0];
+        return firstKey ? firstKey + ': ' + actions[firstKey] : 'These buttons are the main actions available from this page.';
     }
 
     function finishTour() {
