@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AgentCommand;
 use App\Models\DeviceAgent;
+use App\Models\SoftwareComplianceAction;
+use App\Models\SoftwareDiscovery;
 use App\Services\AgentCommandSigningService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -64,6 +66,57 @@ class AgentCommandController extends Controller
             'error_message' => $validated['error_message'] ?? null,
             'executed_at' => now(),
         ]);
+
+        $this->syncSamRemediation($command->fresh(), $validated['status'], $validated['error_message'] ?? null);
+
         return response()->json(['message' => 'Command result recorded.']);
+    }
+
+    private function syncSamRemediation(AgentCommand $command, string $status, ?string $errorMessage): void
+    {
+        if ($command->command_type !== 'software_uninstall') {
+            return;
+        }
+
+        $payload = $command->payload ?? [];
+        $actionId = $payload['compliance_action_id'] ?? null;
+        if (! $actionId) {
+            return;
+        }
+
+        $action = SoftwareComplianceAction::where('organization_id', $command->organization_id)
+            ->whereKey($actionId)
+            ->where('action_type', 'uninstall_reclaim')
+            ->first();
+        if (! $action || $action->status !== 'open') {
+            return;
+        }
+
+        $note = trim((string) $action->notes);
+
+        if ($status === 'completed') {
+            $action->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+                'notes' => trim($note."\nEndpoint uninstall command completed on ".now()->format('Y-m-d H:i').'.'),
+            ]);
+
+            if (! empty($payload['discovery_id'])) {
+                SoftwareDiscovery::where('organization_id', $command->organization_id)
+                    ->whereKey($payload['discovery_id'])
+                    ->update([
+                        'is_installed' => false,
+                        'uninstalled_at' => now(),
+                        'reviewed_at' => now(),
+                    ]);
+            }
+
+            return;
+        }
+
+        $message = $errorMessage ?: 'Endpoint uninstall command failed.';
+        $action->update([
+            'notes' => trim($note."\nEndpoint uninstall command failed on ".now()->format('Y-m-d H:i').': '.$message),
+        ]);
     }
 }
