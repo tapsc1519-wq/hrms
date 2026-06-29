@@ -11,6 +11,7 @@ use App\Models\SoftwareDiscovery;
 use App\Models\SoftwareLicense;
 use App\Models\SoftwarePolicyException;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -289,6 +290,40 @@ class SoftwareComplianceController extends Controller
         $exception->update(['status' => 'revoked', 'revoked_by' => auth()->id(), 'revoked_at' => now()]);
 
         return back()->with('success', 'Policy exception revoked. The installation is included in policy compliance again.');
+    }
+
+    public function extendPolicyException(Request $request, Software $software, SoftwarePolicyException $exception)
+    {
+        abort_if($software->organization_id !== $this->orgId(), 404);
+        abort_if($exception->organization_id !== $this->orgId() || $exception->software_id !== $software->id, 404);
+        abort_if($exception->status === 'revoked', 422, 'Revoked policy exceptions cannot be extended.');
+
+        $validated = $request->validate([
+            'expires_at' => 'required|date|after_or_equal:today',
+            'reason' => 'required|string|max:2000',
+            'conditions' => 'nullable|string|max:2000',
+        ]);
+
+        $previousExpiry = $exception->expires_at?->toDateString();
+        $extensionNote = 'Extended on '.now()->format('Y-m-d').' by '.auth()->user()->name.'. Previous expiry: '.$previousExpiry.'.';
+        $conditions = trim(collect([$validated['conditions'] ?? null, $extensionNote])->filter()->implode("\n"));
+
+        $exception->update([
+            'status' => 'approved',
+            'expires_at' => $validated['expires_at'],
+            'reason' => $validated['reason'],
+            'conditions' => $conditions,
+            'revoked_by' => null,
+            'revoked_at' => null,
+        ]);
+
+        SoftwareComplianceAction::where('organization_id', $this->orgId())
+            ->where('software_discovery_id', $exception->software_discovery_id)
+            ->where('action_type', 'uninstall_reclaim')
+            ->where('status', 'open')
+            ->update(['status' => 'cancelled', 'completed_at' => now()]);
+
+        return back()->with('success', 'Policy exception extended until '.Carbon::parse($validated['expires_at'])->format('d M Y').'.');
     }
 
     public function storeAction(Request $request, Software $software)
