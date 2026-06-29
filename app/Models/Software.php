@@ -62,6 +62,11 @@ class Software extends Model
         return $this->hasMany(SoftwarePolicyException::class);
     }
 
+    public function complianceActions(): HasMany
+    {
+        return $this->hasMany(SoftwareComplianceAction::class);
+    }
+
     public function policyReviewedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'policy_reviewed_by');
