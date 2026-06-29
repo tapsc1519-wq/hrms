@@ -9,6 +9,7 @@ use App\Models\Software;
 use App\Models\SoftwareComplianceAction;
 use App\Models\SoftwareDiscovery;
 use App\Models\SoftwareLicense;
+use App\Models\SoftwarePolicyException;
 use App\Models\SoftwareRequest;
 use App\Models\SoftwareRenewalDecision;
 use App\Models\SoftwareUsageReview;
@@ -40,6 +41,21 @@ class SamDashboardController extends Controller
             'unknown_records' => (clone $discoveryBase)->where('status', 'unknown')->count(),
             'mapped_records' => (clone $discoveryBase)->where('status', 'mapped')->count(),
             'catalog_items' => Software::where('organization_id', $organizationId)->count(),
+            'unreviewed_policies' => Software::where('organization_id', $organizationId)
+                ->where('policy_status', 'unreviewed')
+                ->count(),
+            'stale_policies' => Software::where('organization_id', $organizationId)
+                ->whereNotNull('policy_reviewed_at')
+                ->where('policy_reviewed_at', '<', $now->copy()->subYear())
+                ->count(),
+            'active_policy_exceptions' => SoftwarePolicyException::where('organization_id', $organizationId)
+                ->active()
+                ->count(),
+            'prohibited_installations' => SoftwareDiscovery::where('organization_id', $organizationId)
+                ->where('status', 'mapped')
+                ->where('is_installed', true)
+                ->whereHas('software', fn ($query) => $query->where('policy_status', 'prohibited'))
+                ->count(),
             'pending_requests' => SoftwareRequest::where('organization_id', $organizationId)
                 ->where('status', 'pending')
                 ->count(),
@@ -185,6 +201,20 @@ class SamDashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $policyGaps = Software::where('organization_id', $organizationId)
+            ->with('policyReviewedBy')
+            ->withCount(['discoveries as installed_count' => fn ($query) => $query->where('status', 'mapped')->where('is_installed', true)])
+            ->where(function ($query) use ($now) {
+                $query->whereIn('policy_status', ['unreviewed', 'restricted', 'prohibited'])
+                    ->orWhereNull('policy_reviewed_at')
+                    ->orWhere('policy_reviewed_at', '<', $now->copy()->subYear());
+            })
+            ->orderByRaw("CASE policy_status WHEN 'prohibited' THEN 0 WHEN 'restricted' THEN 1 WHEN 'unreviewed' THEN 2 ELSE 3 END")
+            ->orderByDesc('installed_count')
+            ->orderBy('name')
+            ->limit(8)
+            ->get();
+
         $coverage = [
             'normalized_percent' => $stats['installed_records'] > 0
                 ? (int) round(($stats['mapped_records'] / $stats['installed_records']) * 100)
@@ -204,7 +234,8 @@ class SamDashboardController extends Controller
             'usageReviews',
             'softwareRequests',
             'softwareProcurement',
-            'inventoryGaps'
+            'inventoryGaps',
+            'policyGaps'
         ));
     }
 

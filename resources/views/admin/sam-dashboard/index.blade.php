@@ -354,5 +354,35 @@
             </div>
         </div>
     </div>
+    <div class="col-xl-6">
+        <div class="table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Policy Governance</span>
+                <a href="{{ route('admin.software-policies.index') }}" class="btn btn-sm btn-outline-primary">Policies</a>
+            </div>
+            <div class="card-body border-bottom">
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Unreviewed policies</span><strong class="text-dark">{{ $stats['unreviewed_policies'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Stale policy reviews</span><strong class="text-dark">{{ $stats['stale_policies'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Active exceptions / prohibited installs</span><strong class="text-dark">{{ $stats['active_policy_exceptions'] }} / {{ $stats['prohibited_installations'] }}</strong></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th class="ps-4">Software</th><th>Policy</th><th>Installs</th><th class="text-end pe-4">Reviewed</th></tr></thead>
+                    <tbody>
+                        @forelse($policyGaps as $software)
+                        <tr>
+                            <td class="ps-4"><div class="fw-bold">{{ $software->name }}</div><div class="text-muted small">{{ $software->vendor ?: 'Unknown publisher' }}</div></td>
+                            <td><span class="badge bg-{{ $software->policy_status_badge }}">{{ $software->policy_status_label }}</span><div class="text-muted small">{{ ucfirst($software->criticality) }} criticality</div></td>
+                            <td>{{ $software->installed_count }}</td>
+                            <td class="text-end pe-4"><div>{{ $software->policy_reviewed_at?->format('d-m-Y') ?? 'Never' }}</div><div class="text-muted small">{{ $software->policyReviewedBy?->name }}</div></td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="text-center text-muted py-4">No policy governance gaps found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

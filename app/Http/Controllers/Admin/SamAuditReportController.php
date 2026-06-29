@@ -40,6 +40,12 @@ class SamAuditReportController extends Controller
                     ->orWhere('last_seen_at', '<', now()->subHours(24))
                     ->orWhereNotNull('last_error'))
                 ->count(),
+            'policy_gaps' => Software::where('organization_id', $organizationId)
+                ->where(fn ($query) => $query
+                    ->where('policy_status', 'unreviewed')
+                    ->orWhereNull('policy_reviewed_at')
+                    ->orWhere('policy_reviewed_at', '<', now()->subYear()))
+                ->count(),
             'license_seats' => SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->sum('seats'),
             'software_requests' => SoftwareRequest::where('organization_id', $organizationId)
                 ->whereIn('status', ['pending', 'approved'])
@@ -89,6 +95,7 @@ class SamAuditReportController extends Controller
             $this->writeSoftwareRequests($directory, $organizationId, $activityFrom);
             $this->writeSoftwareProcurement($directory, $organizationId, $activityFrom);
             $this->writeInventoryQuality($directory, $organizationId);
+            $this->writePolicyGovernance($directory, $organizationId);
             File::put($directory.DIRECTORY_SEPARATOR.'README.txt', $this->readme($organization, $activityFrom, $includeRemoved, $generatedAt));
 
             $zip = new ZipArchive();
@@ -120,6 +127,7 @@ class SamAuditReportController extends Controller
             ['Unknown Installations', SoftwareDiscovery::where('organization_id', $organizationId)->where('is_installed', true)->where('status', 'unknown')->count()],
             ['Enrolled Devices', DeviceAgent::where('organization_id', $organizationId)->count()],
             ['Inventory Data Quality Gaps', DeviceAgent::where('organization_id', $organizationId)->where(fn ($q) => $q->whereNull('asset_id')->orWhereNull('user_id')->orWhereNull('last_seen_at')->orWhere('last_seen_at', '<', now()->subHours(24))->orWhereNotNull('last_error'))->count()],
+            ['Policy Governance Gaps', Software::where('organization_id', $organizationId)->where(fn ($q) => $q->where('policy_status', 'unreviewed')->orWhereNull('policy_reviewed_at')->orWhere('policy_reviewed_at', '<', now()->subYear()))->count()],
             ['Active License Seats', SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->sum('seats')],
             ['Active Allocations', SoftwareAssignment::where('status', 'active')->whereHas('license', fn ($q) => $q->where('organization_id', $organizationId))->count()],
             ['Open Software Requests', SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->count()],
@@ -429,6 +437,56 @@ class SamAuditReportController extends Controller
         });
     }
 
+    private function writePolicyGovernance(string $directory, int $organizationId): void
+    {
+        $headers = ['Software ID','Software','Publisher','Criticality','Policy Status','Policy Notes','Policy Reviewed By','Policy Reviewed At','Active Installs','Active Exceptions','Prohibited Or Restricted Violations','Open Uninstall Tasks','Governance Issues'];
+
+        $this->csv($directory, '15-policy-governance.csv', $headers, function ($handle) use ($organizationId) {
+            Software::where('organization_id', $organizationId)
+                ->with([
+                    'policyReviewedBy',
+                    'discoveries' => fn ($query) => $query->where('status', 'mapped')->where('is_installed', true)->with('activePolicyException'),
+                ])
+                ->withCount(['complianceActions as open_uninstall_tasks_count' => fn ($query) => $query->where('action_type', 'uninstall_reclaim')->where('status', 'open')])
+                ->orderBy('id')
+                ->chunkById(500, function ($items) use ($handle) {
+                    foreach ($items as $item) {
+                        $activeInstalls = $item->discoveries->count();
+                        $activeExceptions = $item->discoveries->filter(fn ($discovery) => $discovery->activePolicyException)->count();
+                        $violations = in_array($item->policy_status, ['restricted', 'prohibited'], true)
+                            ? max(0, $activeInstalls - $activeExceptions)
+                            : 0;
+                        $issues = collect([
+                            $item->policy_status === 'unreviewed' ? 'Unreviewed policy' : null,
+                            $item->policy_reviewed_at ? null : 'Never reviewed',
+                            $item->policy_reviewed_at && $item->policy_reviewed_at->lt(now()->subYear()) ? 'Reviewed over 12 months ago' : null,
+                            $violations > 0 ? 'Policy violations detected' : null,
+                        ])->filter()->implode('; ');
+
+                        if ($issues === '' && $activeInstalls === 0 && $activeExceptions === 0) {
+                            continue;
+                        }
+
+                        fputcsv($handle, [
+                            $item->id,
+                            $item->name,
+                            $item->vendor,
+                            $item->criticality,
+                            $item->policy_status_label,
+                            $item->policy_notes,
+                            $item->policyReviewedBy?->name,
+                            $item->policy_reviewed_at?->toIso8601String(),
+                            $activeInstalls,
+                            $activeExceptions,
+                            $violations,
+                            $item->open_uninstall_tasks_count,
+                            $issues,
+                        ]);
+                    }
+                });
+        });
+    }
+
     private function csv(string $directory, string $filename, array $headers, Closure $writer): void
     {
         $handle = fopen($directory.DIRECTORY_SEPARATOR.$filename, 'wb');
@@ -501,6 +559,6 @@ class SamAuditReportController extends Controller
 
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }
