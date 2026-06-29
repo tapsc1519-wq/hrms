@@ -1038,6 +1038,7 @@
         box-shadow: 0 22px 70px rgba(15, 23, 42, .28);
         z-index: 2002;
         padding: 1rem;
+        visibility: hidden;
     }
     .guided-tour-progress {
         color: #64748b;
@@ -2109,9 +2110,14 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
     }
 
     function showStep() {
+        if (!moveToAvailableStep(currentIndex >= tourSteps.length ? -1 : 1)) {
+            finishTour();
+            return;
+        }
+
         clearHighlight();
         var step = tourSteps[currentIndex] || {};
-        activeTarget = step.target ? document.querySelector('[data-tour="' + cssEscape(step.target) + '"]') : null;
+        activeTarget = getTarget(step);
         if (activeTarget) {
             activeTarget.classList.add('guided-tour-highlight');
             activeTarget.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
@@ -2124,6 +2130,7 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
     function renderCard(step) {
         var isFirst = currentIndex === 0;
         var isLast = currentIndex === tourSteps.length - 1;
+        card.style.visibility = 'hidden';
         card.innerHTML =
             '<div class="guided-tour-progress">Step ' + (currentIndex + 1) + ' of ' + tourSteps.length + '</div>' +
             '<div class="guided-tour-title">' + escapeHtml(step.title || 'Guide') + '</div>' +
@@ -2169,6 +2176,7 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
 
         card.style.left = left + 'px';
         card.style.top = top + 'px';
+        card.style.visibility = 'visible';
     }
 
     function nextStep() {
@@ -2183,7 +2191,30 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
     function previousStep() {
         if (currentIndex === 0) return;
         currentIndex -= 1;
+        if (!moveToAvailableStep(-1)) {
+            currentIndex = 0;
+        }
         showStep();
+    }
+
+    function moveToAvailableStep(direction) {
+        var attempts = 0;
+        while (attempts < tourSteps.length) {
+            var step = tourSteps[currentIndex] || {};
+            if (!step.target || getTarget(step)) {
+                return true;
+            }
+            currentIndex += direction;
+            if (currentIndex < 0 || currentIndex >= tourSteps.length) {
+                return false;
+            }
+            attempts += 1;
+        }
+        return false;
+    }
+
+    function getTarget(step) {
+        return step.target ? document.querySelector('[data-tour="' + cssEscape(step.target) + '"]') : null;
     }
 
     function finishTour() {

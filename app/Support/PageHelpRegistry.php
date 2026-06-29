@@ -208,6 +208,68 @@ class PageHelpRegistry
                 ],
                 'next' => 'Open Normalization Workbench to map unknown software to the catalog.',
             ],
+            'admin.agent-sources.index' => [
+                  'title' => 'Endpoint Management Help',
+                  'what' => 'Endpoint Management shows computers reporting inventory and lets authorized administrators send a small set of signed, audited device actions.',
+                'how' => [
+                    'Filter Healthy, Stale, or Offline devices and resolve computers that are not linked to an asset or employee.',
+                    'Select devices and queue a signed inventory refresh when current data is required.',
+                    'Download the Windows installer and use a short-lived enrollment token during setup; every enrolled computer receives its own revocable device key.',
+                      'Review the agent version before relying on newly introduced collection features.',
+                      'Open a device to install or remove approved WinGet packages, lock its active session, or schedule a restart.',
+                ],
+                'sections' => [
+                    'Endpoint list' => 'Shows enrolled Windows devices, health, version, last seen, asset link, employee link, and inventory count.',
+                    'Endpoint actions' => 'On a device page, this area contains lock, restart, inventory refresh, software install, and software remove controls.',
+                    'Managed Software' => 'Lists only catalog software with endpoint deployment enabled and a WinGet Package ID.',
+                    'Signed Command History' => 'Shows queued, delivered, executed, completed, failed, cancelled, or expired commands with result messages.',
+                    'Software Inventory' => 'Shows software discovered on that device and whether each record is mapped to the catalog.',
+                ],
+                'actions' => [
+                    'Download Windows Installer' => 'Downloads the installer used to enroll Windows devices into this portal.',
+                    'Create Enrollment Token' => 'Creates a short-lived setup token for agent installation.',
+                    'Refresh Selected' => 'Queues inventory refresh commands for selected devices.',
+                    'Link' => 'Connects a reported endpoint to the correct asset and employee.',
+                ],
+                'tour' => [
+                    [
+                        'target' => 'endpoint-list-header',
+                        'title' => 'Endpoint Management',
+                        'body' => 'Start here to understand device coverage, installer access, and where endpoint administration begins.',
+                    ],
+                    [
+                        'target' => 'endpoint-installer-actions',
+                        'title' => 'Installer and Enrollment',
+                        'body' => 'Use these actions to download the Windows agent package and create enrollment tokens for new device setup.',
+                    ],
+                    [
+                        'target' => 'endpoint-health-summary',
+                        'title' => 'Fleet Health Summary',
+                        'body' => 'These cards show enrolled devices, healthy check-ins, attention needed, and devices missing asset or employee links.',
+                    ],
+                    [
+                        'target' => 'endpoint-filters',
+                        'title' => 'Fleet Filters',
+                        'body' => 'Use search, health, linking, access, version, and row filters to narrow the endpoint list before taking action.',
+                    ],
+                    [
+                        'target' => 'endpoint-device-table',
+                        'title' => 'Enrolled Devices',
+                        'body' => 'This table is the main fleet view. Open a device name for command history, software inventory, and device actions.',
+                    ],
+                    [
+                        'target' => 'endpoint-bulk-refresh',
+                        'title' => 'Refresh Selected',
+                        'body' => 'Select one or more devices, then queue an inventory refresh so the agent reports current hardware and software data.',
+                    ],
+                    [
+                        'target' => 'endpoint-deployment-setup',
+                        'title' => 'Deployment Setup',
+                        'body' => 'Use this section to confirm the agent API endpoint and manage enrollment tokens used during rollout.',
+                    ],
+                ],
+                'next' => 'Open a specific endpoint to review its inventory, command history, and secure device actions.',
+            ],
             'admin.agent-sources.*' => [
                   'title' => 'Endpoint Management Help',
                   'what' => 'Endpoint Management shows computers reporting inventory and lets authorized administrators send a small set of signed, audited device actions.',

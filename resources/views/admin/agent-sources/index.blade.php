@@ -3,9 +3,9 @@
 
 @section('content')
 @php $canManageAgents = auth()->user()->hasPermission('software.agents.manage'); @endphp
-<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2" data-tour="endpoint-list-header">
     <div><h4>Endpoint Management</h4><p>Monitor managed computers, deploy approved software, and review signed device actions.</p></div>
-    @if(auth()->user()->hasPermission('software.agents.manage'))<div class="d-flex gap-2 flex-wrap"><a href="{{ route('admin.agent-sources.windows-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-windows me-1"></i>Download Windows Installer</a><a href="{{ route('admin.agent-sources.windows-package') }}" class="btn btn-outline-secondary btn-sm" title="Advanced PowerShell package"><i class="bi bi-file-zip me-1"></i>PowerShell Package</a><button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTokenModal"><i class="bi bi-key me-1"></i>Create Enrollment Token</button></div>@endif
+    @if(auth()->user()->hasPermission('software.agents.manage'))<div class="d-flex gap-2 flex-wrap" data-tour="endpoint-installer-actions"><a href="{{ route('admin.agent-sources.windows-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-windows me-1"></i>Download Windows Installer</a><a href="{{ route('admin.agent-sources.windows-package') }}" class="btn btn-outline-secondary btn-sm" title="Advanced PowerShell package"><i class="bi bi-file-zip me-1"></i>PowerShell Package</a><button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTokenModal"><i class="bi bi-key me-1"></i>Create Enrollment Token</button></div>@endif
 </div>
 
 @if(session('new_agent_token'))
@@ -15,7 +15,7 @@
 </div>
 @endif
 
-<div class="row g-3 mb-3">
+<div class="row g-3 mb-3" data-tour="endpoint-health-summary">
     @foreach([
         ['Enrolled Devices', $stats['devices'], 'grad-blue', 'Known agent installations'],
         ['Healthy', $stats['healthy'], 'grad-green', 'Seen within 24 hours'],
@@ -26,7 +26,7 @@
     @endforeach
 </div>
 
-<div class="table-card mb-3">
+<div class="table-card mb-3" data-tour="endpoint-filters">
     <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
         <span class="fw-semibold">Fleet Filters</span>
         <div class="small text-muted">Current agent: <span class="fw-semibold text-dark">v{{ $currentVersion }}</span> · {{ $stats['outdated'] }} outdated or unknown</div>
@@ -46,10 +46,10 @@
 </div>
 
 @if($canManageAgents)<form id="bulkRefreshForm" method="POST" action="{{ route('admin.agent-sources.commands.inventory-refresh.bulk') }}">@csrf</form>@endif
-<div class="table-card mb-4">
+<div class="table-card mb-4" data-tour="endpoint-device-table">
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div><span class="fw-semibold">Enrolled Devices</span><span class="badge bg-light text-dark ms-2">{{ $devices->total() }}</span></div>
-        @if($canManageAgents)<button id="bulkRefreshButton" form="bulkRefreshForm" class="btn btn-outline-primary btn-sm" disabled><i class="bi bi-arrow-repeat me-1"></i>Refresh Selected <span id="selectedDeviceCount"></span></button>@endif
+        @if($canManageAgents)<button id="bulkRefreshButton" form="bulkRefreshForm" class="btn btn-outline-primary btn-sm" disabled data-tour="endpoint-bulk-refresh"><i class="bi bi-arrow-repeat me-1"></i>Refresh Selected <span id="selectedDeviceCount"></span></button>@endif
     </div>
     <div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th class="ps-4" style="width:44px"><input id="selectPageDevices" class="form-check-input" type="checkbox" title="Select this page"></th><th>Device</th><th>Asset / Employee</th><th>Operating System</th><th>Agent</th><th>Software</th><th>Last Seen</th><th>Health</th><th>Access</th><th class="text-end pe-4">Action</th></tr></thead><tbody>
     @forelse($devices as $device)
@@ -70,7 +70,7 @@
 </div>
 
 @if($canManageAgents)
-<details class="table-card mb-4" @if(session('new_agent_token')) open @endif>
+<details class="table-card mb-4" data-tour="endpoint-deployment-setup" @if(session('new_agent_token')) open @endif>
     <summary class="card-header d-flex justify-content-between align-items-center" style="cursor:pointer"><span class="fw-semibold"><i class="bi bi-gear me-1"></i>Deployment Setup</span><span class="small text-muted">{{ $stats['active_tokens'] }} active enrollment {{ Str::plural('token', $stats['active_tokens']) }}</span></summary>
     <div class="card-body border-top"><div class="row g-3"><div class="col-lg-7"><label class="form-label">Inventory API Endpoint</label><div class="input-group"><input id="agentEndpoint" type="text" class="form-control font-monospace" value="{{ url('/api/v1/agent/check-in') }}" readonly><button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('agentEndpoint').value)" title="Copy endpoint"><i class="bi bi-copy"></i></button></div></div><div class="col-lg-5"><label class="form-label">Authentication</label><div class="form-control bg-light text-muted">Enrollment token, then a unique device key</div></div></div></div>
     <div class="table-responsive border-top"><table class="table align-middle mb-0"><thead><tr><th class="ps-4">Enrollment Token</th><th>Prefix</th><th>Created</th><th>Last Used</th><th>Expiry</th><th>Status</th><th class="text-end pe-4">Action</th></tr></thead><tbody>
