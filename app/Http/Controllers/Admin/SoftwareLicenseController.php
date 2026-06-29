@@ -17,14 +17,17 @@ class SoftwareLicenseController extends Controller
 {
     public function index(Request $request)
     {
+        $perPage = in_array((int) $request->input('per_page'), [25, 50, 100], true) ? (int) $request->input('per_page') : 25;
         $query = SoftwareLicense::where('organization_id', $this->orgId())
             ->with(['software', 'supplier'])
             ->latest();
 
         if ($request->filled('status'))   $query->where('status', $request->status);
         if ($request->filled('software_id')) $query->where('software_id', $request->software_id);
+        if ($request->evidence === 'missing') $this->applyEvidenceMissingFilter($query);
+        if ($request->evidence === 'complete') $this->applyEvidenceCompleteFilter($query);
 
-        $licenses = $query->paginate(25)->withQueryString();
+        $licenses = $query->paginate($perPage)->withQueryString();
 
         $softwareList = Software::where('organization_id', $this->orgId())
             ->orderBy('name')->get(['id','name']);
@@ -32,15 +35,19 @@ class SoftwareLicenseController extends Controller
         // Compliance summary
         $allActive = SoftwareLicense::where('organization_id', $this->orgId())
             ->where('status','active')->with('activeAssignments')->get();
+        $allLicenses = SoftwareLicense::where('organization_id', $this->orgId())->get();
 
         $compliance = [
             'over'   => $allActive->filter(fn($l) => $l->is_over_licensed)->count(),
             'expiring' => $allActive->filter(fn($l) => $l->is_expiring_soon)->count(),
             'total_seats' => $allActive->sum('seats'),
             'used_seats'  => $allActive->sum(fn($l) => $l->used_seats),
+            'evidence_gaps' => $allLicenses->filter(fn ($license) => count($license->evidence_issues) > 0)->count(),
+            'evidence_complete' => $allLicenses->filter(fn ($license) => count($license->evidence_issues) === 0)->count(),
+            'evidence_score' => (int) round($allLicenses->avg(fn ($license) => $license->evidence_score) ?? 0),
         ];
 
-        return view('admin.software-licenses.index', compact('licenses', 'softwareList', 'compliance'));
+        return view('admin.software-licenses.index', compact('licenses', 'softwareList', 'compliance', 'perPage'));
     }
 
     public function create(Request $request)
@@ -327,5 +334,41 @@ class SoftwareLicenseController extends Controller
                 'query' => request()->query(),
             ]
         );
+    }
+
+    private function applyEvidenceMissingFilter($query): void
+    {
+        $query->where(function ($q) {
+            $q->whereNull('vendor_id')
+                ->orWhere(function ($po) {
+                    $po->whereNull('purchase_order_id')
+                        ->where(fn ($number) => $number->whereNull('po_number')->orWhere('po_number', ''));
+                })
+                ->orWhereNull('invoice_number')
+                ->orWhere('invoice_number', '')
+                ->orWhere(function ($cost) {
+                    $cost->whereNull('purchase_price')->whereNull('unit_cost');
+                })
+                ->orWhere(function ($proof) {
+                    $proof->whereNull('evidence_document')->whereNull('agreement_number');
+                });
+        });
+    }
+
+    private function applyEvidenceCompleteFilter($query): void
+    {
+        $query->whereNotNull('vendor_id')
+            ->where(function ($q) {
+                $q->where(fn ($po) => $po->whereNotNull('po_number')->where('po_number', '!=', ''))
+                    ->orWhereNotNull('purchase_order_id');
+            })
+            ->whereNotNull('invoice_number')
+            ->where('invoice_number', '!=', '')
+            ->where(function ($q) {
+                $q->whereNotNull('purchase_price')->orWhereNotNull('unit_cost');
+            })
+            ->where(function ($q) {
+                $q->whereNotNull('evidence_document')->orWhereNotNull('agreement_number');
+            });
     }
 }

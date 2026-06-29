@@ -120,6 +120,31 @@ class SoftwareLicense extends Model
         return (float) ($this->unit_cost ?? 0) * (int) $this->seats;
     }
 
+    public function getEvidenceIssuesAttribute(): array
+    {
+        return array_values(array_filter([
+            $this->vendor_id ? null : 'Supplier missing',
+            ($this->po_number || $this->purchase_order_id) ? null : 'PO missing',
+            $this->invoice_number ? null : 'Invoice missing',
+            ($this->purchase_price || $this->unit_cost) ? null : 'Cost missing',
+            ($this->evidence_document || $this->agreement_number) ? null : 'Proof missing',
+        ]));
+    }
+
+    public function getEvidenceScoreAttribute(): int
+    {
+        return max(0, 100 - (count($this->evidence_issues) * 20));
+    }
+
+    public function getEvidenceBadgeAttribute(): string
+    {
+        return match (true) {
+            $this->evidence_score >= 80 => 'success',
+            $this->evidence_score >= 60 => 'warning',
+            default => 'danger',
+        };
+    }
+
     public function getUtilizationPercentageAttribute(): int
     {
         if ((int) $this->seats === 0) {

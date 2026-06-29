@@ -11,6 +11,9 @@
         <p>License compliance overview across all software titles.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ route('admin.software-licenses.index', ['evidence' => 'missing']) }}" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-file-earmark-check me-1"></i>Evidence Gaps
+        </a>
         <a href="{{ route('admin.software-licenses.renewals', ['window' => 60, 'plan_status' => 'unplanned']) }}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-calendar2-check me-1"></i>Renewals
         </a>
@@ -81,6 +84,20 @@
             </div>
         </div>
     </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card-gradient {{ $compliance['evidence_gaps'] > 0 ? 'grad-red' : 'grad-green' }} h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon"><i class="bi bi-file-earmark-check-fill"></i></div>
+                    <div>
+                        <div class="stat-number">{{ $compliance['evidence_score'] }}%</div>
+                        <div class="stat-label">Evidence Quality</div>
+                        <div class="stat-sub">{{ $compliance['evidence_gaps'] }} with missing proof</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {{-- Filters --}}
@@ -99,8 +116,18 @@
                 <option value="expired"   @selected(request('status') === 'expired')>Expired</option>
                 <option value="cancelled" @selected(request('status') === 'cancelled')>Cancelled</option>
             </select>
+            <select name="evidence" class="form-select" style="width:auto;min-width:155px">
+                <option value="">All Evidence</option>
+                <option value="missing" @selected(request('evidence') === 'missing')>Missing Evidence</option>
+                <option value="complete" @selected(request('evidence') === 'complete')>Complete Evidence</option>
+            </select>
+            <select name="per_page" class="form-select" style="width:auto;min-width:95px">
+                @foreach([25,50,100] as $size)
+                    <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }} rows</option>
+                @endforeach
+            </select>
             <button class="btn btn-primary btn-sm">Filter</button>
-            @if(request()->hasAny(['software_id','status']))
+            @if(request()->hasAny(['software_id','status','evidence','per_page']))
                 <a href="{{ route('admin.software-licenses.index') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-x-lg me-1"></i>Clear
                 </a>
@@ -130,6 +157,7 @@
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Supplier</th>
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Renewal</th>
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Recommendation</th>
+                        <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Evidence</th>
                         <th class="py-3" style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b">Status</th>
                         <th class="py-3"></th>
                     </tr>
@@ -172,6 +200,14 @@
                             </span>
                         </td>
                         <td class="py-3">
+                            <span class="badge bg-{{ $lic->evidence_badge }}">{{ $lic->evidence_score }}%</span>
+                            @if(count($lic->evidence_issues))
+                                <div class="text-muted small mt-1" title="{{ implode(', ', $lic->evidence_issues) }}">{{ Str::limit(implode(', ', $lic->evidence_issues), 42) }}</div>
+                            @else
+                                <div class="text-muted small mt-1">Complete</div>
+                            @endif
+                        </td>
+                        <td class="py-3">
                             <span class="badge bg-{{ $lic->status_badge }}">{{ $lic->status_label }}</span>
                         </td>
                         <td class="py-3 pe-3">
@@ -186,10 +222,7 @@
 
             {{-- Pagination --}}
             @if($licenses->hasPages())
-                <div class="px-4 py-3 d-flex align-items-center justify-content-between border-top" style="background:#f8fafc">
-                    <div class="text-muted" style="font-size:.8rem">
-                        Showing {{ $licenses->firstItem() }}–{{ $licenses->lastItem() }} of {{ $licenses->total() }}
-                    </div>
+                <div class="px-4 py-3 border-top" style="background:#f8fafc">
                     {{ $licenses->links() }}
                 </div>
             @endif
