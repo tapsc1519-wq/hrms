@@ -58,6 +58,7 @@
             ['Software Request SLA','Open demand with SLA status, days open, days overdue, aging flags, linked PO, and current issue.'],
             ['Software Procurement','Software PO lines, supplier, order status, received seats, pending seats, receipts, invoices, and generated license seats.'],
             ['Software Demand Fulfillment','Employee request to PO to receipt to license allocation trail, including waiting demand and fulfillment outcome.'],
+            ['Audit Manifest','Evidence file list with byte size, SHA-256 hash, and generation timestamp for integrity checks.'],
         ] as [$name,$description])<tr><td class="ps-4 fw-semibold">{{ $name }}</td><td class="text-muted">{{ $description }}</td></tr>@endforeach
     </tbody></table></div></div></div>
 </div>
