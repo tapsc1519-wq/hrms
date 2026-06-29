@@ -188,6 +188,27 @@ class PageHelpRegistry
                 ],
                 'next' => 'Contact IT through a support ticket if the software is not listed in the catalog.',
             ],
+            'staff.devices.*' => [
+                'title' => 'My Device Help',
+                'what' => 'My Device lets employees install the Windows device agent from their own account so IT can automatically link the reported device to the correct employee.',
+                'how' => [
+                    'Create a setup token from this page and copy it immediately.',
+                    'Download and run the Windows installer on your company device.',
+                    'Paste the API endpoint and setup token during installation.',
+                    'After the first check-in, confirm your device appears under My Reported Devices.',
+                ],
+                'sections' => [
+                    'Install Device Agent' => 'Step-by-step employee installation instructions and the API endpoint required by the installer.',
+                    'Setup Tokens' => 'Recent employee-bound setup tokens, their prefix, expiry, and active status.',
+                    'My Reported Devices' => 'Devices that checked in using your employee-bound token or are otherwise linked to your account.',
+                ],
+                'actions' => [
+                    'Download Agent' => 'Downloads the Windows installer for this portal.',
+                    'Create Setup Token' => 'Creates a 24-hour one-time enrollment token linked to your employee account.',
+                    'Copy' => 'Copies the endpoint or setup token for pasting into the installer.',
+                ],
+                'next' => 'If installation needs administrator approval, contact IT support after creating your setup token.',
+            ],
             'admin.software-licenses.*' => [
                 'title' => 'Software Licenses Help',
                 'what' => 'Software licenses record purchased seats, subscription details, expiry dates, suppliers, invoices, and evidence documents.',

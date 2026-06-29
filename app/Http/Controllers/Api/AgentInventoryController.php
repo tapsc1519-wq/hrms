@@ -61,14 +61,21 @@ class AgentInventoryController extends Controller
 
         $organizationId = (int) $request->attributes->get('agent_organization_id');
         $asset = $this->resolveAsset($organizationId, $validated['asset_tag'] ?? null, $validated['serial_number'] ?? null);
-        $user = $this->resolveUser($organizationId, $validated['employee_code'] ?? null, $validated['employee_email'] ?? null, $asset);
+        $tokenUserId = $request->attributes->get('agent_auth_type') === 'enrollment'
+            ? $request->attributes->get('agent_token')?->assigned_user_id
+            : null;
+        $user = $tokenUserId
+            ? User::where('organization_id', $organizationId)->whereKey($tokenUserId)->first()
+            : $this->resolveUser($organizationId, $validated['employee_code'] ?? null, $validated['employee_email'] ?? null, $asset);
         $inventory = collect($validated['software'] ?? []);
 
         $result = DB::transaction(function () use ($validated, $organizationId, $asset, $user, $inventory, $request) {
             $agent = DeviceAgent::firstOrNew(['organization_id' => $organizationId, 'device_uuid' => $validated['device_uuid']]);
+            $assetId = $asset?->id ?? $agent->asset_id;
+            $userId = $user?->id ?? $agent->user_id;
             $agent->fill([
-                'asset_id' => $asset?->id,
-                'user_id' => $user?->id,
+                'asset_id' => $assetId,
+                'user_id' => $userId,
                 'hostname' => $validated['hostname'],
                 'serial_number' => $validated['serial_number'] ?? null,
                 'os_name' => $validated['os_name'] ?? null,
@@ -124,8 +131,8 @@ class AgentInventoryController extends Controller
                     $discovery->first_seen_at = now();
                 }
                 $discovery->fill([
-                    'asset_id' => $asset?->id,
-                    'user_id' => $user?->id,
+                    'asset_id' => $assetId,
+                    'user_id' => $userId,
                     'software_id' => $match['software_id'],
                     'raw_publisher' => $item['raw_publisher'] ?? null,
                     'raw_edition' => $item['raw_edition'] ?? null,

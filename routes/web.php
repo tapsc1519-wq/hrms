@@ -52,6 +52,7 @@ use App\Http\Controllers\Staff\AssetController as StaffAssetController;
 use App\Http\Controllers\Staff\RequestController as StaffRequestController;
 use App\Http\Controllers\Staff\TicketController as StaffTicketController;
 use App\Http\Controllers\Staff\SoftwareController as StaffSoftwareController;
+use App\Http\Controllers\Staff\DeviceController as StaffDeviceController;
 use App\Http\Controllers\Staff\HrmsDashboardController as StaffHrmsDashboardController;
 use App\Http\Controllers\Staff\ProfileController as StaffProfileController;
 use App\Http\Controllers\Staff\AttendanceController as StaffAttendanceController;
@@ -405,6 +406,9 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'role:staff'])->grou
     // My Software
     Route::middleware('module:sam')->group(function () {
     Route::get('my-software', [StaffSoftwareController::class, 'index'])->name('my-software.index');
+    Route::get('my-device', [StaffDeviceController::class, 'index'])->name('devices.index');
+    Route::get('my-device/windows-installer', [StaffDeviceController::class, 'downloadWindowsInstaller'])->name('devices.windows-installer');
+    Route::post('my-device/tokens', [StaffDeviceController::class, 'createToken'])->name('devices.tokens.store');
     Route::get('software-requests', [StaffSoftwareController::class, 'requests'])->name('software-requests.index');
     Route::get('software-requests/create', [StaffSoftwareController::class, 'createRequest'])->name('software-requests.create');
     Route::post('software-requests', [StaffSoftwareController::class, 'storeRequest'])->name('software-requests.store');

@@ -44,7 +44,7 @@ class AgentSourceController extends Controller
             ->when($request->filled('version'), fn ($query) => $query->where('agent_version', $request->version))
             ->latest('last_seen_at')->paginate($perPage)->withQueryString();
 
-        $tokens = AgentApiToken::where('organization_id', $organizationId)->with('createdBy')->latest()->get();
+        $tokens = AgentApiToken::where('organization_id', $organizationId)->with(['createdBy', 'assignedUser'])->latest()->get();
         $healthyCount = (clone $baseQuery)->where('last_seen_at', '>=', now()->subHours(24))->count();
         $staleCount = (clone $baseQuery)->where('last_seen_at', '>=', now()->subDays(7))->where('last_seen_at', '<', now()->subHours(24))->count();
         $offlineCount = (clone $baseQuery)->where(fn ($query) => $query->whereNull('last_seen_at')->orWhere('last_seen_at', '<', now()->subDays(7)))->count();
@@ -72,7 +72,7 @@ class AgentSourceController extends Controller
         AgentApiToken::create([
             'organization_id' => $this->orgId(), 'name' => $validated['name'],
             'token_prefix' => substr($plainToken, 0, 16), 'token_hash' => hash('sha256', $plainToken),
-            'created_by' => auth()->id(), 'expires_at' => $validated['expires_at'] ?? null,
+            'created_by' => auth()->id(), 'purpose' => 'admin_enrollment', 'expires_at' => $validated['expires_at'] ?? null,
         ]);
         return back()->with('success', 'Enrollment token created. Copy it now; it will not be shown again.')->with('new_agent_token', $plainToken);
     }

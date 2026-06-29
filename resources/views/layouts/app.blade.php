@@ -1474,10 +1474,14 @@
                 <i class="bi bi-clipboard-plus-fill"></i> My Requests
             </a>
             @endif
-            @if($hasSam)
+             @if($hasSam)
             <a href="{{ route('staff.my-software.index') }}"
                class="sidebar-link {{ request()->routeIs('staff.my-software.*', 'staff.software-requests.*') ? 'active' : '' }}">
                 <i class="bi bi-display-fill"></i> My Software
+            </a>
+            <a href="{{ route('staff.devices.index') }}"
+               class="sidebar-link {{ request()->routeIs('staff.devices.*') ? 'active' : '' }}">
+                <i class="bi bi-laptop-fill"></i> My Device
             </a>
             @endif
             @if($hasSupport)
