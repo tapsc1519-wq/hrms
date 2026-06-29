@@ -10,8 +10,8 @@
         ['Active Installations', $stats['installations'], 'grad-purple', 'Current discovery evidence'],
         ['Inventory Gaps', $stats['inventory_gaps'], 'grad-orange', 'Endpoint records needing cleanup'],
         ['Policy Gaps', $stats['policy_gaps'], 'grad-red', 'Unreviewed or stale policy records'],
-        ['Exception Expiry', $stats['policy_exceptions_expiring'], 'grad-orange', 'Approved exceptions expiring in 14 days'],
-        ['Expired Exceptions', $stats['expired_policy_exceptions'], 'grad-red', 'Approved exceptions past expiry'],
+        ['Exception Expiry', $stats['policy_exceptions_expiring'], 'grad-orange', 'Approved exceptions expiring in 14 days', route('admin.software-compliance.index', ['exception_risk' => 'expiring'])],
+        ['Expired Exceptions', $stats['expired_policy_exceptions'], 'grad-red', 'Approved exceptions past expiry', route('admin.software-compliance.index', ['exception_risk' => 'expired'])],
         ['License Seats', $stats['license_seats'], 'grad-green', 'Active purchased entitlement'],
         ['License Evidence Gaps', $stats['license_evidence_gaps'], 'grad-orange', 'Missing entitlement proof fields'],
         ['Overdue Actions', $stats['overdue_actions'], 'grad-red', 'Open remediation past due date'],
@@ -23,8 +23,17 @@
         ['Renewal Plans', $stats['renewal_plans'], 'grad-orange', 'Planned supplier or seat decisions'],
         ['Usage Reviews', $stats['usage_reviews'], 'grad-purple', 'Retain or reclaim decisions'],
         ['Open Actions', $stats['open_actions'], 'grad-red', 'Remediation still in progress'],
-    ] as [$label,$value,$color,$sub])
-    <div class="col-sm-6 col-xl-3"><div class="stat-card-gradient {{ $color }}"><div class="card-body"><div class="stat-label">{{ $label }}</div><div class="stat-number">{{ number_format($value) }}</div><div class="stat-sub">{{ $sub }}</div></div></div></div>
+    ] as $card)
+    @php [$label,$value,$color,$sub,$href] = array_pad($card, 5, null); @endphp
+    <div class="col-sm-6 col-xl-3">
+        @if($href)
+            <a href="{{ $href }}" class="text-decoration-none d-block h-100">
+        @endif
+        <div class="stat-card-gradient {{ $color }} h-100"><div class="card-body"><div class="stat-label">{{ $label }}</div><div class="stat-number">{{ number_format($value) }}</div><div class="stat-sub">{{ $sub }}</div></div></div>
+        @if($href)
+            </a>
+        @endif
+    </div>
     @endforeach
 </div>
 
