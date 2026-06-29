@@ -157,6 +157,20 @@ class SoftwareComplianceController extends Controller
             ->with(['discovery', 'user', 'asset', 'approvedBy', 'revokedBy'])
             ->latest()->paginate(10, ['*'], 'exceptions_page')->withQueryString();
 
+        $exceptionRiskCounts = [
+            'expiring' => SoftwarePolicyException::where('organization_id', $this->orgId())
+                ->where('software_id', $software->id)
+                ->where('status', 'approved')
+                ->whereDate('expires_at', '>=', today())
+                ->whereDate('expires_at', '<=', today()->addDays(14))
+                ->count(),
+            'expired' => SoftwarePolicyException::where('organization_id', $this->orgId())
+                ->where('software_id', $software->id)
+                ->where('status', 'approved')
+                ->whereDate('expires_at', '<', today())
+                ->count(),
+        ];
+
         $owners = User::where('organization_id', $this->orgId())
             ->whereIn('role', ['admin', 'staff'])
             ->orderBy('name')
@@ -177,6 +191,7 @@ class SoftwareComplianceController extends Controller
             'actions' => $actions,
             'openUninstallDiscoveryIds' => $openUninstallDiscoveryIds,
             'exceptions' => $exceptions,
+            'exceptionRiskCounts' => $exceptionRiskCounts,
             'owners' => $owners,
             'actionTypes' => $this->actionTypes(),
         ]);

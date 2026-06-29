@@ -521,7 +521,24 @@
 
 @if(in_array($software->policy_status, ['restricted','prohibited']) || $exceptions->total() > 0)
 <div class="table-card mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center"><div><h5 class="mb-1">Policy Exception History</h5><p class="text-muted small mb-0">Temporary approvals for specific detected installations.</p></div><span class="badge bg-light text-dark">{{ $exceptions->total() }}</span></div>
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2"><div><h5 class="mb-1">Policy Exception History</h5><p class="text-muted small mb-0">Temporary approvals for specific detected installations.</p></div><div class="d-flex flex-wrap gap-1"><span class="badge bg-light text-dark">{{ $exceptions->total() }} total</span>@if($exceptionRiskCounts['expired'] > 0)<span class="badge bg-danger">{{ $exceptionRiskCounts['expired'] }} expired</span>@endif @if($exceptionRiskCounts['expiring'] > 0)<span class="badge bg-warning text-dark">{{ $exceptionRiskCounts['expiring'] }} expiring</span>@endif</div></div>
+    @if($exceptionRiskCounts['expired'] > 0 || $exceptionRiskCounts['expiring'] > 0)
+        <div class="alert alert-warning d-flex align-items-start justify-content-between flex-wrap gap-2 m-3 mb-0">
+            <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-shield-exclamation mt-1"></i>
+                <div>
+                    <strong>Exception review needed.</strong>
+                    @if($exceptionRiskCounts['expired'] > 0)
+                        {{ $exceptionRiskCounts['expired'] }} approved exception{{ $exceptionRiskCounts['expired'] === 1 ? '' : 's' }} already expired.
+                    @endif
+                    @if($exceptionRiskCounts['expiring'] > 0)
+                        {{ $exceptionRiskCounts['expiring'] }} approved exception{{ $exceptionRiskCounts['expiring'] === 1 ? '' : 's' }} expire within 14 days.
+                    @endif
+                </div>
+            </div>
+            <a href="{{ route('admin.software-compliance.index', ['exception_risk' => $exceptionRiskCounts['expired'] > 0 ? 'expired' : 'expiring']) }}" class="btn btn-sm btn-outline-dark">View Risk List</a>
+        </div>
+    @endif
     <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th class="ps-4">User / Device</th><th>Validity</th><th>Business Reason</th><th>Approved By</th><th>Status</th><th class="text-end pe-4">Action</th></tr></thead><tbody>
     @forelse($exceptions as $exception)<tr><td class="ps-4"><div class="fw-bold">{{ $exception->user?->name ?? 'No user mapped' }}</div><div class="text-muted small">{{ $exception->asset?->asset_tag ?? $exception->discovery?->raw_name ?? 'No device mapped' }}</div></td><td>{{ $exception->valid_from->format('d M Y') }} to {{ $exception->expires_at->format('d M Y') }}<div class="text-muted small">{{ $exception->days_to_expiry }} day(s) to expiry</div></td><td><div>{{ $exception->reason }}</div>@if($exception->conditions)<div class="text-muted small">Conditions: {{ $exception->conditions }}</div>@endif</td><td>{{ $exception->approvedBy?->name ?? 'Unknown' }}<div class="text-muted small">{{ $exception->created_at->format('d M Y') }}</div></td><td><span class="badge bg-{{ $exception->status_badge }}">{{ $exception->status_label }}</span><div class="mt-1"><span class="badge bg-{{ $exception->expiry_badge }}">{{ $exception->expiry_label }}</span></div></td><td class="text-end pe-4">@if($exception->status === 'approved')<div class="d-inline-flex gap-1 flex-wrap justify-content-end"><button type="button" class="btn btn-sm btn-outline-primary extend-exception-button" data-bs-toggle="modal" data-bs-target="#extendPolicyExceptionModal" data-action="{{ route('admin.software-compliance.policy-exceptions.extend', [$software, $exception]) }}" data-title="{{ $exception->user?->name ?? $exception->asset?->asset_tag ?? $exception->discovery?->raw_name ?? 'Policy exception' }}" data-expires="{{ $exception->expires_at->toDateString() }}" data-reason="{{ $exception->reason }}" data-conditions="{{ $exception->conditions }}">Extend</button>@if($exception->is_active)<form method="POST" action="{{ route('admin.software-compliance.policy-exceptions.revoke', [$software, $exception]) }}" onsubmit="return confirm('Revoke this policy exception?')">@csrf @method('PATCH')<button class="btn btn-sm btn-outline-danger">Revoke</button></form>@endif</div>@else<span class="text-muted small">Closed</span>@endif</td></tr>
     @empty<tr><td colspan="6" class="text-center text-muted py-4">No policy exceptions have been recorded.</td></tr>@endforelse
