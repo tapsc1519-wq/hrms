@@ -256,12 +256,54 @@ class SoftwareLicenseController extends Controller
 
         $softwareLicense->load(['software','supplier','purchaseOrder','assignments.user','assignments.assignedBy']);
 
+        $suppliers = Supplier::where('organization_id', $this->orgId())
+            ->orderBy('name')->get(['id','name']);
         $employees = User::where('organization_id', $this->orgId())
             ->where('role', 'staff')
             ->orderBy('name')
             ->get(['id','name','email','job_title']);
 
-        return view('admin.software-licenses.show', compact('softwareLicense', 'employees'));
+        return view('admin.software-licenses.show', compact('softwareLicense', 'employees', 'suppliers'));
+    }
+
+    public function updateEvidence(Request $request, SoftwareLicense $softwareLicense)
+    {
+        abort_if($softwareLicense->organization_id !== $this->orgId(), 403);
+
+        $validated = $request->validate([
+            'vendor_id' => 'nullable|integer',
+            'po_number' => 'nullable|string|max:100',
+            'invoice_number' => 'nullable|string|max:100',
+            'agreement_number' => 'nullable|string|max:100',
+            'purchase_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after_or_equal:purchase_date',
+            'renewal_date' => 'nullable|date|after_or_equal:purchase_date',
+            'unit_cost' => 'nullable|numeric|min:0',
+            'purchase_price' => 'nullable|numeric|min:0',
+            'evidence_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120',
+            'remove_evidence_document' => 'nullable|boolean',
+        ]);
+
+        if (! empty($validated['vendor_id'])) {
+            abort_unless(Supplier::where('organization_id', $this->orgId())->whereKey($validated['vendor_id'])->exists(), 403);
+        }
+
+        if ($request->boolean('remove_evidence_document') && $softwareLicense->evidence_document) {
+            Storage::disk('public')->delete($softwareLicense->evidence_document);
+            $validated['evidence_document'] = null;
+        }
+
+        if ($request->hasFile('evidence_document')) {
+            if ($softwareLicense->evidence_document) {
+                Storage::disk('public')->delete($softwareLicense->evidence_document);
+            }
+            $validated['evidence_document'] = $request->file('evidence_document')->store('license-evidence', 'public');
+        }
+
+        unset($validated['remove_evidence_document']);
+        $softwareLicense->update($validated);
+
+        return back()->with('success', 'License evidence updated. Evidence quality is now '.$softwareLicense->fresh()->evidence_score.'%.');
     }
 
     public function assign(Request $request, SoftwareLicense $softwareLicense)

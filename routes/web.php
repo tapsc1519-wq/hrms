@@ -206,6 +206,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::get('software-licenses/create', [SoftwareLicenseController::class, 'create'])->name('software-licenses.create');
     Route::post('software-licenses', [SoftwareLicenseController::class, 'store'])->name('software-licenses.store');
     Route::get('software-licenses/{softwareLicense}', [SoftwareLicenseController::class, 'show'])->name('software-licenses.show');
+    Route::patch('software-licenses/{softwareLicense}/evidence', [SoftwareLicenseController::class, 'updateEvidence'])->middleware('permission:software.manage')->name('software-licenses.evidence.update');
     Route::post('software-licenses/{softwareLicense}/assign', [SoftwareLicenseController::class, 'assign'])->name('software-licenses.assign');
     Route::patch('software-licenses/{softwareLicense}/assignments/{assignment}/return', [SoftwareLicenseController::class, 'returnLicense'])->name('software-licenses.return');
     Route::delete('software-licenses/{softwareLicense}', [SoftwareLicenseController::class, 'destroy'])->name('software-licenses.destroy');

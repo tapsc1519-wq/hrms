@@ -204,6 +204,99 @@
 
     {{-- Right column — Assign form --}}
     <div class="col-lg-5">
+        @if(auth()->user()->hasPermission('software.manage'))
+        <div class="form-card mb-4">
+            <div class="form-card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-file-earmark-check-fill me-2 text-primary"></i>Evidence Quality</span>
+                <span class="badge bg-{{ $softwareLicense->evidence_badge }}">{{ $softwareLicense->evidence_score }}%</span>
+            </div>
+            <div class="form-card-body">
+                @if(count($softwareLicense->evidence_issues))
+                    <div class="alert alert-warning small border-0 mb-3">
+                        <div class="fw-bold mb-1">Missing for audit readiness</div>
+                        {{ implode(', ', $softwareLicense->evidence_issues) }}
+                    </div>
+                @else
+                    <div class="alert alert-success small border-0 mb-3">
+                        <i class="bi bi-check-circle me-1"></i>This license has complete evidence for the SAM Audit Pack.
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('admin.software-licenses.evidence.update', $softwareLicense) }}" enctype="multipart/form-data">
+                    @csrf @method('PATCH')
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Supplier</label>
+                            <select name="vendor_id" class="form-select @error('vendor_id') is-invalid @enderror">
+                                <option value="">No supplier</option>
+                                @foreach($suppliers as $supplier)
+                                    <option value="{{ $supplier->id }}" @selected(old('vendor_id', $softwareLicense->vendor_id) == $supplier->id)>{{ $supplier->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('vendor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">PO Number</label>
+                            <input type="text" name="po_number" value="{{ old('po_number', $softwareLicense->po_number) }}" class="form-control @error('po_number') is-invalid @enderror">
+                            @error('po_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Invoice Number</label>
+                            <input type="text" name="invoice_number" value="{{ old('invoice_number', $softwareLicense->invoice_number) }}" class="form-control @error('invoice_number') is-invalid @enderror">
+                            @error('invoice_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Agreement Number</label>
+                            <input type="text" name="agreement_number" value="{{ old('agreement_number', $softwareLicense->agreement_number) }}" class="form-control @error('agreement_number') is-invalid @enderror">
+                            @error('agreement_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Unit Cost</label>
+                            <input type="number" name="unit_cost" value="{{ old('unit_cost', $softwareLicense->unit_cost) }}" min="0" step="0.01" class="form-control @error('unit_cost') is-invalid @enderror">
+                            @error('unit_cost')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Purchase Price</label>
+                            <input type="number" name="purchase_price" value="{{ old('purchase_price', $softwareLicense->purchase_price) }}" min="0" step="0.01" class="form-control @error('purchase_price') is-invalid @enderror">
+                            @error('purchase_price')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Purchase Date</label>
+                            <input type="date" name="purchase_date" value="{{ old('purchase_date', $softwareLicense->purchase_date?->toDateString()) }}" class="form-control @error('purchase_date') is-invalid @enderror">
+                            @error('purchase_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Expiry Date</label>
+                            <input type="date" name="expiry_date" value="{{ old('expiry_date', $softwareLicense->expiry_date?->toDateString()) }}" class="form-control @error('expiry_date') is-invalid @enderror">
+                            @error('expiry_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Renewal Date</label>
+                            <input type="date" name="renewal_date" value="{{ old('renewal_date', $softwareLicense->renewal_date?->toDateString()) }}" class="form-control @error('renewal_date') is-invalid @enderror">
+                            @error('renewal_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Evidence Document</label>
+                            <input type="file" name="evidence_document" class="form-control @error('evidence_document') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                            <div class="form-text">Upload PO, invoice or agreement. PDF, image or Word file up to 5 MB.</div>
+                            @error('evidence_document')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        @if($softwareLicense->evidence_document)
+                        <div class="col-12 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                            <a href="{{ Storage::url($softwareLicense->evidence_document) }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-paperclip me-1"></i>Open Current Evidence</a>
+                            <label class="form-check m-0">
+                                <input type="checkbox" name="remove_evidence_document" value="1" class="form-check-input">
+                                <span class="form-check-label small text-muted">Remove current file</span>
+                            </label>
+                        </div>
+                        @endif
+                    </div>
+                    <button class="btn btn-primary w-100 mt-3"><i class="bi bi-save me-1"></i>Update Evidence</button>
+                </form>
+            </div>
+        </div>
+        @endif
+
         @if($softwareLicense->status === 'active' && !$softwareLicense->is_expired)
         <div class="form-card">
             <div class="form-card-header">
