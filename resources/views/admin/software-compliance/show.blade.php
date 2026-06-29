@@ -633,9 +633,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     document.querySelectorAll('.extend-exception-button').forEach(function (button) {
         button.addEventListener('click', function () {
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            var currentExpiry = new Date(button.dataset.expires + 'T00:00:00');
+            var minimumExpiry = currentExpiry >= today ? new Date(currentExpiry) : new Date(today);
+            if (currentExpiry >= today) minimumExpiry.setDate(minimumExpiry.getDate() + 1);
+            var minimumDate = minimumExpiry.toISOString().slice(0, 10);
+
             document.getElementById('extendPolicyExceptionForm').action = button.dataset.action;
             document.getElementById('extendPolicyExceptionTarget').textContent = button.dataset.title;
-            document.getElementById('extendExceptionExpires').value = button.dataset.expires;
+            document.getElementById('extendExceptionExpires').min = minimumDate;
+            document.getElementById('extendExceptionExpires').value = minimumDate;
             document.getElementById('extendExceptionCurrent').textContent = 'Current expiry: ' + button.dataset.expires;
             document.getElementById('extendExceptionReason').value = button.dataset.reason || '';
             document.getElementById('extendExceptionConditions').value = button.dataset.conditions || '';

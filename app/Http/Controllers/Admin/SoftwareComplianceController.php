@@ -298,10 +298,17 @@ class SoftwareComplianceController extends Controller
         abort_if($exception->organization_id !== $this->orgId() || $exception->software_id !== $software->id, 404);
         abort_if($exception->status === 'revoked', 422, 'Revoked policy exceptions cannot be extended.');
 
+        $minimumExpiryRule = $exception->expires_at->gte(today())
+            ? 'after:'.$exception->expires_at->toDateString()
+            : 'after_or_equal:today';
+
         $validated = $request->validate([
-            'expires_at' => 'required|date|after_or_equal:today',
+            'expires_at' => ['required', 'date', $minimumExpiryRule],
             'reason' => 'required|string|max:2000',
             'conditions' => 'nullable|string|max:2000',
+        ], [
+            'expires_at.after' => 'Choose a date after the current exception expiry.',
+            'expires_at.after_or_equal' => 'Choose today or a future date for the renewed exception.',
         ]);
 
         $previousExpiry = $exception->expires_at?->toDateString();
