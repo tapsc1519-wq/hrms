@@ -105,6 +105,15 @@ class SamDashboardController extends Controller
             'planned_renewals' => SoftwareRenewalDecision::where('organization_id', $organizationId)
                 ->where('status', 'planned')
                 ->count(),
+            'overdue_renewal_decisions' => SoftwareRenewalDecision::where('organization_id', $organizationId)
+                ->where('status', 'planned')
+                ->whereNotNull('due_date')
+                ->where('due_date', '<', $now->toDateString())
+                ->count(),
+            'renewal_decisions_due_soon' => SoftwareRenewalDecision::where('organization_id', $organizationId)
+                ->where('status', 'planned')
+                ->whereBetween('due_date', [$now->toDateString(), $now->copy()->addDays(14)->toDateString()])
+                ->count(),
             'open_usage_reviews' => SoftwareUsageReview::where('organization_id', $organizationId)
                 ->where('status', 'pending_user')
                 ->count(),
@@ -263,6 +272,15 @@ class SamDashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $renewalSlaRisks = SoftwareRenewalDecision::where('organization_id', $organizationId)
+            ->where('status', 'planned')
+            ->whereNotNull('due_date')
+            ->with(['license.software', 'owner'])
+            ->orderBy('due_date')
+            ->latest('id')
+            ->limit(8)
+            ->get();
+
         $coverage = [
             'normalized_percent' => $stats['installed_records'] > 0
                 ? (int) round(($stats['mapped_records'] / $stats['installed_records']) * 100)
@@ -285,7 +303,8 @@ class SamDashboardController extends Controller
             'inventoryGaps',
             'policyGaps',
             'licenseEvidenceGaps',
-            'actionSlaRisks'
+            'actionSlaRisks',
+            'renewalSlaRisks'
         ));
     }
 

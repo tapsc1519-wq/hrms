@@ -455,5 +455,37 @@
             </div>
         </div>
     </div>
+    <div class="col-xl-6">
+        <div class="table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Renewal SLA</span>
+                <a href="{{ route('admin.software-licenses.renewals', ['plan_status' => 'planned']) }}" class="btn btn-sm btn-outline-primary">Renewals</a>
+            </div>
+            <div class="card-body border-bottom">
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Overdue renewal decisions</span><strong class="text-dark">{{ $stats['overdue_renewal_decisions'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Due in next 14 days</span><strong class="text-dark">{{ $stats['renewal_decisions_due_soon'] }}</strong></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th class="ps-4">License</th><th>Decision</th><th>Owner</th><th class="text-end pe-4">Due</th></tr></thead>
+                    <tbody>
+                        @forelse($renewalSlaRisks as $decision)
+                        @php
+                            $isOverdue = $decision->due_date && $decision->due_date->isPast() && !$decision->due_date->isToday();
+                        @endphp
+                        <tr>
+                            <td class="ps-4"><div class="fw-bold">{{ $decision->license?->software?->name ?? 'Unknown software' }}</div><div class="text-muted small">{{ $decision->license?->seats ?? 0 }} current seats</div></td>
+                            <td><span class="badge bg-{{ $decision->decision_badge }}">{{ $decision->decision_label }}</span><div class="text-muted small">{{ $isOverdue ? 'Overdue' : 'Due soon' }}</div></td>
+                            <td>{{ $decision->owner?->name ?? 'Unassigned' }}</td>
+                            <td class="text-end pe-4">{{ $decision->due_date?->format('d-m-Y') ?? '-' }}</td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="text-center text-muted py-4">No planned renewal decisions with due dates.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

@@ -215,13 +215,14 @@ class PageHelpRegistry
             ],
             'admin.sam-audit.*' => [
                 'title' => 'SAM Audit Pack Help',
-                'what' => 'The SAM Audit Pack creates a tenant-scoped ZIP containing point-in-time software, entitlement, license evidence quality, discovery, policy governance, exception, device, inventory quality, renewal, usage optimization, software request, software procurement, remediation, and remediation SLA evidence.',
+                'what' => 'The SAM Audit Pack creates a tenant-scoped ZIP containing point-in-time software, entitlement, license evidence quality, discovery, policy governance, exception, device, inventory quality, renewal, renewal SLA, usage optimization, software request, software procurement, remediation, and remediation SLA evidence.',
                 'how' => [
                     'Choose how far back historical exceptions, renewal decisions, usage reviews, software requests, software procurement, and remediation actions should be included.',
                     'Include removed installations when the auditor needs evidence of historical software presence.',
                     'Review policy governance for unreviewed, stale, restricted, or prohibited titles before sharing the pack.',
                     'Review license evidence quality when active entitlements are missing supplier, invoice, PO, cost, or document proof.',
                     'Review remediation SLA when open compliance actions are overdue or due soon.',
+                    'Review renewal SLA when planned renewal decisions are overdue or due soon.',
                     'Review inventory data quality when stale agents or missing employee/device links could affect compliance confidence.',
                     'Store the generated package according to your organization audit and data-retention policy.',
                 ],
