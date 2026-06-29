@@ -108,6 +108,16 @@
                             @if($row['software']->edition) &middot; {{ $row['software']->edition }} @endif
                         </div>
                         <div class="mt-1"><span class="badge bg-{{ $row['software']->policy_status_badge }}">{{ $row['software']->policy_status_label }}</span></div>
+                        @if($row['expired_policy_exception_count'] > 0 || $row['expiring_policy_exception_count'] > 0)
+                            <div class="mt-1 d-flex flex-wrap gap-1">
+                                @if($row['expired_policy_exception_count'] > 0)
+                                    <span class="badge bg-danger">{{ $row['expired_policy_exception_count'] }} expired exception{{ $row['expired_policy_exception_count'] === 1 ? '' : 's' }}</span>
+                                @endif
+                                @if($row['expiring_policy_exception_count'] > 0)
+                                    <span class="badge bg-warning text-dark">{{ $row['expiring_policy_exception_count'] }} expiring exception{{ $row['expiring_policy_exception_count'] === 1 ? '' : 's' }}</span>
+                                @endif
+                            </div>
+                        @endif
                     </td>
                     <td>
                         <div class="fw-bold">{{ $row['software']->license_metric_label }}</div>

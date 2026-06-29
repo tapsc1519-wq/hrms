@@ -29,6 +29,15 @@ class SoftwareComplianceController extends Controller
                 'licenses.activeAssignments',
                 'discoveries' => fn ($query) => $query->where('status', 'mapped')->where('is_installed', true)->with('activePolicyException'),
             ])
+            ->withCount([
+                'policyExceptions as expiring_policy_exceptions_count' => fn ($query) => $query
+                    ->where('status', 'approved')
+                    ->whereDate('expires_at', '>=', today())
+                    ->whereDate('expires_at', '<=', today()->addDays(14)),
+                'policyExceptions as expired_policy_exceptions_count' => fn ($query) => $query
+                    ->where('status', 'approved')
+                    ->whereDate('expires_at', '<', today()),
+            ])
             ->orderBy('name');
 
         if ($request->filled('search')) {
@@ -476,6 +485,8 @@ class SoftwareComplianceController extends Controller
             'software' => $software,
             'installed_count' => $installedCount,
             'active_exception_count' => $activeExceptionCount,
+            'expiring_policy_exception_count' => (int) ($software->expiring_policy_exceptions_count ?? 0),
+            'expired_policy_exception_count' => (int) ($software->expired_policy_exceptions_count ?? 0),
             'policy_violation_count' => $policyViolationCount,
             'discovered_users' => $discoveredUserIds->count(),
             'discovered_devices' => $discoveredAssetIds->count(),
