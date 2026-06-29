@@ -13,6 +13,7 @@ use App\Models\SoftwareLicense;
 use App\Models\SoftwarePolicyException;
 use App\Models\SoftwareRecognitionRule;
 use App\Models\SoftwareRenewalDecision;
+use App\Models\SoftwareUsageReview;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
@@ -31,6 +32,7 @@ class SamAuditReportController extends Controller
             'installations' => SoftwareDiscovery::where('organization_id', $organizationId)->where('is_installed', true)->count(),
             'license_seats' => SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->sum('seats'),
             'renewal_plans' => SoftwareRenewalDecision::where('organization_id', $organizationId)->where('status', 'planned')->count(),
+            'usage_reviews' => SoftwareUsageReview::where('organization_id', $organizationId)->count(),
             'open_actions' => SoftwareComplianceAction::where('organization_id', $organizationId)->where('status', 'open')->count(),
         ];
 
@@ -67,6 +69,7 @@ class SamAuditReportController extends Controller
             $this->writePolicyExceptions($directory, $organizationId, $activityFrom);
             $this->writeRemediationActions($directory, $organizationId, $activityFrom);
             $this->writeRenewalDecisions($directory, $organizationId, $activityFrom);
+            $this->writeUsageReviews($directory, $organizationId, $activityFrom);
             File::put($directory.DIRECTORY_SEPARATOR.'README.txt', $this->readme($organization, $activityFrom, $includeRemoved, $generatedAt));
 
             $zip = new ZipArchive();
@@ -101,6 +104,7 @@ class SamAuditReportController extends Controller
             ['Active Allocations', SoftwareAssignment::where('status', 'active')->whereHas('license', fn ($q) => $q->where('organization_id', $organizationId))->count()],
             ['Active Policy Exceptions', SoftwarePolicyException::where('organization_id', $organizationId)->active()->count()],
             ['Planned Renewal Decisions', SoftwareRenewalDecision::where('organization_id', $organizationId)->where('status', 'planned')->count()],
+            ['Usage Optimization Reviews', SoftwareUsageReview::where('organization_id', $organizationId)->count()],
             ['Open Remediation Actions', SoftwareComplianceAction::where('organization_id', $organizationId)->where('status', 'open')->count()],
         ];
         $this->csv($directory, '00-summary.csv', ['Measure', 'Value'], fn ($handle) => collect($rows)->each(fn ($row) => fputcsv($handle, $row)));
@@ -235,6 +239,47 @@ class SamAuditReportController extends Controller
         });
     }
 
+    private function writeUsageReviews(string $directory, int $organizationId, Carbon $activityFrom): void
+    {
+        $headers = ['Review ID','Software','Publisher','Assignment ID','Discovery ID','Employee Code','Employee','Email','Status','Inactivity Days','Last Used Date','Estimated Annual Savings','Due Date','Owner','Created By','Decided By','Decided At','Review Notes','Decision Notes','Created At'];
+
+        $this->csv($directory, '11-usage-optimization-reviews.csv', $headers, function ($handle) use ($organizationId, $activityFrom) {
+            SoftwareUsageReview::where('organization_id', $organizationId)
+                ->where(fn ($q) => $q->where('created_at', '>=', $activityFrom)->orWhere('status', 'pending_user'))
+                ->with(['assignment.user', 'assignment.license.software', 'owner', 'createdBy', 'decidedBy'])
+                ->orderBy('id')
+                ->chunkById(500, function ($items) use ($handle) {
+                    foreach ($items as $item) {
+                        $assignment = $item->assignment;
+                        $software = $assignment?->license?->software;
+                        $user = $assignment?->user;
+                        fputcsv($handle, [
+                            $item->id,
+                            $software?->name,
+                            $software?->vendor,
+                            $item->software_assignment_id,
+                            $item->software_discovery_id,
+                            $user?->employee_id,
+                            $user?->name,
+                            $user?->email,
+                            $item->status_label,
+                            $item->inactivity_days,
+                            $item->last_used_date?->toDateString(),
+                            $item->estimated_annual_savings,
+                            $item->due_date?->toDateString(),
+                            $item->owner?->name,
+                            $item->createdBy?->name,
+                            $item->decidedBy?->name,
+                            $item->decided_at?->toIso8601String(),
+                            $item->notes,
+                            $item->decision_notes,
+                            $item->created_at->toIso8601String(),
+                        ]);
+                    }
+                });
+        });
+    }
+
     private function csv(string $directory, string $filename, array $headers, Closure $writer): void
     {
         $handle = fopen($directory.DIRECTORY_SEPARATOR.$filename, 'wb');
@@ -307,6 +352,6 @@ class SamAuditReportController extends Controller
 
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Remediation and renewal decisions include open/planned items and items created during that period. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Remediation, renewal, and usage optimization decisions include open/planned items and items created during that period. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }

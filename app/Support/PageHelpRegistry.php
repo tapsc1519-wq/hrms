@@ -147,6 +147,7 @@ class PageHelpRegistry
                     'Choose an inactivity period such as 60 or 90 days.',
                     'Start a review to ask the employee whether the software is still required.',
                     'Retain justified allocations or reclaim unused seats for another employee.',
+                    'Reclaimed reviews appear in SAM Overview savings and the SAM Audit Pack evidence.',
                 ],
                 'next' => 'No Usage Data means discovery telemetry is missing; confirm device reporting before reclaiming those licenses.',
             ],
@@ -214,9 +215,9 @@ class PageHelpRegistry
             ],
             'admin.sam-audit.*' => [
                 'title' => 'SAM Audit Pack Help',
-                'what' => 'The SAM Audit Pack creates a tenant-scoped ZIP containing point-in-time software, entitlement, discovery, policy, exception, device, renewal, and remediation evidence.',
+                'what' => 'The SAM Audit Pack creates a tenant-scoped ZIP containing point-in-time software, entitlement, discovery, policy, exception, device, renewal, usage optimization, and remediation evidence.',
                 'how' => [
-                    'Choose how far back historical exceptions, renewal decisions, and remediation actions should be included.',
+                    'Choose how far back historical exceptions, renewal decisions, usage reviews, and remediation actions should be included.',
                     'Include removed installations when the auditor needs evidence of historical software presence.',
                     'Store the generated package according to your organization audit and data-retention policy.',
                 ],

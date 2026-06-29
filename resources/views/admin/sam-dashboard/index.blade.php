@@ -14,6 +14,11 @@
         <a href="{{ route('admin.software-compliance.index') }}" class="btn btn-primary btn-sm">
             <i class="bi bi-shield-check me-1"></i>Compliance
         </a>
+        @if(auth()->user()->hasPermission('software.optimization.view'))
+        <a href="{{ route('admin.software-optimization.index') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-graph-down-arrow me-1"></i>Optimize
+        </a>
+        @endif
         <a href="{{ route('admin.software-licenses.renewals', ['window' => 60, 'plan_status' => 'unplanned']) }}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-calendar2-check me-1"></i>Renewals
         </a>
@@ -91,6 +96,10 @@
                 <div class="d-flex align-items-start gap-2">
                     <span class="badge bg-primary rounded-pill mt-1">3</span>
                     <div><div class="fw-bold">Resolve risk</div><div class="text-muted small">Allocate, purchase, approve exception, or uninstall.</div></div>
+                </div>
+                <div class="d-flex align-items-start gap-2 mt-3">
+                    <span class="badge bg-primary rounded-pill mt-1">4</span>
+                    <div><div class="fw-bold">Reclaim waste</div><div class="text-muted small">Review inactive paid allocations before renewal.</div></div>
                 </div>
             </div>
         </div>
@@ -197,6 +206,35 @@
                         </tr>
                         @empty
                         <tr><td colspan="3" class="text-center text-muted py-4">No open SAM remediation actions.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Usage Optimization</span>
+                <a href="{{ route('admin.software-optimization.index') }}" class="btn btn-sm btn-outline-primary">Optimize</a>
+            </div>
+            <div class="card-body border-bottom">
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Open employee reviews</span><strong class="text-dark">{{ $stats['open_usage_reviews'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Reclaimed annual savings</span><strong class="text-dark">Rs {{ number_format((float) $stats['reclaimed_savings'], 0) }}</strong></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th class="ps-4">Employee</th><th>Software</th><th>Status</th><th class="text-end pe-4">Savings</th></tr></thead>
+                    <tbody>
+                        @forelse($usageReviews as $review)
+                        <tr>
+                            <td class="ps-4"><div class="fw-bold">{{ $review->assignment?->user?->name ?? 'Unknown employee' }}</div><div class="text-muted small">{{ $review->inactivity_days ?? 0 }} inactive days</div></td>
+                            <td><div class="fw-bold">{{ $review->assignment?->license?->software?->name ?? 'Unknown software' }}</div><div class="text-muted small">{{ $review->owner?->name ?? 'Unassigned' }}</div></td>
+                            <td><span class="badge bg-{{ $review->status_badge }}">{{ $review->status_label }}</span></td>
+                            <td class="text-end pe-4">Rs {{ number_format((float) $review->estimated_annual_savings, 0) }}</td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="text-center text-muted py-4">No usage optimization reviews yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

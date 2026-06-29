@@ -9,6 +9,7 @@ use App\Models\SoftwareComplianceAction;
 use App\Models\SoftwareDiscovery;
 use App\Models\SoftwareLicense;
 use App\Models\SoftwareRenewalDecision;
+use App\Models\SoftwareUsageReview;
 
 class SamDashboardController extends Controller
 {
@@ -48,6 +49,12 @@ class SamDashboardController extends Controller
             'planned_renewals' => SoftwareRenewalDecision::where('organization_id', $organizationId)
                 ->where('status', 'planned')
                 ->count(),
+            'open_usage_reviews' => SoftwareUsageReview::where('organization_id', $organizationId)
+                ->where('status', 'pending_user')
+                ->count(),
+            'reclaimed_savings' => SoftwareUsageReview::where('organization_id', $organizationId)
+                ->where('status', 'reclaimed')
+                ->sum('estimated_annual_savings'),
             'open_actions' => SoftwareComplianceAction::where('organization_id', $organizationId)->where('status', 'open')->count(),
         ];
 
@@ -112,6 +119,13 @@ class SamDashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $usageReviews = SoftwareUsageReview::where('organization_id', $organizationId)
+            ->with(['assignment.user', 'assignment.license.software', 'owner'])
+            ->orderByRaw("CASE WHEN status = 'pending_user' THEN 0 ELSE 1 END")
+            ->latest()
+            ->limit(8)
+            ->get();
+
         $coverage = [
             'normalized_percent' => $stats['installed_records'] > 0
                 ? (int) round(($stats['mapped_records'] / $stats['installed_records']) * 100)
@@ -127,7 +141,8 @@ class SamDashboardController extends Controller
             'normalizationGroups',
             'riskRows',
             'renewals',
-            'openActions'
+            'openActions',
+            'usageReviews'
         ));
     }
 
