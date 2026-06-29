@@ -15,6 +15,8 @@
         ['Overdue Actions', $stats['overdue_actions'], 'grad-red', 'Open remediation past due date'],
         ['Overdue Renewals', $stats['overdue_renewals'], 'grad-red', 'Planned renewal decisions past due'],
         ['Open Requests', $stats['software_requests'], 'grad-blue', 'Pending or approved demand'],
+        ['Overdue Requests', $stats['overdue_software_requests'], 'grad-red', 'Needed-by date missed'],
+        ['Aging Requests', $stats['aging_software_requests'], 'grad-orange', 'Open longer than 7 days'],
         ['Software PO Lines', $stats['software_po_items'], 'grad-green', 'Procurement and receiving evidence'],
         ['Renewal Plans', $stats['renewal_plans'], 'grad-orange', 'Planned supplier or seat decisions'],
         ['Usage Reviews', $stats['usage_reviews'], 'grad-purple', 'Retain or reclaim decisions'],
@@ -52,6 +54,7 @@
             ['Renewal SLA','Planned renewal decisions with due dates, SLA status, days overdue, owner, license expiry, and renewal dates.'],
             ['Usage Optimization Reviews','Inactive allocation reviews, retain/reclaim decisions, owners, employee evidence, and estimated annual savings.'],
             ['Software Requests','Employee demand, urgency, approval decisions, PO linkage, allocation, fulfillment, and business justification.'],
+            ['Software Request SLA','Open demand with SLA status, days open, days overdue, aging flags, linked PO, and current issue.'],
             ['Software Procurement','Software PO lines, supplier, order status, received seats, pending seats, receipts, invoices, and generated license seats.'],
         ] as [$name,$description])<tr><td class="ps-4 fw-semibold">{{ $name }}</td><td class="text-muted">{{ $description }}</td></tr>@endforeach
     </tbody></table></div></div></div>

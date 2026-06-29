@@ -68,6 +68,15 @@ class SamAuditReportController extends Controller
             'software_requests' => SoftwareRequest::where('organization_id', $organizationId)
                 ->whereIn('status', ['pending', 'approved'])
                 ->count(),
+            'overdue_software_requests' => SoftwareRequest::where('organization_id', $organizationId)
+                ->whereIn('status', ['pending', 'approved'])
+                ->whereNotNull('needed_by')
+                ->where('needed_by', '<', now()->toDateString())
+                ->count(),
+            'aging_software_requests' => SoftwareRequest::where('organization_id', $organizationId)
+                ->whereIn('status', ['pending', 'approved'])
+                ->where('created_at', '<', now()->subDays(7))
+                ->count(),
             'software_po_items' => PurchaseOrderItem::where('item_type', 'software')
                 ->whereHas('purchaseOrder', fn ($query) => $query->where('organization_id', $organizationId))
                 ->count(),
@@ -118,6 +127,7 @@ class SamAuditReportController extends Controller
             $this->writeRemediationSla($directory, $organizationId);
             $this->writeRenewalSla($directory, $organizationId);
             $this->writeSamHealthScore($directory, $organizationId);
+            $this->writeSoftwareRequestSla($directory, $organizationId);
             File::put($directory.DIRECTORY_SEPARATOR.'README.txt', $this->readme($organization, $activityFrom, $includeRemoved, $generatedAt));
 
             $zip = new ZipArchive();
@@ -154,6 +164,8 @@ class SamAuditReportController extends Controller
             ['License Evidence Gaps', SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->where(fn ($q) => $q->whereNull('evidence_document')->orWhereNull('invoice_number')->orWhereNull('po_number')->orWhereNull('vendor_id'))->count()],
             ['Active Allocations', SoftwareAssignment::where('status', 'active')->whereHas('license', fn ($q) => $q->where('organization_id', $organizationId))->count()],
             ['Open Software Requests', SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->count()],
+            ['Overdue Software Requests', SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->whereNotNull('needed_by')->where('needed_by', '<', now()->toDateString())->count()],
+            ['Aging Software Requests', SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->where('created_at', '<', now()->subDays(7))->count()],
             ['Software Purchase Order Lines', PurchaseOrderItem::where('item_type', 'software')->whereHas('purchaseOrder', fn ($q) => $q->where('organization_id', $organizationId))->count()],
             ['Active Policy Exceptions', SoftwarePolicyException::where('organization_id', $organizationId)->active()->count()],
             ['Planned Renewal Decisions', SoftwareRenewalDecision::where('organization_id', $organizationId)->where('status', 'planned')->count()],
@@ -649,6 +661,56 @@ class SamAuditReportController extends Controller
         });
     }
 
+    private function writeSoftwareRequestSla(string $directory, int $organizationId): void
+    {
+        $headers = ['Request ID','Employee Code','Employee','Email','Department','Software','Publisher','Status','Urgency','Needed By','SLA Status','Days Open','Days Overdue','Aging Flag','Purchase Order','Created At','Reviewed At','Fulfilled At','SLA Issue'];
+
+        $this->csv($directory, '20-software-request-sla.csv', $headers, function ($handle) use ($organizationId) {
+            SoftwareRequest::where('organization_id', $organizationId)
+                ->whereIn('status', ['pending', 'approved'])
+                ->with(['requester.department', 'software', 'purchaseOrderItem.purchaseOrder'])
+                ->orderByRaw('CASE WHEN needed_by IS NOT NULL AND needed_by < ? THEN 0 ELSE 1 END', [now()->toDateString()])
+                ->orderBy('needed_by')
+                ->orderBy('created_at')
+                ->chunkById(500, function ($items) use ($handle) {
+                    foreach ($items as $item) {
+                        $daysOpen = $item->created_at ? (int) $item->created_at->diffInDays(now()) : 0;
+                        $daysOverdue = ($item->needed_by && $item->needed_by->lt(today()))
+                            ? (int) $item->needed_by->diffInDays(today())
+                            : 0;
+                        $issues = collect([
+                            $item->is_overdue ? 'Needed-by date missed' : null,
+                            $item->needed_by && $item->needed_by->gte(today()) && $item->needed_by->lte(today()->addDays(7)) ? 'Needed within 7 days' : null,
+                            $item->is_aging ? 'Open for more than 7 days' : null,
+                            $item->purchase_order_item_id && $item->status === 'approved' ? 'Awaiting allocation after procurement link' : null,
+                        ])->filter()->implode('; ');
+
+                        fputcsv($handle, [
+                            $item->id,
+                            $item->requester?->employee_id,
+                            $item->requester?->name,
+                            $item->requester?->email,
+                            $item->requester?->department?->name,
+                            $item->software?->name,
+                            $item->software?->vendor,
+                            $item->status_label,
+                            $item->urgency,
+                            $item->needed_by?->toDateString(),
+                            $item->sla_label,
+                            $daysOpen,
+                            $daysOverdue,
+                            $item->is_aging ? 'Yes' : 'No',
+                            $item->purchaseOrderItem?->purchaseOrder?->po_number,
+                            $item->created_at?->toIso8601String(),
+                            $item->reviewed_at?->toIso8601String(),
+                            $item->fulfilled_at?->toIso8601String(),
+                            $issues,
+                        ]);
+                    }
+                });
+        });
+    }
+
     private function writeSamHealthScore(string $directory, int $organizationId): void
     {
         $installed = SoftwareDiscovery::where('organization_id', $organizationId)->where('is_installed', true)->count();
@@ -667,6 +729,8 @@ class SamAuditReportController extends Controller
             'risk_rows' => $riskRows,
             'overdue_actions' => SoftwareComplianceAction::where('organization_id', $organizationId)->where('status', 'open')->whereNotNull('due_date')->where('due_date', '<', now()->toDateString())->count(),
             'overdue_renewals' => SoftwareRenewalDecision::where('organization_id', $organizationId)->where('status', 'planned')->whereNotNull('due_date')->where('due_date', '<', now()->toDateString())->count(),
+            'overdue_software_requests' => SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->whereNotNull('needed_by')->where('needed_by', '<', now()->toDateString())->count(),
+            'aging_software_requests' => SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->where('created_at', '<', now()->subDays(7))->count(),
             'policy_gaps' => Software::where('organization_id', $organizationId)->where(fn ($q) => $q->where('policy_status', 'unreviewed')->orWhereNull('policy_reviewed_at')->orWhere('policy_reviewed_at', '<', now()->subYear()))->count(),
             'license_evidence_gaps' => SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->where(fn ($q) => $q->whereNull('evidence_document')->orWhereNull('invoice_number')->orWhereNull('po_number')->orWhereNull('vendor_id'))->count(),
             'inventory_gaps' => DeviceAgent::where('organization_id', $organizationId)->where(fn ($q) => $q->whereNull('asset_id')->orWhereNull('user_id')->orWhereNull('last_seen_at')->orWhere('last_seen_at', '<', now()->subHours(24))->orWhereNotNull('last_error'))->count(),
@@ -677,6 +741,7 @@ class SamAuditReportController extends Controller
             'Compliance risk' => min(20, $stats['risk_rows'] * 3),
             'Overdue remediation' => min(15, $stats['overdue_actions'] * 5),
             'Overdue renewals' => min(10, $stats['overdue_renewals'] * 4),
+            'Demand SLA' => min(10, ($stats['overdue_software_requests'] * 4) + ($stats['aging_software_requests'] * 2)),
             'Policy governance' => min(12, $stats['policy_gaps'] * 2),
             'License evidence' => min(10, $stats['license_evidence_gaps'] * 2),
             'Inventory data quality' => min(10, $stats['inventory_gaps'] * 2),
@@ -765,6 +830,6 @@ class SamAuditReportController extends Controller
 
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe SAM health score summarizes inventory coverage, normalization, compliance risk, SLA, policy, evidence, and data quality signals. The compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation and renewal SLA files highlight open/planned work that is overdue or scheduled. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe SAM health score summarizes inventory coverage, normalization, compliance risk, SLA, demand SLA, policy, evidence, and data quality signals. The compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Policy governance highlights unreviewed, stale, restricted, and prohibited titles. License evidence quality highlights active entitlements missing supplier, invoice, PO, cost, or document proof. Remediation, renewal, and software request SLA files highlight open/planned work that is overdue, aging, or scheduled. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. Inventory data quality highlights endpoint records that may affect SAM confidence. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }
