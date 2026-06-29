@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DeviceAgent;
 use App\Models\Organization;
+use App\Models\PurchaseOrderItem;
 use App\Models\Software;
 use App\Models\SoftwareAssignment;
 use App\Models\SoftwareComplianceAction;
@@ -34,6 +35,9 @@ class SamAuditReportController extends Controller
             'license_seats' => SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->sum('seats'),
             'software_requests' => SoftwareRequest::where('organization_id', $organizationId)
                 ->whereIn('status', ['pending', 'approved'])
+                ->count(),
+            'software_po_items' => PurchaseOrderItem::where('item_type', 'software')
+                ->whereHas('purchaseOrder', fn ($query) => $query->where('organization_id', $organizationId))
                 ->count(),
             'renewal_plans' => SoftwareRenewalDecision::where('organization_id', $organizationId)->where('status', 'planned')->count(),
             'usage_reviews' => SoftwareUsageReview::where('organization_id', $organizationId)->count(),
@@ -75,6 +79,7 @@ class SamAuditReportController extends Controller
             $this->writeRenewalDecisions($directory, $organizationId, $activityFrom);
             $this->writeUsageReviews($directory, $organizationId, $activityFrom);
             $this->writeSoftwareRequests($directory, $organizationId, $activityFrom);
+            $this->writeSoftwareProcurement($directory, $organizationId, $activityFrom);
             File::put($directory.DIRECTORY_SEPARATOR.'README.txt', $this->readme($organization, $activityFrom, $includeRemoved, $generatedAt));
 
             $zip = new ZipArchive();
@@ -108,6 +113,7 @@ class SamAuditReportController extends Controller
             ['Active License Seats', SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->sum('seats')],
             ['Active Allocations', SoftwareAssignment::where('status', 'active')->whereHas('license', fn ($q) => $q->where('organization_id', $organizationId))->count()],
             ['Open Software Requests', SoftwareRequest::where('organization_id', $organizationId)->whereIn('status', ['pending', 'approved'])->count()],
+            ['Software Purchase Order Lines', PurchaseOrderItem::where('item_type', 'software')->whereHas('purchaseOrder', fn ($q) => $q->where('organization_id', $organizationId))->count()],
             ['Active Policy Exceptions', SoftwarePolicyException::where('organization_id', $organizationId)->active()->count()],
             ['Planned Renewal Decisions', SoftwareRenewalDecision::where('organization_id', $organizationId)->where('status', 'planned')->count()],
             ['Usage Optimization Reviews', SoftwareUsageReview::where('organization_id', $organizationId)->count()],
@@ -324,6 +330,49 @@ class SamAuditReportController extends Controller
         });
     }
 
+    private function writeSoftwareProcurement(string $directory, int $organizationId, Carbon $activityFrom): void
+    {
+        $headers = ['PO Item ID','PO Number','PO Status','Supplier','Order Date','Expected Delivery','Actual Delivery','Software','Publisher','Item Name','License Type','Subscription Period','Ordered Quantity','Received Quantity','Pending Quantity','Unit Price','Total Price','Linked Requests','Created License Seats','Receipt Numbers','Invoice Numbers','Created At'];
+
+        $this->csv($directory, '13-software-procurement.csv', $headers, function ($handle) use ($organizationId, $activityFrom) {
+            PurchaseOrderItem::where('item_type', 'software')
+                ->whereHas('purchaseOrder', fn ($query) => $query
+                    ->where('organization_id', $organizationId)
+                    ->where(fn ($q) => $q->where('created_at', '>=', $activityFrom)->orWhereNotIn('status', ['received', 'cancelled'])))
+                ->with(['purchaseOrder.supplier', 'software', 'softwareRequests', 'softwareLicenses', 'receiptItems.goodsReceipt'])
+                ->orderBy('id')
+                ->chunkById(500, function ($items) use ($handle) {
+                    foreach ($items as $item) {
+                        $order = $item->purchaseOrder;
+                        fputcsv($handle, [
+                            $item->id,
+                            $order?->po_number,
+                            $order?->status,
+                            $order?->supplier?->name,
+                            $order?->order_date?->toDateString(),
+                            $order?->expected_delivery_date?->toDateString(),
+                            $order?->actual_delivery_date?->toDateString(),
+                            $item->software?->name,
+                            $item->software?->vendor,
+                            $item->item_name,
+                            $item->license_type,
+                            $item->subscription_period,
+                            $item->quantity,
+                            $item->received_quantity,
+                            $item->pending_quantity,
+                            $item->unit_price,
+                            $item->total_price,
+                            $item->softwareRequests->pluck('id')->implode(', '),
+                            $item->softwareLicenses->sum('seats'),
+                            $item->receiptItems->pluck('goodsReceipt.receipt_number')->filter()->unique()->implode(', '),
+                            $item->receiptItems->pluck('goodsReceipt.invoice_number')->filter()->unique()->implode(', '),
+                            $item->created_at->toIso8601String(),
+                        ]);
+                    }
+                });
+        });
+    }
+
     private function csv(string $directory, string $filename, array $headers, Closure $writer): void
     {
         $handle = fopen($directory.DIRECTORY_SEPARATOR.$filename, 'wb');
@@ -396,6 +445,6 @@ class SamAuditReportController extends Controller
 
     private function readme(Organization $organization, Carbon $activityFrom, bool $includeRemoved, Carbon $generatedAt): string
     {
-        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Remediation, renewal, usage optimization, and software request decisions include open/planned items and items created during that period. License keys are masked; source evidence remains controlled by the portal.\r\n";
+        return "OPSBRIDGE SAM AUDIT PACK\r\n\r\nOrganization: {$organization->name}\r\nGenerated: {$generatedAt->toIso8601String()}\r\nActivity period starts: {$activityFrom->toDateString()}\r\nRemoved installations included: ".($includeRemoved?'Yes':'No')."\r\n\r\nThe compliance snapshot is point-in-time. Policy exceptions include active records and records created during the selected activity period. Remediation, renewal, usage optimization, software request, and software procurement decisions include open/planned items and items created during that period. License keys are masked; source evidence remains controlled by the portal.\r\n";
     }
 }

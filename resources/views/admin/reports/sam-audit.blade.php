@@ -10,6 +10,7 @@
         ['Active Installations', $stats['installations'], 'grad-purple', 'Current discovery evidence'],
         ['License Seats', $stats['license_seats'], 'grad-green', 'Active purchased entitlement'],
         ['Open Requests', $stats['software_requests'], 'grad-blue', 'Pending or approved demand'],
+        ['Software PO Lines', $stats['software_po_items'], 'grad-green', 'Procurement and receiving evidence'],
         ['Renewal Plans', $stats['renewal_plans'], 'grad-orange', 'Planned supplier or seat decisions'],
         ['Usage Reviews', $stats['usage_reviews'], 'grad-purple', 'Retain or reclaim decisions'],
         ['Open Actions', $stats['open_actions'], 'grad-red', 'Remediation still in progress'],
@@ -40,6 +41,7 @@
             ['Renewal Decisions','Renew, reduce, cancel, or review decisions with projected cost, ownership, completion, and updated renewal dates.'],
             ['Usage Optimization Reviews','Inactive allocation reviews, retain/reclaim decisions, owners, employee evidence, and estimated annual savings.'],
             ['Software Requests','Employee demand, urgency, approval decisions, PO linkage, allocation, fulfillment, and business justification.'],
+            ['Software Procurement','Software PO lines, supplier, order status, received seats, pending seats, receipts, invoices, and generated license seats.'],
         ] as [$name,$description])<tr><td class="ps-4 fw-semibold">{{ $name }}</td><td class="text-muted">{{ $description }}</td></tr>@endforeach
     </tbody></table></div></div></div>
 </div>

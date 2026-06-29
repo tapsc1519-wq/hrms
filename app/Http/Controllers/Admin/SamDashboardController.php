@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DeviceAgent;
+use App\Models\PurchaseOrderItem;
 use App\Models\Software;
 use App\Models\SoftwareComplianceAction;
 use App\Models\SoftwareDiscovery;
@@ -46,6 +47,18 @@ class SamDashboardController extends Controller
                 ->whereIn('status', ['pending', 'approved'])
                 ->whereIn('urgency', ['high', 'critical'])
                 ->count(),
+            'open_software_po_items' => PurchaseOrderItem::where('item_type', 'software')
+                ->whereColumn('received_quantity', '<', 'quantity')
+                ->whereHas('purchaseOrder', fn ($query) => $query
+                    ->where('organization_id', $organizationId)
+                    ->whereNotIn('status', ['draft', 'cancelled']))
+                ->count(),
+            'pending_software_po_seats' => PurchaseOrderItem::where('item_type', 'software')
+                ->whereHas('purchaseOrder', fn ($query) => $query
+                    ->where('organization_id', $organizationId)
+                    ->whereNotIn('status', ['draft', 'cancelled']))
+                ->get()
+                ->sum(fn ($item) => $item->pending_quantity),
             'active_licenses' => SoftwareLicense::where('organization_id', $organizationId)->where('status', 'active')->count(),
             'expiring_licenses' => SoftwareLicense::where('organization_id', $organizationId)
                 ->where('status', 'active')
@@ -147,6 +160,13 @@ class SamDashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $softwareProcurement = PurchaseOrderItem::where('item_type', 'software')
+            ->whereHas('purchaseOrder', fn ($query) => $query->where('organization_id', $organizationId))
+            ->with(['purchaseOrder.supplier', 'software', 'softwareRequests', 'softwareLicenses'])
+            ->latest('id')
+            ->limit(8)
+            ->get();
+
         $coverage = [
             'normalized_percent' => $stats['installed_records'] > 0
                 ? (int) round(($stats['mapped_records'] / $stats['installed_records']) * 100)
@@ -164,7 +184,8 @@ class SamDashboardController extends Controller
             'renewals',
             'openActions',
             'usageReviews',
-            'softwareRequests'
+            'softwareRequests',
+            'softwareProcurement'
         ));
     }
 

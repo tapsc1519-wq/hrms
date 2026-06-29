@@ -215,9 +215,9 @@ class PageHelpRegistry
             ],
             'admin.sam-audit.*' => [
                 'title' => 'SAM Audit Pack Help',
-                'what' => 'The SAM Audit Pack creates a tenant-scoped ZIP containing point-in-time software, entitlement, discovery, policy, exception, device, renewal, usage optimization, software request, and remediation evidence.',
+                'what' => 'The SAM Audit Pack creates a tenant-scoped ZIP containing point-in-time software, entitlement, discovery, policy, exception, device, renewal, usage optimization, software request, software procurement, and remediation evidence.',
                 'how' => [
-                    'Choose how far back historical exceptions, renewal decisions, usage reviews, software requests, and remediation actions should be included.',
+                    'Choose how far back historical exceptions, renewal decisions, usage reviews, software requests, software procurement, and remediation actions should be included.',
                     'Include removed installations when the auditor needs evidence of historical software presence.',
                     'Store the generated package according to your organization audit and data-retention policy.',
                 ],

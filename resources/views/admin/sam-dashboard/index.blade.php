@@ -277,5 +277,43 @@
             </div>
         </div>
     </div>
+    <div class="col-xl-6">
+        <div class="table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Software Procurement</span>
+                @if(auth()->user()->hasPermission('purchase_orders.manage'))
+                    <a href="{{ route('admin.purchase-orders.index') }}" class="btn btn-sm btn-outline-primary">Purchase Orders</a>
+                @endif
+            </div>
+            <div class="card-body border-bottom">
+                <div class="d-flex justify-content-between text-muted small mb-2"><span>Open software PO lines</span><strong class="text-dark">{{ $stats['open_software_po_items'] }}</strong></div>
+                <div class="d-flex justify-content-between text-muted small"><span>Pending software seats</span><strong class="text-dark">{{ $stats['pending_software_po_seats'] }}</strong></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th class="ps-4">PO / Supplier</th><th>Software</th><th>Progress</th><th class="text-end pe-4">Demand</th></tr></thead>
+                    <tbody>
+                        @forelse($softwareProcurement as $item)
+                        <tr>
+                            <td class="ps-4">
+                                @if(auth()->user()->hasPermission('purchase_orders.manage'))
+                                    <a href="{{ route('admin.purchase-orders.show', $item->purchaseOrder) }}" class="fw-bold text-decoration-none">{{ $item->purchaseOrder?->po_number ?? 'PO deleted' }}</a>
+                                @else
+                                    <div class="fw-bold">{{ $item->purchaseOrder?->po_number ?? 'PO deleted' }}</div>
+                                @endif
+                                <div class="text-muted small">{{ $item->purchaseOrder?->supplier?->name ?? 'Unknown supplier' }}</div>
+                            </td>
+                            <td><div class="fw-bold">{{ $item->software?->name ?? $item->item_name }}</div><div class="text-muted small">{{ $item->license_type ?: 'software' }} &middot; {{ $item->subscription_period ?: 'term not set' }}</div></td>
+                            <td><span class="badge bg-{{ $item->pending_quantity > 0 ? 'warning text-dark' : 'success' }}">{{ $item->received_quantity }} / {{ $item->quantity }} received</span><div class="text-muted small">{{ ucfirst(str_replace('_', ' ', $item->purchaseOrder?->status ?? 'unknown')) }}</div></td>
+                            <td class="text-end pe-4"><div>{{ $item->softwareRequests->count() }} request(s)</div><div class="text-muted small">{{ $item->softwareLicenses->sum('seats') }} license seat(s)</div></td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="text-center text-muted py-4">No software purchase order lines yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
