@@ -7,6 +7,7 @@
     $network = $deviceAgent->network_info ?? [];
     $security = $deviceAgent->security_info ?? [];
     $healthBadge = $deviceAgent->health_status === 'healthy' ? 'success' : ($deviceAgent->health_status === 'stale' ? 'warning' : 'danger');
+    $canQueueCommands = (bool) $deviceAgent->credential?->is_active;
 @endphp
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
     <div><a href="{{ route('admin.agent-sources.index') }}" class="back-link"><i class="bi bi-arrow-left"></i> Endpoint Management</a><div class="d-flex align-items-center gap-2"><h4 class="mb-0">{{ $deviceAgent->hostname }}</h4><span class="badge bg-{{ $healthBadge }}">{{ ucfirst($deviceAgent->health_status) }}</span></div><p>{{ $deviceAgent->os_name ?: 'Unknown operating system' }} {{ $deviceAgent->os_version }}</p></div>
@@ -25,6 +26,17 @@
 <div class="table-card mb-3">
     <div class="card-header"><span class="fw-semibold">Endpoint Actions</span></div>
     <div class="card-body">
+        @if(! $canQueueCommands)
+            <div class="alert alert-warning small mb-3">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Commands cannot be queued until this endpoint has an active device credential. Re-enroll the device or restore agent access first.
+            </div>
+        @elseif($deviceAgent->health_status !== 'healthy')
+            <div class="alert alert-info small mb-3">
+                <i class="bi bi-clock-history me-1"></i>
+                This endpoint is {{ $deviceAgent->health_status }}. Commands can be queued, but they will run only after the agent checks in before the command expires.
+            </div>
+        @endif
         <div class="row g-3 align-items-stretch">
             @if(auth()->user()->hasPermission('endpoint.device.control'))
             <div class="col-lg-5">
@@ -34,9 +46,9 @@
                     <div class="d-flex gap-2 flex-wrap">
                         <form method="POST" action="{{ route('admin.agent-sources.commands.lock', $deviceAgent) }}" onsubmit="return confirm('Lock the active Windows session on {{ addslashes($deviceAgent->hostname) }}?')">
                             @csrf
-                            <button class="btn btn-outline-primary btn-sm"><i class="bi bi-lock-fill me-1"></i>Lock Session</button>
+                            <button class="btn btn-outline-primary btn-sm" @disabled(! $canQueueCommands)><i class="bi bi-lock-fill me-1"></i>Lock Session</button>
                         </form>
-                        <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#restartEndpointModal"><i class="bi bi-arrow-clockwise me-1"></i>Restart</button>
+                        <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#restartEndpointModal" @disabled(! $canQueueCommands)><i class="bi bi-arrow-clockwise me-1"></i>Restart</button>
                     </div>
                 </div>
             </div>
@@ -55,13 +67,13 @@
                         <div class="col-md-6">
                             <form method="POST" action="{{ route('admin.agent-sources.commands.software-install', $deviceAgent) }}" onsubmit="return confirm('Install the selected approved software on this endpoint?')">
                                 @csrf
-                                <div class="input-group input-group-sm"><select name="software_id" class="form-select" required><option value="">Choose software to install</option>@foreach($managedSoftware as $item)<option value="{{ $item->id }}">{{ $item->name }} - {{ $item->winget_package_id }}</option>@endforeach</select><button class="btn btn-primary"><i class="bi bi-download me-1"></i>Install</button></div>
+                                <div class="input-group input-group-sm"><select name="software_id" class="form-select" required @disabled(! $canQueueCommands)><option value="">Choose software to install</option>@foreach($managedSoftware as $item)<option value="{{ $item->id }}">{{ $item->name }} - {{ $item->winget_package_id }}</option>@endforeach</select><button class="btn btn-primary" @disabled(! $canQueueCommands)><i class="bi bi-download me-1"></i>Install</button></div>
                             </form>
                         </div>
                         <div class="col-md-6">
                             <form method="POST" action="{{ route('admin.agent-sources.commands.software-uninstall', $deviceAgent) }}" onsubmit="return confirm('Remove the selected software from this endpoint?')">
                                 @csrf
-                                <div class="input-group input-group-sm"><select name="software_id" class="form-select" required><option value="">Choose software to remove</option>@foreach($managedSoftware as $item)<option value="{{ $item->id }}">{{ $item->name }} - {{ $item->winget_package_id }}</option>@endforeach</select><button class="btn btn-outline-danger"><i class="bi bi-trash3 me-1"></i>Remove</button></div>
+                                <div class="input-group input-group-sm"><select name="software_id" class="form-select" required @disabled(! $canQueueCommands)><option value="">Choose software to remove</option>@foreach($managedSoftware as $item)<option value="{{ $item->id }}">{{ $item->name }} - {{ $item->winget_package_id }}</option>@endforeach</select><button class="btn btn-outline-danger" @disabled(! $canQueueCommands)><i class="bi bi-trash3 me-1"></i>Remove</button></div>
                             </form>
                         </div>
                     </div>
