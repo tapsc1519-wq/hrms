@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AgentCommand;
 use App\Models\Software;
 use App\Models\SoftwareAssignment;
 use App\Models\SoftwareComplianceAction;
@@ -13,6 +14,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class SoftwareComplianceController extends Controller
 {
@@ -114,7 +116,7 @@ class SoftwareComplianceController extends Controller
 
         $actions = SoftwareComplianceAction::where('organization_id', $this->orgId())
             ->where('software_id', $software->id)
-            ->with(['owner', 'createdBy', 'user', 'asset', 'discovery'])
+            ->with(['owner', 'createdBy', 'user', 'asset', 'discovery.deviceAgent.credential'])
             ->latest()
             ->paginate(10, ['*'], 'actions_page')
             ->withQueryString();
@@ -338,6 +340,53 @@ class SoftwareComplianceController extends Controller
         }
 
         return back()->with('success', 'Compliance action marked as completed.');
+    }
+
+    public function queueUninstallCommand(Software $software, SoftwareComplianceAction $action)
+    {
+        abort_if($software->organization_id !== $this->orgId(), 404);
+        abort_if($action->organization_id !== $this->orgId() || $action->software_id !== $software->id, 404);
+        abort_unless($action->status === 'open' && $action->action_type === 'uninstall_reclaim', 422, 'Only open uninstall/reclaim actions can be sent to an endpoint.');
+        abort_unless($software->endpoint_management_enabled && filled($software->winget_package_id), 422, 'Endpoint uninstall requires this software to be enabled for endpoint deployment with a WinGet package ID.');
+
+        $discovery = $action->discovery()->with('deviceAgent.credential')->first();
+        abort_unless($discovery?->deviceAgent, 422, 'This remediation action is not linked to a managed endpoint.');
+        abort_unless($discovery->deviceAgent->credential?->is_active, 422, 'This endpoint does not have an active device credential.');
+
+        $alreadyQueued = AgentCommand::where('device_agent_id', $discovery->deviceAgent->id)
+            ->where('command_type', 'software_uninstall')
+            ->whereIn('status', ['queued', 'delivered'])
+            ->exists();
+        if ($alreadyQueued) {
+            return back()->with('error', 'A software uninstall command is already pending for this endpoint.');
+        }
+
+        AgentCommand::create([
+            'organization_id' => $this->orgId(),
+            'device_agent_id' => $discovery->deviceAgent->id,
+            'command_uuid' => (string) Str::uuid(),
+            'command_type' => 'software_uninstall',
+            'payload' => [
+                'software_id' => $software->id,
+                'name' => $software->name,
+                'package_id' => $software->winget_package_id,
+                'compliance_action_id' => $action->id,
+                'discovery_id' => $discovery->id,
+                'reason' => 'SAM remediation action',
+            ],
+            'priority' => 8,
+            'status' => 'queued',
+            'available_at' => now(),
+            'expires_at' => now()->addDay(),
+            'created_by' => auth()->id(),
+        ]);
+
+        $note = trim((string) $action->notes);
+        $action->update([
+            'notes' => trim($note."\nEndpoint uninstall command queued on ".now()->format('Y-m-d H:i').'.'),
+        ]);
+
+        return back()->with('success', 'Endpoint uninstall command queued for '.$discovery->deviceAgent->hostname.'.');
     }
 
     private function buildComplianceRow(Software $software): array

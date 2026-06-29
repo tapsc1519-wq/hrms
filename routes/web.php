@@ -256,6 +256,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::post('software-compliance/{software}/discoveries/{discovery}/policy-exceptions', [SoftwareComplianceController::class, 'approvePolicyException'])->middleware('permission:software.policies.manage')->name('software-compliance.policy-exceptions.store');
     Route::patch('software-compliance/{software}/policy-exceptions/{exception}/revoke', [SoftwareComplianceController::class, 'revokePolicyException'])->middleware('permission:software.policies.manage')->name('software-compliance.policy-exceptions.revoke');
     Route::post('software-compliance/{software}/actions', [SoftwareComplianceController::class, 'storeAction'])->name('software-compliance.actions.store');
+    Route::post('software-compliance/{software}/actions/{action}/queue-uninstall', [SoftwareComplianceController::class, 'queueUninstallCommand'])->middleware('permission:endpoint.software.manage')->name('software-compliance.actions.queue-uninstall');
     Route::patch('software-compliance/{software}/actions/{action}/complete', [SoftwareComplianceController::class, 'completeAction'])->name('software-compliance.actions.complete');
     });
 

@@ -399,12 +399,30 @@
                             </td>
                             <td class="text-end pe-4">
                                 @if($action->status === 'open')
-                                <form method="POST" action="{{ route('admin.software-compliance.actions.complete', [$software, $action]) }}">
-                                    @csrf @method('PATCH')
-                                    <button class="btn btn-sm btn-outline-success">
-                                        <i class="bi bi-check2 me-1"></i>Done
-                                    </button>
-                                </form>
+                                <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
+                                    @php
+                                        $canQueueUninstall = $action->action_type === 'uninstall_reclaim'
+                                            && $action->discovery?->deviceAgent
+                                            && $action->discovery->deviceAgent->credential?->is_active
+                                            && $software->endpoint_management_enabled
+                                            && filled($software->winget_package_id)
+                                            && auth()->user()->hasPermission('endpoint.software.manage');
+                                    @endphp
+                                    @if($canQueueUninstall)
+                                    <form method="POST" action="{{ route('admin.software-compliance.actions.queue-uninstall', [$software, $action]) }}" onsubmit="return confirm('Queue an endpoint uninstall command for {{ addslashes($action->discovery->deviceAgent->hostname) }}?')">
+                                        @csrf
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-send me-1"></i>Queue Uninstall
+                                        </button>
+                                    </form>
+                                    @endif
+                                    <form method="POST" action="{{ route('admin.software-compliance.actions.complete', [$software, $action]) }}">
+                                        @csrf @method('PATCH')
+                                        <button class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-check2 me-1"></i>Done
+                                        </button>
+                                    </form>
+                                </div>
                                 @else
                                     <span class="text-muted small">{{ $action->completed_at?->format('d-m-Y') }}</span>
                                 @endif
