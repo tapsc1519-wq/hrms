@@ -1088,6 +1088,10 @@
 
             @if($hasSam)
             <div class="sidebar-section-title">Software</div>
+            <a href="{{ route('admin.sam-dashboard.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.sam-dashboard.*') ? 'active' : '' }}">
+                <i class="bi bi-speedometer2"></i> SAM Overview
+            </a>
             <a href="{{ route('admin.software.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.software.*') ? 'active' : '' }}">
                 <i class="bi bi-display-fill"></i> Software Catalog

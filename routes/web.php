@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\SoftwareLicenseController;
 use App\Http\Controllers\Admin\SoftwareOptimizationController;
 use App\Http\Controllers\Admin\SoftwarePolicyController;
 use App\Http\Controllers\Admin\SoftwareRequestController;
+use App\Http\Controllers\Admin\SamDashboardController;
 use App\Http\Controllers\Admin\SamAuditReportController;
 use App\Http\Controllers\Admin\CatalogController;
 use App\Http\Controllers\Admin\BulkImportController;
@@ -183,6 +184,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
 
     // Software Asset Management
     Route::middleware('module:sam')->group(function () {
+    Route::get('sam', [SamDashboardController::class, 'index'])->name('sam-dashboard.index');
     Route::get('software', [AdminSoftwareController::class, 'index'])->name('software.index');
     Route::get('software/create', [AdminSoftwareController::class, 'create'])->name('software.create');
     Route::post('software', [AdminSoftwareController::class, 'store'])->name('software.store');

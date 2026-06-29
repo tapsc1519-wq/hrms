@@ -109,6 +109,16 @@ class PageHelpRegistry
                 ],
                 'next' => 'After catalog setup, add licenses and map discovered software to catalog records.',
             ],
+            'admin.sam-dashboard.*' => [
+                'title' => 'SAM Overview Help',
+                'what' => 'SAM Overview brings discovery health, normalization backlog, licensing risk, renewals, and remediation work into one operating view.',
+                'how' => [
+                    'Start with device coverage so compliance is based on current inventory.',
+                    'Normalize the largest unknown software groups before reviewing shortage or policy risk.',
+                    'Use the risk and renewal lists to decide what needs procurement, allocation, exception, or uninstall action.',
+                ],
+                'next' => 'After the overview is clean, open Software Compliance for detailed per-product decisions.',
+            ],
             'admin.software-licenses.renewals' => [
                 'title' => 'License Renewals Help',
                 'what' => 'This page helps you decide what to renew, reduce, cancel, or manually review before license money is spent.',
