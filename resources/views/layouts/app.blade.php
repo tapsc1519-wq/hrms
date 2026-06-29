@@ -1704,6 +1704,13 @@
                 $actionNotifications = \App\Support\ActionNotificationService::forUser(auth()->user());
                 $pageHelp = \App\Support\PageHelpRegistry::current();
                 $pageTourKey = request()->route()?->getName() ?? request()->path();
+                $pageHelpTourData = [
+                    'title' => $pageHelp['title'] ?? 'Page Guide',
+                    'what' => $pageHelp['what'] ?? '',
+                    'sections' => $pageHelp['sections'] ?? [],
+                    'actions' => $pageHelp['actions'] ?? [],
+                    'next' => $pageHelp['next'] ?? '',
+                ];
             @endphp
             <button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" id="startPageTour">
                 <i class="bi bi-stars"></i>
@@ -2076,13 +2083,7 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
 <script>
 (function () {
     var configuredTourSteps = @json($pageHelp['tour'] ?? []);
-    var pageHelpData = @json([
-        'title' => $pageHelp['title'] ?? 'Page Guide',
-        'what' => $pageHelp['what'] ?? '',
-        'sections' => $pageHelp['sections'] ?? [],
-        'actions' => $pageHelp['actions'] ?? [],
-        'next' => $pageHelp['next'] ?? '',
-    ]);
+    var pageHelpData = @json($pageHelpTourData);
     var tourSteps = normalizeConfiguredSteps(configuredTourSteps);
     var tourKey = @json('page-tour-complete:' . $pageTourKey);
     var startButton = document.getElementById('startPageTour');
