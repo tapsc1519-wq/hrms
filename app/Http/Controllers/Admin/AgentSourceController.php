@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AgentApiToken;
 use App\Models\AgentCommand;
+use App\Models\Asset;
 use App\Models\DeviceAgent;
 use App\Models\Software;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
@@ -57,7 +59,10 @@ class AgentSourceController extends Controller
         ];
         $versions = (clone $baseQuery)->whereNotNull('agent_version')->select('agent_version')->distinct()->orderBy('agent_version')->pluck('agent_version');
 
-        return view('admin.agent-sources.index', compact('devices', 'tokens', 'stats', 'versions', 'currentVersion', 'perPage'));
+        $assets = Asset::where('organization_id', $organizationId)->orderBy('asset_tag')->get(['id', 'asset_tag', 'name']);
+        $users = User::where('organization_id', $organizationId)->whereIn('role', ['admin', 'staff'])->orderBy('name')->get(['id', 'name', 'employee_id']);
+
+        return view('admin.agent-sources.index', compact('devices', 'tokens', 'stats', 'versions', 'currentVersion', 'perPage', 'assets', 'users'));
     }
 
     public function createToken(Request $request)
@@ -127,6 +132,29 @@ class AgentSourceController extends Controller
         $credential->update(['revoked_at' => now()]);
 
         return back()->with('success', 'Device access revoked. Re-enroll this device before it can report inventory or receive commands.');
+    }
+
+    public function updateLinking(Request $request, DeviceAgent $deviceAgent)
+    {
+        abort_if($deviceAgent->organization_id !== $this->orgId(), 403);
+        $validated = $request->validate([
+            'asset_id' => 'nullable|integer',
+            'user_id' => 'nullable|integer',
+        ]);
+
+        if (! empty($validated['asset_id'])) {
+            abort_unless(Asset::where('organization_id', $this->orgId())->whereKey($validated['asset_id'])->exists(), 403);
+        }
+        if (! empty($validated['user_id'])) {
+            abort_unless(User::where('organization_id', $this->orgId())->whereKey($validated['user_id'])->exists(), 403);
+        }
+
+        $deviceAgent->update([
+            'asset_id' => $validated['asset_id'] ?? null,
+            'user_id' => $validated['user_id'] ?? null,
+        ]);
+
+        return back()->with('success', 'Endpoint linking updated for '.$deviceAgent->hostname.'.');
     }
 
     public function queueInventory(DeviceAgent $deviceAgent)

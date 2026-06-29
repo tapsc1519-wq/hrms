@@ -226,6 +226,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::post('agent-sources/tokens', [AgentSourceController::class, 'createToken'])->middleware('permission:software.agents.manage')->name('agent-sources.tokens.store');
     Route::patch('agent-sources/tokens/{token}/revoke', [AgentSourceController::class, 'revokeToken'])->middleware('permission:software.agents.manage')->name('agent-sources.tokens.revoke');
     Route::patch('agent-sources/{deviceAgent}/credential/revoke', [AgentSourceController::class, 'revokeDeviceCredential'])->middleware('permission:software.agents.manage')->name('agent-sources.credential.revoke');
+    Route::patch('agent-sources/{deviceAgent}/linking', [AgentSourceController::class, 'updateLinking'])->middleware('permission:software.agents.manage')->name('agent-sources.linking.update');
     Route::get('agent-sources/{deviceAgent}', [AgentSourceController::class, 'show'])->middleware('permission:endpoint.view')->name('agent-sources.show');
     Route::post('agent-sources/{deviceAgent}/commands/inventory-refresh', [AgentSourceController::class, 'queueInventory'])->middleware('permission:software.agents.manage')->name('agent-sources.commands.inventory-refresh');
     Route::post('agent-sources/{deviceAgent}/commands/lock', [AgentSourceController::class, 'queueLock'])->middleware('permission:endpoint.device.control')->name('agent-sources.commands.lock');
