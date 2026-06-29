@@ -674,17 +674,6 @@ class SamAuditReportController extends Controller
                 ->orderBy('created_at')
                 ->chunkById(500, function ($items) use ($handle) {
                     foreach ($items as $item) {
-                        $daysOpen = $item->created_at ? (int) $item->created_at->diffInDays(now()) : 0;
-                        $daysOverdue = ($item->needed_by && $item->needed_by->lt(today()))
-                            ? (int) $item->needed_by->diffInDays(today())
-                            : 0;
-                        $issues = collect([
-                            $item->is_overdue ? 'Needed-by date missed' : null,
-                            $item->needed_by && $item->needed_by->gte(today()) && $item->needed_by->lte(today()->addDays(7)) ? 'Needed within 7 days' : null,
-                            $item->is_aging ? 'Open for more than 7 days' : null,
-                            $item->purchase_order_item_id && $item->status === 'approved' ? 'Awaiting allocation after procurement link' : null,
-                        ])->filter()->implode('; ');
-
                         fputcsv($handle, [
                             $item->id,
                             $item->requester?->employee_id,
@@ -697,14 +686,14 @@ class SamAuditReportController extends Controller
                             $item->urgency,
                             $item->needed_by?->toDateString(),
                             $item->sla_label,
-                            $daysOpen,
-                            $daysOverdue,
+                            $item->days_open,
+                            $item->days_overdue,
                             $item->is_aging ? 'Yes' : 'No',
                             $item->purchaseOrderItem?->purchaseOrder?->po_number,
                             $item->created_at?->toIso8601String(),
                             $item->reviewed_at?->toIso8601String(),
                             $item->fulfilled_at?->toIso8601String(),
-                            $issues,
+                            $item->sla_issue,
                         ]);
                     }
                 });

@@ -88,6 +88,33 @@
     </div>
 
     <div class="col-xl-4">
+        <div class="table-card mb-3">
+            <div class="card-body p-4">
+                <h6 class="mb-3"><i class="bi bi-stopwatch me-2 text-primary"></i>SLA Summary</h6>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted small">Current state</span>
+                    <span class="badge bg-{{ $softwareRequest->sla_badge }}">{{ $softwareRequest->sla_label }}</span>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="border rounded p-2">
+                            <div class="text-muted small">Days open</div>
+                            <div class="fw-bold">{{ $softwareRequest->days_open }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2">
+                            <div class="text-muted small">Days overdue</div>
+                            <div class="fw-bold {{ $softwareRequest->days_overdue > 0 ? 'text-danger' : '' }}">{{ $softwareRequest->days_overdue }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-{{ $softwareRequest->sla_badge === 'danger' ? 'danger' : ($softwareRequest->sla_badge === 'warning' ? 'warning' : 'success') }} small mb-0">
+                    <i class="bi bi-info-circle me-1"></i>{{ $softwareRequest->sla_issue }}
+                </div>
+            </div>
+        </div>
+
         @if($softwareRequest->status === 'pending' && auth()->user()->hasPermission('software.requests.review'))
         <div class="table-card mb-3">
             <div class="card-body p-4">

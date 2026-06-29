@@ -104,6 +104,20 @@ class SoftwareRequest extends Model
         return $this->is_open && $this->created_at->lt(now()->subDays(7));
     }
 
+    public function getDaysOpenAttribute(): int
+    {
+        return $this->created_at ? (int) $this->created_at->diffInDays(now()) : 0;
+    }
+
+    public function getDaysOverdueAttribute(): int
+    {
+        if (! $this->is_open || ! $this->needed_by || ! $this->needed_by->lt(today())) {
+            return 0;
+        }
+
+        return (int) $this->needed_by->diffInDays(today());
+    }
+
     public function getSlaLabelAttribute(): string
     {
         if (! $this->is_open) return 'Closed';
@@ -121,5 +135,19 @@ class SoftwareRequest extends Model
             'Closed' => 'secondary',
             default => 'success',
         };
+    }
+
+    public function getSlaIssueAttribute(): string
+    {
+        if (! $this->is_open) return 'Closed request';
+
+        $issues = collect([
+            $this->is_overdue ? 'Needed-by date missed' : null,
+            $this->needed_by && $this->needed_by->gte(today()) && $this->needed_by->lte(today()->addDays(7)) ? 'Needed within 7 days' : null,
+            $this->is_aging ? 'Open for more than 7 days' : null,
+            $this->purchase_order_item_id && $this->status === 'approved' ? 'Awaiting allocation after procurement link' : null,
+        ])->filter();
+
+        return $issues->isNotEmpty() ? $issues->implode('; ') : 'On track';
     }
 }
