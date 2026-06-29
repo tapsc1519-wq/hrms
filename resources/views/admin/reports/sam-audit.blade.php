@@ -10,6 +10,8 @@
         ['Active Installations', $stats['installations'], 'grad-purple', 'Current discovery evidence'],
         ['Inventory Gaps', $stats['inventory_gaps'], 'grad-orange', 'Endpoint records needing cleanup'],
         ['Policy Gaps', $stats['policy_gaps'], 'grad-red', 'Unreviewed or stale policy records'],
+        ['Exception Expiry', $stats['policy_exceptions_expiring'], 'grad-orange', 'Approved exceptions expiring in 14 days'],
+        ['Expired Exceptions', $stats['expired_policy_exceptions'], 'grad-red', 'Approved exceptions past expiry'],
         ['License Seats', $stats['license_seats'], 'grad-green', 'Active purchased entitlement'],
         ['License Evidence Gaps', $stats['license_evidence_gaps'], 'grad-orange', 'Missing entitlement proof fields'],
         ['Overdue Actions', $stats['overdue_actions'], 'grad-red', 'Open remediation past due date'],
@@ -36,7 +38,7 @@
     </div></div></div>
     <div class="col-xl-7"><div class="table-card h-100"><div class="card-header"><span class="fw-semibold">Package Contents</span></div><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th class="ps-4">Evidence File</th><th>What It Proves</th></tr></thead><tbody>
         @foreach([
-            ['Compliance Snapshot','Required versus purchased seats, policy violations, exceptions, risk and exposure.'],
+            ['Compliance Snapshot','Required versus purchased seats, policy violations, active/expiring/expired exceptions, risk and exposure.'],
             ['SAM Health Score','Executive health score and penalty contributors across inventory, normalization, compliance, SLA, policy, evidence, and data quality.'],
             ['Software Catalog','Normalized titles, license metrics, criticality and reviewed policy decisions.'],
             ['License Entitlements','Purchased seats, dates, supplier references and masked key references.'],
