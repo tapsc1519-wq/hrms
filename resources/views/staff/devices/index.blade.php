@@ -38,6 +38,14 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                <div class="border rounded-3 p-3 mb-3 bg-light">
+                    <label class="form-label small fw-semibold mb-1">Agent API Endpoint</label>
+                    <div class="input-group input-group-sm">
+                        <input id="downloadAgentEndpointStaff" type="text" class="form-control font-monospace" value="{{ $agentEndpoint }}" readonly>
+                        <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('downloadAgentEndpointStaff').value)" title="Copy endpoint"><i class="bi bi-copy"></i></button>
+                    </div>
+                    <div class="form-text">Use this endpoint in the installer together with your setup token.</div>
+                </div>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <button type="button" class="border rounded-3 p-3 h-100 w-100 d-flex gap-3 text-start bg-white" data-bs-toggle="collapse" data-bs-target="#staffWindowsInstallGuide" aria-expanded="false" aria-controls="staffWindowsInstallGuide">
@@ -114,7 +122,7 @@
                         <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">1</span>Create setup token</div><div class="text-muted">Click Create Setup Token first. Copy it when it appears because it is shown only once.</div></div>
                         <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">2</span>Download EXE</div><div class="text-muted">Click Download Windows Installer and save the file on your company PC.</div></div>
                         <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">3</span>Run as administrator</div><div class="text-muted">Double-click the installer. If Windows asks for permission, choose Yes to continue.</div></div>
-                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">4</span>Enter setup details</div><div class="text-muted">Enter the API endpoint shown on this page and your setup token when the installer asks.</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">4</span>Enter setup details</div><div class="text-muted">Enter the API endpoint shown above and your setup token when the installer asks.</div></div>
                         <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">5</span>Allow security prompts</div><div class="text-muted">If SmartScreen or antivirus warns about a new company installer, choose More info and Run anyway only if it came from this portal.</div></div>
                         <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">6</span>Confirm check-in</div><div class="text-muted">After success, your PC appears in My Enrolled Devices and starts reporting inventory.</div></div>
                     </div>
@@ -136,7 +144,7 @@
                         <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">2</span>Download SH</div><div class="text-muted">Click Download Linux Installer and save <span class="font-monospace">OpsBridge-Agent-Installer.sh</span>.</div></div>
                         <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">3</span>Allow execution</div><div class="text-muted mb-2">Open Terminal in the download folder and run:</div><div class="font-monospace bg-white border rounded p-2">chmod +x OpsBridge-Agent-Installer*.sh</div></div>
                         <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">4</span>Run installer</div><div class="text-muted mb-2">Run it with root permission:</div><div class="font-monospace bg-white border rounded p-2">sudo ./OpsBridge-Agent-Installer*.sh</div></div>
-                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">5</span>Enter setup details</div><div class="text-muted">Paste the API endpoint shown on this page and your setup token when Terminal asks.</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">5</span>Enter setup details</div><div class="text-muted">Paste the API endpoint shown above and your setup token when Terminal asks.</div></div>
                         <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">6</span>Confirm check-in</div><div class="text-muted">After success, your Linux computer appears in My Enrolled Devices. If IT asks, run <span class="font-monospace">sudo python3 /opt/opsbridge-agent/opsbridge_agent.py --once</span>.</div></div>
                     </div>
                     <div class="d-flex justify-content-end mt-3">
@@ -178,7 +186,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">6</span>Enter details in setup window</div>
-                            <div class="text-muted">Two OpsBridge Agent Setup windows appear: first for the API endpoint shown on this page, then for your setup token. The token field is hidden while typing.</div>
+                            <div class="text-muted">Two OpsBridge Agent Setup windows appear: first for the API endpoint shown above, then for your setup token. The token field is hidden while typing.</div>
                         </div>
                         <div class="col-md-6">
                             <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">7</span>Approve admin password</div>
