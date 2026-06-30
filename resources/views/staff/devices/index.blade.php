@@ -107,7 +107,7 @@
                         <i class="bi bi-apple fs-4 text-primary"></i>
                         <div>
                             <div class="fw-semibold">macOS temporary installer guide</div>
-                            <div class="small text-muted">Follow these steps while the signed PKG installer is pending. macOS may show security prompts because the file is not Apple-signed yet.</div>
+                            <div class="small text-muted">Follow these steps while the signed PKG installer is pending. macOS may block the file once because it is not Apple-signed yet.</div>
                         </div>
                     </div>
                     <div class="row g-3 small">
@@ -120,21 +120,29 @@
                             <div class="text-muted">Click macOS and save <span class="font-monospace">OpsBridge-Agent-Installer.command</span> in Downloads.</div>
                         </div>
                         <div class="col-md-6">
-                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">3</span>Allow execution</div>
-                            <div class="text-muted mb-2">If macOS says the file cannot be executed, open Terminal and run:</div>
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">3</span>If macOS blocks it</div>
+                            <div class="text-muted">If you see “Apple could not verify” or “cannot be opened,” go to System Settings &gt; Privacy &amp; Security and click Open Anyway for the OpsBridge installer.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">4</span>Allow execution</div>
+                            <div class="text-muted mb-2">If macOS says the file cannot be executed because of access privileges, open Terminal and run:</div>
                             <div class="font-monospace bg-white border rounded p-2">cd ~/Downloads<br>chmod +x OpsBridge-Agent-Installer*.command</div>
                         </div>
                         <div class="col-md-6">
-                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">4</span>Run installer</div>
-                            <div class="text-muted mb-2">Run it with admin permission:</div>
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">5</span>Run installer</div>
+                            <div class="text-muted mb-2">Double-click the file again, or run it with admin permission:</div>
                             <div class="font-monospace bg-white border rounded p-2">sudo ./OpsBridge-Agent-Installer*.command</div>
                         </div>
                         <div class="col-md-6">
-                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">5</span>Enter details in setup window</div>
-                            <div class="text-muted">A small OpsBridge Agent Setup window asks for the API endpoint shown on this page and your setup token. The token field is hidden while typing.</div>
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">6</span>Enter details in setup window</div>
+                            <div class="text-muted">Two OpsBridge Agent Setup windows appear: first for the API endpoint shown on this page, then for your setup token. The token field is hidden while typing.</div>
                         </div>
                         <div class="col-md-6">
-                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">6</span>Confirm check-in</div>
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">7</span>Approve admin password</div>
+                            <div class="text-muted">macOS asks for your computer admin password. This is required to install the background agent service.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">8</span>Confirm check-in</div>
                             <div class="text-muted">After success, your Mac appears in My Enrolled Devices. If IT asks, run <span class="font-monospace">sudo python3 /opt/opsbridge-agent/opsbridge_agent.py --once</span> once.</div>
                         </div>
                     </div>
