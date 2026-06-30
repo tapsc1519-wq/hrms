@@ -195,7 +195,7 @@ class AgentSourceController extends Controller
     public function queueLock(DeviceAgent $deviceAgent)
     {
         return $this->queueEndpointCommand($deviceAgent, 'lock_session', [
-            'message' => 'Your Windows session was locked by an authorized administrator.',
+            'message' => 'Your device session was locked by an authorized administrator.',
         ], 10, 15, 'Device lock');
     }
 

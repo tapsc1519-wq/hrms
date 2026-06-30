@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -10,10 +11,12 @@ import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
+import xml.etree.ElementTree as ET
 
-AGENT_VERSION = "0.1.0-unix"
+AGENT_VERSION = "0.1.1-unix"
 DEFAULT_CONFIG = "/etc/opsbridge-agent/config.json"
 
 
@@ -247,13 +250,150 @@ def send_snapshot(config, payload):
         return json.loads(response.read().decode("utf-8"))
 
 
+def api_request(url, token, method="GET", payload=None, timeout=60):
+    data = json.dumps(payload).encode("utf-8") if payload is not None else None
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json",
+        "User-Agent": f"OpsBridge-Agent/{AGENT_VERSION}",
+        "X-Agent-Version": AGENT_VERSION,
+    }
+    if payload is not None:
+        headers["Content-Type"] = "application/json; charset=utf-8"
+    request = urllib.request.Request(url, data=data, headers=headers, method=method)
+    context = ssl.create_default_context()
+    with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def verify_command_signature(command, public_key_xml, device_uuid_value):
+    try:
+        if command.get("device_uuid") != device_uuid_value:
+            return False
+        if int(command.get("expires_at") or 0) <= int(time.time()):
+            return False
+
+        root = ET.fromstring(public_key_xml)
+        modulus = int.from_bytes(base64.b64decode(root.findtext("Modulus") or ""), "big")
+        exponent = int.from_bytes(base64.b64decode(root.findtext("Exponent") or ""), "big")
+        signature = base64.b64decode(command.get("signature") or "")
+        key_bytes = (modulus.bit_length() + 7) // 8
+        verified = pow(int.from_bytes(signature, "big"), exponent, modulus).to_bytes(key_bytes, "big")
+        canonical = "|".join([
+            str(command.get("command_uuid") or ""),
+            str(command.get("device_uuid") or ""),
+            str(command.get("command_type") or ""),
+            str(int(command.get("issued_at") or 0)),
+            str(int(command.get("expires_at") or 0)),
+            str(command.get("payload_base64") or ""),
+        ])
+        digest_info = bytes.fromhex("3031300d060960864801650304020105000420") + hashlib.sha256(canonical.encode("utf-8")).digest()
+        return verified.startswith(b"\x00\x01") and verified.endswith(digest_info) and b"\x00" in verified[2:-len(digest_info)]
+    except Exception:
+        return False
+
+
+def command_payload(command):
+    encoded = command.get("payload_base64") or ""
+    if not encoded:
+        return {}
+    return json.loads(base64.b64decode(encoded).decode("utf-8") or "{}")
+
+
+def send_command_result(poll_url, token, device_uuid_value, command_uuid, status, message):
+    url = poll_url.rstrip("/") + "/" + urllib.parse.quote(command_uuid) + "/result"
+    return api_request(url, token, "POST", {
+        "device_uuid": device_uuid_value,
+        "status": status,
+        "result": {"message": message},
+        "error_message": message if status == "failed" else None,
+    })
+
+
+def lock_session():
+    system = platform.system()
+    if system == "Darwin":
+        user = run(["stat", "-f", "%Su", "/dev/console"])
+        if not user or user == "root":
+            raise RuntimeError("No active macOS console user was found to lock.")
+        uid = run(["id", "-u", user])
+        if not uid:
+            raise RuntimeError(f"Could not resolve uid for macOS console user {user}.")
+        result = subprocess.run([
+            "launchctl", "asuser", uid,
+            "/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession",
+            "-suspend",
+        ], capture_output=True, text=True, timeout=20)
+        if result.returncode != 0:
+            raise RuntimeError((result.stderr or result.stdout or "macOS rejected the lock request.").strip())
+        return "The active macOS session was locked."
+
+    for command in (["loginctl", "lock-sessions"], ["dm-tool", "lock"]):
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, timeout=20)
+            if result.returncode == 0:
+                return "The active Linux session lock was requested."
+        except Exception:
+            pass
+    raise RuntimeError("No supported Linux session lock command was available.")
+
+
+def restart_device(payload):
+    delay = max(1, min(60, int(payload.get("delay_minutes") or 1)))
+    message = str(payload.get("message") or "Administrator-requested restart.")[:180]
+    if platform.system() == "Darwin":
+        command = ["shutdown", "-r", f"+{delay}", message]
+    else:
+        command = ["shutdown", "-r", f"+{delay}", message]
+    result = subprocess.run(command, capture_output=True, text=True, timeout=20)
+    if result.returncode != 0:
+        raise RuntimeError((result.stderr or result.stdout or "The operating system rejected the restart request.").strip())
+    return f"Restart scheduled in {delay} minutes."
+
+
+def invoke_agent_commands(config):
+    poll_url = config.get("command_poll_url")
+    public_key_xml = config.get("command_signing_public_key_xml")
+    device_uuid_value = config.get("device_uuid")
+    token = config.get("token")
+    if not poll_url or not public_key_xml or not device_uuid_value or not token:
+        return
+
+    separator = "&" if "?" in poll_url else "?"
+    response = api_request(poll_url + separator + "device_uuid=" + urllib.parse.quote(device_uuid_value), token)
+    for command in response.get("commands", []):
+        command_uuid = str(command.get("command_uuid") or "")
+        if not verify_command_signature(command, public_key_xml, device_uuid_value):
+            send_command_result(poll_url, token, device_uuid_value, command_uuid, "failed", "Command signature, device target, or expiry validation failed.")
+            continue
+        try:
+            payload = command_payload(command)
+            command_type = str(command.get("command_type") or "")
+            if command_type == "inventory_refresh":
+                message = "Inventory snapshot completed during this agent run."
+            elif command_type == "lock_session":
+                message = lock_session()
+            elif command_type == "restart_device":
+                message = restart_device(payload)
+            else:
+                raise RuntimeError(f"Command type '{command_type}' is not supported by agent {AGENT_VERSION}.")
+            send_command_result(poll_url, token, device_uuid_value, command_uuid, "completed", message)
+        except Exception as exc:
+            send_command_result(poll_url, token, device_uuid_value, command_uuid, "failed", str(exc))
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpsBridge macOS/Linux device agent")
     parser.add_argument("--config", default=DEFAULT_CONFIG)
     parser.add_argument("--once", action="store_true")
+    parser.add_argument("--commands-only", action="store_true")
     args = parser.parse_args()
 
     config = load_config(args.config)
+    if args.commands_only:
+        invoke_agent_commands(config)
+        return
+
     os_name, os_version, arch = os_details()
     payload = {
         "device_uuid": config.get("device_uuid") or device_uuid(),
@@ -288,7 +428,12 @@ def main():
     if response.get("device_api_key"):
         config["token"] = response["device_api_key"]
         config["device_uuid"] = payload["device_uuid"]
-        save_config(args.config, config)
+    if response.get("command_poll_url"):
+        config["command_poll_url"] = response["command_poll_url"]
+    if response.get("command_signing_public_key_xml"):
+        config["command_signing_public_key_xml"] = response["command_signing_public_key_xml"]
+    save_config(args.config, config)
+    invoke_agent_commands(config)
     print(json.dumps({"message": response.get("message"), "device_agent_id": response.get("device_agent_id")}))
 
 

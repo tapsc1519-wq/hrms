@@ -44,7 +44,7 @@
                     <div class="fw-semibold mb-1"><i class="bi bi-shield-lock me-1 text-primary"></i>Device Controls</div>
                     <div class="text-muted small mb-3">Lock the active session immediately or schedule a controlled restart.</div>
                     <div class="d-flex gap-2 flex-wrap">
-                        <form method="POST" action="{{ route('admin.agent-sources.commands.lock', $deviceAgent) }}" onsubmit="return confirm('Lock the active Windows session on {{ addslashes($deviceAgent->hostname) }}?')">
+                        <form method="POST" action="{{ route('admin.agent-sources.commands.lock', $deviceAgent) }}" onsubmit="return confirm('Lock the active session on {{ addslashes($deviceAgent->hostname) }}?')">
                             @csrf
                             <button class="btn btn-outline-primary btn-sm" @disabled(! $canQueueCommands)><i class="bi bi-lock-fill me-1"></i>Lock Session</button>
                         </form>

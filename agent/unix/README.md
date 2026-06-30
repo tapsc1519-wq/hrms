@@ -38,13 +38,14 @@ Employee self-service setup tokens are already linked to the employee account, s
 - Basic hardware summary
 - Network adapter identifiers
 - Installed applications/packages
+- Signed command polling for inventory refresh, lock session, and restart
 
 On Linux, package discovery uses `dpkg-query` or `rpm` when available. On macOS, app discovery reads `.app` bundles from `/Applications` and `~/Applications`.
 
 ## Scheduling
 
-- Linux: installs a `systemd` timer named `opsbridge-agent.timer`
-- macOS: installs a LaunchDaemon named `com.opsbridge.agent`
+- Linux: installs `systemd` timers named `opsbridge-agent.timer` and `opsbridge-agent-commands.timer`
+- macOS: installs LaunchDaemons named `com.opsbridge.agent` and `com.opsbridge.agent.commands`
 
 After the first successful check-in, the server replaces the enrollment token with a unique device API key.
 

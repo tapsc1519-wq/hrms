@@ -34,12 +34,13 @@ if ! command -v python3 >/dev/null 2>&1; then
   echo "python3 is required." >&2
   exit 1
 fi
+PYTHON_BIN="$(command -v python3)"
 
 mkdir -p "$ROOT" "$CONFIG_DIR"
 cp "$(dirname "$0")/opsbridge_agent.py" "$ROOT/opsbridge_agent.py"
 chmod 755 "$ROOT/opsbridge_agent.py"
 
-python3 - "$CONFIG_DIR/config.json" "$ENDPOINT" "$TOKEN" "$ASSET_TAG" "$EMPLOYEE_CODE" "$EMPLOYEE_EMAIL" "$INTERVAL_MINUTES" <<'PY'
+"$PYTHON_BIN" - "$CONFIG_DIR/config.json" "$ENDPOINT" "$TOKEN" "$ASSET_TAG" "$EMPLOYEE_CODE" "$EMPLOYEE_EMAIL" "$INTERVAL_MINUTES" <<'PY'
 import json, sys
 config = {
     "endpoint": sys.argv[2],
@@ -57,6 +58,7 @@ chmod 600 "$CONFIG_DIR/config.json"
 OS_NAME="$(uname -s)"
 if [ "$OS_NAME" = "Darwin" ]; then
   PLIST="/Library/LaunchDaemons/com.opsbridge.agent.plist"
+  COMMAND_PLIST="/Library/LaunchDaemons/com.opsbridge.agent.commands.plist"
   cat > "$PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -65,7 +67,7 @@ if [ "$OS_NAME" = "Darwin" ]; then
   <key>Label</key><string>com.opsbridge.agent</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/usr/bin/python3</string>
+    <string>$PYTHON_BIN</string>
     <string>$ROOT/opsbridge_agent.py</string>
   </array>
   <key>StartInterval</key><integer>$((INTERVAL_MINUTES * 60))</integer>
@@ -75,9 +77,31 @@ if [ "$OS_NAME" = "Darwin" ]; then
 </dict>
 </plist>
 PLIST
+  cat > "$COMMAND_PLIST" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.opsbridge.agent.commands</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$PYTHON_BIN</string>
+    <string>$ROOT/opsbridge_agent.py</string>
+    <string>--commands-only</string>
+  </array>
+  <key>StartInterval</key><integer>300</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>/var/log/opsbridge-agent-commands.log</string>
+  <key>StandardErrorPath</key><string>/var/log/opsbridge-agent-commands.err</string>
+</dict>
+</plist>
+PLIST
   chmod 644 "$PLIST"
+  chmod 644 "$COMMAND_PLIST"
   launchctl unload "$PLIST" >/dev/null 2>&1 || true
+  launchctl unload "$COMMAND_PLIST" >/dev/null 2>&1 || true
   launchctl load "$PLIST"
+  launchctl load "$COMMAND_PLIST"
 else
   cat > /etc/systemd/system/opsbridge-agent.service <<SERVICE
 [Unit]
@@ -85,7 +109,15 @@ Description=OpsBridge Device Agent
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/python3 $ROOT/opsbridge_agent.py
+ExecStart=$PYTHON_BIN $ROOT/opsbridge_agent.py
+SERVICE
+  cat > /etc/systemd/system/opsbridge-agent-commands.service <<SERVICE
+[Unit]
+Description=OpsBridge Device Agent Command Poller
+
+[Service]
+Type=oneshot
+ExecStart=$PYTHON_BIN $ROOT/opsbridge_agent.py --commands-only
 SERVICE
   cat > /etc/systemd/system/opsbridge-agent.timer <<TIMER
 [Unit]
@@ -99,9 +131,23 @@ Persistent=true
 [Install]
 WantedBy=timers.target
 TIMER
+  cat > /etc/systemd/system/opsbridge-agent-commands.timer <<TIMER
+[Unit]
+Description=Run OpsBridge Device Agent Command Poller
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+TIMER
   systemctl daemon-reload
   systemctl enable --now opsbridge-agent.timer
+  systemctl enable --now opsbridge-agent-commands.timer
   systemctl start opsbridge-agent.service || true
+  systemctl start opsbridge-agent-commands.service || true
 fi
 
-echo "OpsBridge agent installed. Inventory runs every ${INTERVAL_MINUTES} minutes."
+echo "OpsBridge agent installed. Inventory runs every ${INTERVAL_MINUTES} minutes; commands poll every 5 minutes."
