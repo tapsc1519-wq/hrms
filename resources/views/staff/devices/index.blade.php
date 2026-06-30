@@ -101,7 +101,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="collapse border rounded-3 p-3 mt-3 bg-light" id="staffWindowsInstallGuide">
+                <div class="collapse border rounded-3 p-3 mt-3 bg-light" id="staffWindowsInstallGuide" data-bs-parent="#downloadAgentModal">
                     <div class="d-flex align-items-start gap-2 mb-3">
                         <i class="bi bi-windows fs-4 text-primary"></i>
                         <div class="flex-grow-1">
@@ -122,7 +122,7 @@
                         <a href="{{ route('staff.devices.windows-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i>Download Windows Installer</a>
                     </div>
                 </div>
-                <div class="collapse border rounded-3 p-3 mt-3 bg-light" id="staffLinuxInstallGuide">
+                <div class="collapse border rounded-3 p-3 mt-3 bg-light" id="staffLinuxInstallGuide" data-bs-parent="#downloadAgentModal">
                     <div class="d-flex align-items-start gap-2 mb-3">
                         <i class="bi bi-ubuntu fs-4 text-primary"></i>
                         <div class="flex-grow-1">
@@ -144,7 +144,7 @@
                     </div>
                 </div>
                 @unless($macosPkgAvailable)
-                <div class="collapse border rounded-3 p-3 mt-3 bg-light" id="staffMacosInstallGuide">
+                <div class="collapse border rounded-3 p-3 mt-3 bg-light" id="staffMacosInstallGuide" data-bs-parent="#downloadAgentModal">
                     <div class="d-flex align-items-start gap-2 mb-3">
                         <i class="bi bi-apple fs-4 text-primary"></i>
                         <div class="flex-grow-1">
