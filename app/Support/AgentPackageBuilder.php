@@ -40,11 +40,29 @@ prompt_value() {
   local message="$2"
   local hidden="${3:-false}"
   local value=""
+  local script=""
+  local console_user=""
+  local console_uid=""
   if [ "$(uname -s)" = "Darwin" ] && command -v osascript >/dev/null 2>&1; then
     if [ "$hidden" = "true" ]; then
-      value="$(osascript -e "text returned of (display dialog \"$message\" default answer \"\" with title \"$title\" with hidden answer buttons {\"Cancel\", \"Continue\"} default button \"Continue\")" 2>/dev/null)" || return 1
+      script="text returned of (display dialog \"$message\" default answer \"\" with title \"$title\" with hidden answer buttons {\"Cancel\", \"Continue\"} default button \"Continue\")"
     else
-      value="$(osascript -e "text returned of (display dialog \"$message\" default answer \"\" with title \"$title\" buttons {\"Cancel\", \"Continue\"} default button \"Continue\")" 2>/dev/null)" || return 1
+      script="text returned of (display dialog \"$message\" default answer \"\" with title \"$title\" buttons {\"Cancel\", \"Continue\"} default button \"Continue\")"
+    fi
+    if [ "$(id -u)" -eq 0 ] && command -v launchctl >/dev/null 2>&1; then
+      console_user="$(stat -f "%Su" /dev/console 2>/dev/null || true)"
+      if [ -n "$console_user" ] && [ "$console_user" != "root" ]; then
+        console_uid="$(id -u "$console_user" 2>/dev/null || true)"
+        if [ -n "$console_uid" ]; then
+          value="$(/bin/launchctl asuser "$console_uid" /usr/bin/osascript -e "$script" 2>/dev/null)" || return 1
+        else
+          return 1
+        fi
+      else
+        return 1
+      fi
+    else
+      value="$(osascript -e "$script" 2>/dev/null)" || return 1
     fi
     printf '%s' "$value"
     return 0
