@@ -7,7 +7,9 @@ use App\Models\AgentApiToken;
 use App\Models\DeviceAgent;
 use App\Support\AgentPackageBuilder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use ZipArchive;
 
@@ -21,21 +23,31 @@ class DeviceController extends Controller
             ->latest('last_seen_at')
             ->get();
 
-        $tokens = AgentApiToken::where('organization_id', $this->orgId())
-            ->where('assigned_user_id', auth()->id())
-            ->latest()
-            ->limit(5)
-            ->get();
+        $employeeAgentSetupReady = Schema::hasColumn('agent_api_tokens', 'assigned_user_id')
+            && Schema::hasColumn('agent_api_tokens', 'purpose');
+        $tokens = $employeeAgentSetupReady
+            ? AgentApiToken::where('organization_id', $this->orgId())
+                ->where('assigned_user_id', auth()->id())
+                ->latest()
+                ->limit(5)
+                ->get()
+            : new Collection();
 
         $currentVersion = config('agent.current_version', '0.1.0');
         $agentEndpoint = url('/api/v1/agent/check-in');
         $macosPkgAvailable = AgentPackageBuilder::hasMacosPkg();
 
-        return view('staff.devices.index', compact('devices', 'tokens', 'currentVersion', 'agentEndpoint', 'macosPkgAvailable'));
+        return view('staff.devices.index', compact('devices', 'tokens', 'currentVersion', 'agentEndpoint', 'macosPkgAvailable', 'employeeAgentSetupReady'));
     }
 
     public function createToken(Request $request)
     {
+        abort_unless(
+            Schema::hasColumn('agent_api_tokens', 'assigned_user_id') && Schema::hasColumn('agent_api_tokens', 'purpose'),
+            503,
+            'Employee device setup is pending a database migration.'
+        );
+
         $user = $request->user();
         $plainToken = 'ops_agent_' . Str::random(64);
 

@@ -13,12 +13,19 @@
         </button>
         <form method="POST" action="{{ route('staff.devices.tokens.store') }}">
             @csrf
-            <button class="btn btn-outline-primary btn-sm">
+            <button class="btn btn-outline-primary btn-sm" @disabled(!$employeeAgentSetupReady)>
                 <i class="bi bi-key me-1"></i>Create Setup Token
             </button>
         </form>
     </div>
 </div>
+
+@unless($employeeAgentSetupReady)
+<div class="alert alert-warning border-0 shadow-sm">
+    <div class="fw-bold mb-1"><i class="bi bi-database-exclamation me-1"></i>Employee device setup is pending</div>
+    <div class="small">IT must run the latest database migration before setup tokens can be created from this page.</div>
+</div>
+@endunless
 
 <div class="modal fade" id="downloadAgentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
