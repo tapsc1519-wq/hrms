@@ -326,3 +326,16 @@
     </div>
 </div>
 @endsection
+
+@if(session('new_agent_token'))
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const downloadModal = document.getElementById('downloadAgentModal');
+    if (downloadModal && window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(downloadModal).show();
+    }
+});
+</script>
+@endpush
+@endif

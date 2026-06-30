@@ -300,6 +300,12 @@ document.addEventListener('DOMContentLoaded', function () {
     selectAll.addEventListener('change', function () { selectors.forEach(item => item.checked = selectAll.checked); updateSelection(); });
     selectors.forEach(item => item.addEventListener('change', updateSelection));
     updateSelection();
+    @if(session('new_agent_token'))
+    const downloadModal = document.getElementById('downloadAgentModal');
+    if (downloadModal && window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(downloadModal).show();
+    }
+    @endif
 });
 </script>
 @endpush
