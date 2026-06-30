@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', 'My Device')
+@section('title', 'Device Agent')
 
 @section('content')
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
     <div>
-        <h4><i class="bi bi-laptop me-2 text-primary"></i>My Device</h4>
-        <p>Install the company device agent so IT can keep your assigned device inventory current.</p>
+        <h4><i class="bi bi-shield-check me-2 text-primary"></i>Device Agent</h4>
+        <p>Install the company endpoint agent so IT can keep your assigned computer inventory current.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#downloadAgentModal">
@@ -179,7 +179,7 @@
 
 <div class="table-card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">My Reported Devices</span>
+        <span class="fw-semibold">Reported Agent Devices</span>
         <span class="badge bg-light text-dark">{{ $devices->count() }}</span>
     </div>
     <div class="table-responsive">

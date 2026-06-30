@@ -264,18 +264,18 @@ class PageHelpRegistry
                 'next' => 'Contact IT through a support ticket if the software is not listed in the catalog.',
             ],
             'staff.devices.*' => [
-                'title' => 'My Device Help',
-                'what' => 'My Device lets employees install the Windows, macOS, or Linux device agent from their own account so IT can automatically link the reported device to the correct employee.',
+                'title' => 'Device Agent Help',
+                'what' => 'Device Agent lets employees install the Windows, macOS, or Linux endpoint agent from their own account so IT can automatically link the reported computer to the correct employee.',
                 'how' => [
                     'Create a setup token from this page and copy it immediately.',
                     'Download and run the correct agent installer for your company device.',
                     'Paste the API endpoint and setup token during installation.',
-                    'After the first check-in, confirm your device appears under My Reported Devices.',
+                    'After the first check-in, confirm your computer appears under Reported Agent Devices.',
                 ],
                 'sections' => [
                     'Install Device Agent' => 'Step-by-step employee installation instructions and the API endpoint required by the installer.',
                     'Setup Tokens' => 'Recent employee-bound setup tokens, their prefix, expiry, and active status.',
-                    'My Reported Devices' => 'Devices that checked in using your employee-bound token or are otherwise linked to your account.',
+                    'Reported Agent Devices' => 'Computers that checked in using your employee-bound token or are otherwise linked to your account.',
                 ],
                 'actions' => [
                     'Download Agent' => 'Opens the operating-system selector for Windows, macOS, and Linux installers.',

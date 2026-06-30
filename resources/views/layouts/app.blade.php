@@ -1481,7 +1481,7 @@
             </a>
             <a href="{{ route('staff.devices.index') }}"
                class="sidebar-link {{ request()->routeIs('staff.devices.*') ? 'active' : '' }}">
-                <i class="bi bi-laptop-fill"></i> My Device
+                <i class="bi bi-shield-check"></i> Device Agent
             </a>
             @endif
             @if($hasSupport)
