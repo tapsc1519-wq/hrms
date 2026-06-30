@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -40,20 +41,38 @@ namespace OpsBridge.Agent.Setup
 
         public static string Install(InstallOptions options)
         {
+            return Install(options, null);
+        }
+
+        public static string Install(InstallOptions options, Action<string, int> progress)
+        {
+            Report(progress, "Validating setup details...", 8);
             Validate(options);
+            Report(progress, "Creating secure agent folders...", 18);
             string root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "OpsBridge", "Agent");
             Directory.CreateDirectory(root);
             Directory.CreateDirectory(Path.Combine(root, "logs"));
             Directory.CreateDirectory(Path.Combine(root, "queue"));
 
+            Report(progress, "Copying agent files...", 30);
             WriteResource("OpsBridge.Agent.ps1", Path.Combine(root, "OpsBridge.Agent.ps1"));
             WriteResource("uninstall.ps1", Path.Combine(root, "uninstall.ps1"));
+            Report(progress, "Encrypting enrollment credential...", 44);
             WriteConfig(root, options);
+            Report(progress, "Protecting local agent folder...", 58);
             RestrictDirectory(root);
+            Report(progress, "Registering background tasks...", 72);
             RegisterScheduledTask(root, options.IntervalMinutes);
+            Report(progress, "Adding Windows uninstall entry...", 88);
             RegisterUninstallEntry(root);
+            Report(progress, "Starting first check-in and command poll...", 100);
 
             return "Installation completed. Inventory and endpoint command services have been started.";
+        }
+
+        private static void Report(Action<string, int> progress, string message, int percent)
+        {
+            if (progress != null) progress(message, percent);
         }
 
         private static void Validate(InstallOptions options)
@@ -184,12 +203,14 @@ namespace OpsBridge.Agent.Setup
         private NumericUpDown interval;
         private Button installButton;
         private Label status;
+        private ProgressBar progressBar;
+        private ListBox progressLog;
 
         public SetupForm(Dictionary<string, string> arguments)
         {
             Text = "OpsBridge Device Agent Setup";
-            ClientSize = new Size(680, 610);
-            MinimumSize = new Size(696, 649);
+            ClientSize = new Size(720, 720);
+            MinimumSize = new Size(736, 759);
             MaximizeBox = false;
             StartPosition = FormStartPosition.CenterScreen;
             BackColor = Color.FromArgb(247, 249, 252);
@@ -229,17 +250,17 @@ namespace OpsBridge.Agent.Setup
             subtitle.Location = new Point(109, 67);
             header.Controls.Add(subtitle);
 
-            endpoint = AddField("Inventory API endpoint", 142, 32, 616, false);
-            token = AddField("Enrollment token", 210, 32, 616, true);
-            assetTag = AddField("Asset tag (optional)", 278, 32, 296, false);
-            employeeCode = AddField("Employee code (optional)", 278, 352, 296, false);
-            employeeEmail = AddField("Employee email (optional)", 346, 32, 424, false);
+            endpoint = AddField("Inventory API endpoint", 142, 32, 656, false);
+            token = AddField("Enrollment token", 210, 32, 656, true);
+            assetTag = AddField("Asset tag (optional)", 278, 32, 316, false);
+            employeeCode = AddField("Employee code (optional)", 278, 372, 316, false);
+            employeeEmail = AddField("Employee email (optional)", 346, 32, 456, false);
 
             Label intervalLabel = FieldLabel("Interval (minutes)", 346, 480);
             Controls.Add(intervalLabel);
             interval = new NumericUpDown();
             interval.Location = new Point(480, 369);
-            interval.Size = new Size(168, 27);
+            interval.Size = new Size(208, 27);
             interval.Minimum = 15;
             interval.Maximum = 1440;
             interval.Value = 60;
@@ -254,19 +275,34 @@ namespace OpsBridge.Agent.Setup
 
             Panel note = new Panel();
             note.Location = new Point(32, 446);
-            note.Size = new Size(616, 58);
+            note.Size = new Size(656, 58);
             note.BackColor = Color.FromArgb(239, 246, 255);
             Controls.Add(note);
             Label noteText = new Label();
             noteText.Text = "The enrollment token is encrypted for this computer. After first check-in, it is replaced by a unique device credential.";
             noteText.ForeColor = Color.FromArgb(30, 64, 175);
             noteText.Location = new Point(14, 11);
-            noteText.Size = new Size(588, 40);
+            noteText.Size = new Size(628, 40);
             note.Controls.Add(noteText);
+
+            progressBar = new ProgressBar();
+            progressBar.Location = new Point(32, 526);
+            progressBar.Size = new Size(656, 18);
+            progressBar.Minimum = 0;
+            progressBar.Maximum = 100;
+            Controls.Add(progressBar);
+
+            progressLog = new ListBox();
+            progressLog.Location = new Point(32, 556);
+            progressLog.Size = new Size(656, 82);
+            progressLog.BorderStyle = BorderStyle.FixedSingle;
+            progressLog.BackColor = Color.White;
+            progressLog.ForeColor = Color.FromArgb(51, 65, 85);
+            Controls.Add(progressLog);
 
             installButton = new Button();
             installButton.Text = "Install Device Agent";
-            installButton.Location = new Point(438, 526);
+            installButton.Location = new Point(478, 658);
             installButton.Size = new Size(210, 42);
             installButton.BackColor = Color.FromArgb(37, 99, 235);
             installButton.ForeColor = Color.White;
@@ -277,10 +313,10 @@ namespace OpsBridge.Agent.Setup
             Controls.Add(installButton);
 
             status = new Label();
-            status.Location = new Point(32, 526);
-            status.Size = new Size(390, 54);
+            status.Location = new Point(32, 658);
+            status.Size = new Size(430, 54);
             status.ForeColor = Color.FromArgb(71, 85, 105);
-            status.Text = "Administrator permission is required.";
+            status.Text = "Ready to install. Administrator approval is required.";
             Controls.Add(status);
 
             endpoint.Text = Value(arguments, "endpoint");
@@ -316,25 +352,81 @@ namespace OpsBridge.Agent.Setup
 
         private void InstallClicked(object sender, EventArgs e)
         {
-            installButton.Enabled = false;
-            status.ForeColor = Color.FromArgb(30, 64, 175);
-            status.Text = "Installing and starting the first inventory check-in...";
-            Refresh();
+            InstallOptions options = ReadOptions();
+            SetInstalling(true);
+            progressBar.Value = 0;
+            progressLog.Items.Clear();
+            AddProgress("Starting installation...", 0);
+
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.WorkerReportsProgress = true;
+            worker.DoWork += delegate(object workerSender, DoWorkEventArgs workerArgs)
+            {
+                workerArgs.Result = AgentInstaller.Install(options, delegate(string message, int percent)
+                {
+                    ((BackgroundWorker)workerSender).ReportProgress(percent, message);
+                });
+            };
+            worker.ProgressChanged += delegate(object workerSender, ProgressChangedEventArgs progressArgs)
+            {
+                AddProgress(Convert.ToString(progressArgs.UserState), progressArgs.ProgressPercentage);
+            };
+            worker.RunWorkerCompleted += delegate(object workerSender, RunWorkerCompletedEventArgs completedArgs)
+            {
+                if (completedArgs.Error == null)
+                {
+                    string result = Convert.ToString(completedArgs.Result);
+                    progressBar.Value = 100;
+                    status.ForeColor = Color.FromArgb(5, 150, 105);
+                    status.Text = result;
+                    installButton.Text = "Installed";
+                    MessageBox.Show(result, "OpsBridge Setup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Close();
+                    return;
+                }
+
+                SetInstalling(false);
+                status.ForeColor = Color.FromArgb(220, 38, 38);
+                status.Text = completedArgs.Error.Message;
+                MessageBox.Show(completedArgs.Error.Message, "Installation could not be completed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            };
+
             try
             {
-                string result = AgentInstaller.Install(ReadOptions());
-                status.ForeColor = Color.FromArgb(5, 150, 105);
-                status.Text = result;
-                installButton.Text = "Installed";
-                MessageBox.Show(result, "OpsBridge Setup", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                Close();
+                worker.RunWorkerAsync();
             }
             catch (Exception exception)
             {
-                installButton.Enabled = true;
+                SetInstalling(false);
                 status.ForeColor = Color.FromArgb(220, 38, 38);
                 status.Text = exception.Message;
-                MessageBox.Show(exception.Message, "Installation could not be completed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(exception.Message, "Installation could not be started", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void SetInstalling(bool installing)
+        {
+            endpoint.Enabled = !installing;
+            token.Enabled = !installing;
+            assetTag.Enabled = !installing;
+            employeeCode.Enabled = !installing;
+            employeeEmail.Enabled = !installing;
+            interval.Enabled = !installing;
+            installButton.Enabled = !installing;
+            status.ForeColor = installing ? Color.FromArgb(30, 64, 175) : Color.FromArgb(71, 85, 105);
+            status.Text = installing ? "Installing agent. Please keep this window open." : "Ready to install. Administrator approval is required.";
+        }
+
+        private void AddProgress(string message, int percent)
+        {
+            if (percent < progressBar.Minimum) percent = progressBar.Minimum;
+            if (percent > progressBar.Maximum) percent = progressBar.Maximum;
+            progressBar.Value = percent;
+            if (!String.IsNullOrWhiteSpace(message))
+            {
+                progressLog.Items.Add(DateTime.Now.ToString("HH:mm:ss") + "  " + message);
+                progressLog.TopIndex = progressLog.Items.Count - 1;
+                status.Text = message;
             }
         }
 
