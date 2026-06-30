@@ -83,14 +83,14 @@
             <div class="modal-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <a href="{{ route('admin.agent-sources.windows-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark agent-download-option">
+                        <button type="button" class="border rounded-3 p-3 h-100 w-100 d-flex gap-3 text-start bg-white agent-download-option" data-bs-toggle="collapse" data-bs-target="#adminWindowsInstallGuide" aria-expanded="false" aria-controls="adminWindowsInstallGuide">
                             <div class="fs-3 text-primary"><i class="bi bi-windows"></i></div>
                             <div>
                                 <div class="fw-semibold">Windows</div>
-                                <div class="small text-muted">Download the Windows installer for managed PCs.</div>
-                                <span class="badge bg-primary mt-2">Download EXE</span>
+                                <div class="small text-muted">Open the guided Windows installer steps before downloading.</div>
+                                <span class="badge bg-primary mt-2">Guided EXE Installer</span>
                             </div>
-                        </a>
+                        </button>
                     </div>
                     <div class="col-md-6">
                         @if($macosPkgAvailable)
@@ -114,14 +114,14 @@
                         @endif
                     </div>
                     <div class="col-md-6">
-                        <a href="{{ route('admin.agent-sources.unix-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark agent-download-option">
+                        <button type="button" class="border rounded-3 p-3 h-100 w-100 d-flex gap-3 text-start bg-white agent-download-option" data-bs-toggle="collapse" data-bs-target="#adminLinuxInstallGuide" aria-expanded="false" aria-controls="adminLinuxInstallGuide">
                             <div class="fs-3 text-primary"><i class="bi bi-ubuntu"></i></div>
                             <div>
                                 <div class="fw-semibold">Linux</div>
-                                <div class="small text-muted">Download the shell installer for Linux computers.</div>
-                                <span class="badge bg-primary mt-2">Download SH</span>
+                                <div class="small text-muted">Open the guided Linux installer steps before downloading.</div>
+                                <span class="badge bg-primary mt-2">Guided SH Installer</span>
                             </div>
-                        </a>
+                        </button>
                     </div>
                     <div class="col-md-6">
                         <div class="border rounded-3 p-3 h-100 d-flex gap-3 bg-light text-muted">
@@ -142,6 +142,48 @@
                                 <span class="badge bg-secondary mt-2">Coming soon</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+                <div class="collapse border rounded-3 p-3 mt-3 bg-light" id="adminWindowsInstallGuide">
+                    <div class="d-flex align-items-start gap-2 mb-3">
+                        <i class="bi bi-windows fs-4 text-primary"></i>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">Windows installer guide</div>
+                            <div class="small text-muted">Follow these steps before installing the Windows agent. Windows may ask for administrator approval during setup.</div>
+                        </div>
+                        <a href="{{ route('admin.agent-sources.windows-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i>Download Windows Installer</a>
+                    </div>
+                    <div class="row g-3 small">
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">1</span>Create token</div><div class="text-muted">Create an enrollment token first and keep it ready for the installer.</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">2</span>Download EXE</div><div class="text-muted">Click Download Windows Installer and save the file on the target computer.</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">3</span>Run as administrator</div><div class="text-muted">Double-click the installer. If Windows asks for permission, choose Yes to continue.</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">4</span>Enter setup details</div><div class="text-muted">Enter the API endpoint and enrollment token when the installer asks.</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">5</span>Allow security prompts</div><div class="text-muted">If SmartScreen or antivirus warns about a new internal installer, choose More info and Run anyway only if it came from this portal.</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">6</span>Confirm check-in</div><div class="text-muted">After success, the PC appears in Enrolled Devices and starts reporting inventory.</div></div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <a href="{{ route('admin.agent-sources.windows-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i>Download Windows Installer</a>
+                    </div>
+                </div>
+                <div class="collapse border rounded-3 p-3 mt-3 bg-light" id="adminLinuxInstallGuide">
+                    <div class="d-flex align-items-start gap-2 mb-3">
+                        <i class="bi bi-ubuntu fs-4 text-primary"></i>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">Linux installer guide</div>
+                            <div class="small text-muted">Follow these steps before installing the Linux shell agent. Root permission is required to install the background service.</div>
+                        </div>
+                        <a href="{{ route('admin.agent-sources.unix-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i>Download Linux Installer</a>
+                    </div>
+                    <div class="row g-3 small">
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">1</span>Create token</div><div class="text-muted">Create an enrollment token first and keep it ready for the installer prompt.</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">2</span>Download SH</div><div class="text-muted">Click Download Linux Installer and save <span class="font-monospace">OpsBridge-Agent-Installer.sh</span>.</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">3</span>Allow execution</div><div class="text-muted mb-2">Open Terminal in the download folder and run:</div><div class="font-monospace bg-white border rounded p-2">chmod +x OpsBridge-Agent-Installer*.sh</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">4</span>Run installer</div><div class="text-muted mb-2">Run it with root permission:</div><div class="font-monospace bg-white border rounded p-2">sudo ./OpsBridge-Agent-Installer*.sh</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">5</span>Enter setup details</div><div class="text-muted">Paste the API endpoint and enrollment token when Terminal asks.</div></div>
+                        <div class="col-md-6"><div class="fw-semibold mb-1"><span class="badge bg-primary me-2">6</span>Confirm check-in</div><div class="text-muted">After success, the Linux computer appears in Enrolled Devices. If needed, run <span class="font-monospace">sudo python3 /opt/opsbridge-agent/opsbridge_agent.py --once</span>.</div></div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <a href="{{ route('admin.agent-sources.unix-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i>Download Linux Installer</a>
                     </div>
                 </div>
                 @unless($macosPkgAvailable)
