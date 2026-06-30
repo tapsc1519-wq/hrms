@@ -89,6 +89,24 @@
                     </div>
                     <div class="form-text">Use this endpoint in the installer together with a valid enrollment token.</div>
                 </div>
+                <div class="border rounded-3 p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                        <div>
+                            <div class="fw-semibold">Enrollment token</div>
+                            <div class="small text-muted">Create a token before downloading. It is shown only once and is used only during installation.</div>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-target="#createTokenModal" data-bs-toggle="modal"><i class="bi bi-key me-1"></i>Create Enrollment Token</button>
+                    </div>
+                    @if(session('new_agent_token'))
+                    <div class="alert alert-warning small mt-3 mb-0">
+                        <div class="fw-semibold mb-2">Copy this enrollment token now.</div>
+                        <div class="input-group input-group-sm">
+                            <input id="downloadModalNewAgentTokenAdmin" type="text" class="form-control font-monospace" value="{{ session('new_agent_token') }}" readonly>
+                            <button type="button" class="btn btn-outline-dark" onclick="navigator.clipboard.writeText(document.getElementById('downloadModalNewAgentTokenAdmin').value)"><i class="bi bi-copy me-1"></i>Copy</button>
+                        </div>
+                    </div>
+                    @endif
+                </div>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <button type="button" class="border rounded-3 p-3 h-100 w-100 d-flex gap-3 text-start bg-white agent-download-option" data-bs-toggle="collapse" data-bs-target="#adminWindowsInstallGuide" aria-expanded="false" aria-controls="adminWindowsInstallGuide">

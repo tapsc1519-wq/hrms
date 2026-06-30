@@ -46,6 +46,27 @@
                     </div>
                     <div class="form-text">Use this endpoint in the installer together with your setup token.</div>
                 </div>
+                <div class="border rounded-3 p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                        <div>
+                            <div class="fw-semibold">Setup token</div>
+                            <div class="small text-muted">Create a setup token before downloading. It is shown only once and expires in 24 hours.</div>
+                        </div>
+                        <form method="POST" action="{{ route('staff.devices.tokens.store') }}">
+                            @csrf
+                            <button class="btn btn-outline-primary btn-sm" @disabled(!$employeeAgentSetupReady)><i class="bi bi-key me-1"></i>Create Setup Token</button>
+                        </form>
+                    </div>
+                    @if(session('new_agent_token'))
+                    <div class="alert alert-warning small mt-3 mb-0">
+                        <div class="fw-semibold mb-2">Copy this setup token now.</div>
+                        <div class="input-group input-group-sm">
+                            <input id="downloadModalNewAgentTokenStaff" type="text" class="form-control font-monospace" value="{{ session('new_agent_token') }}" readonly>
+                            <button type="button" class="btn btn-outline-dark" onclick="navigator.clipboard.writeText(document.getElementById('downloadModalNewAgentTokenStaff').value)"><i class="bi bi-copy me-1"></i>Copy</button>
+                        </div>
+                    </div>
+                    @endif
+                </div>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <button type="button" class="border rounded-3 p-3 h-100 w-100 d-flex gap-3 text-start bg-white" data-bs-toggle="collapse" data-bs-target="#staffWindowsInstallGuide" aria-expanded="false" aria-controls="staffWindowsInstallGuide">
