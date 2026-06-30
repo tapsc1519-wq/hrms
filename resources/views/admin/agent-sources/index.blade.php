@@ -103,14 +103,14 @@
                                 </div>
                             </a>
                         @else
-                            <div class="border rounded-3 p-3 h-100 d-flex gap-3 bg-light text-muted">
-                                <div class="fs-3"><i class="bi bi-apple"></i></div>
+                            <a href="{{ route('admin.agent-sources.macos-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark agent-download-option">
+                                <div class="fs-3 text-primary"><i class="bi bi-apple"></i></div>
                                 <div>
                                     <div class="fw-semibold">macOS</div>
-                                    <div class="small">Signed PKG installer has not been built yet.</div>
-                                    <span class="badge bg-secondary mt-2">PKG pending</span>
+                                    <div class="small text-muted">Download the temporary Terminal installer while signed PKG is pending.</div>
+                                    <span class="badge bg-warning text-dark mt-2">Temporary COMMAND</span>
                                 </div>
-                            </div>
+                            </a>
                         @endif
                     </div>
                     <div class="col-md-6">
