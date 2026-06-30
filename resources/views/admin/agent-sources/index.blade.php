@@ -93,14 +93,25 @@
                         </a>
                     </div>
                     <div class="col-md-6">
-                        <a href="{{ route('admin.agent-sources.macos-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark agent-download-option">
-                            <div class="fs-3 text-primary"><i class="bi bi-apple"></i></div>
-                            <div>
-                                <div class="fw-semibold">macOS</div>
-                                <div class="small text-muted">{{ $macosPkgAvailable ? 'Download the signed package installer for Apple devices.' : 'Download the Terminal installer for Apple devices.' }}</div>
-                                <span class="badge bg-primary mt-2">{{ $macosPkgAvailable ? 'Download PKG' : 'Download COMMAND' }}</span>
+                        @if($macosPkgAvailable)
+                            <a href="{{ route('admin.agent-sources.macos-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark agent-download-option">
+                                <div class="fs-3 text-primary"><i class="bi bi-apple"></i></div>
+                                <div>
+                                    <div class="fw-semibold">macOS</div>
+                                    <div class="small text-muted">Download the signed package installer for Apple devices.</div>
+                                    <span class="badge bg-primary mt-2">Download PKG</span>
+                                </div>
+                            </a>
+                        @else
+                            <div class="border rounded-3 p-3 h-100 d-flex gap-3 bg-light text-muted">
+                                <div class="fs-3"><i class="bi bi-apple"></i></div>
+                                <div>
+                                    <div class="fw-semibold">macOS</div>
+                                    <div class="small">Signed PKG installer has not been built yet.</div>
+                                    <span class="badge bg-secondary mt-2">PKG pending</span>
+                                </div>
                             </div>
-                        </a>
+                        @endif
                     </div>
                     <div class="col-md-6">
                         <a href="{{ route('admin.agent-sources.unix-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark agent-download-option">

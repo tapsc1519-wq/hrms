@@ -92,15 +92,10 @@ class DeviceController extends Controller
 
     public function downloadMacosInstaller()
     {
-        if (AgentPackageBuilder::hasMacosPkg()) {
-            return response()->download(AgentPackageBuilder::macosPkgPath(), 'OpsBridge-Agent-Setup.pkg', [
-                'Content-Type' => 'application/octet-stream',
-            ]);
-        }
+        abort_unless(AgentPackageBuilder::hasMacosPkg(), 404, 'The macOS PKG installer has not been built for this release.');
 
-        return response(AgentPackageBuilder::unixInstallerScript(), 200, [
-            'Content-Type' => 'application/x-sh',
-            'Content-Disposition' => 'attachment; filename="OpsBridge-Agent-Installer.command"',
+        return response()->download(AgentPackageBuilder::macosPkgPath(), 'OpsBridge-Agent-Setup.pkg', [
+            'Content-Type' => 'application/octet-stream',
         ]);
     }
 }
