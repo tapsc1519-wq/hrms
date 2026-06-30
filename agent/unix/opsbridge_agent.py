@@ -319,14 +319,35 @@ def lock_session():
         uid = run(["id", "-u", user])
         if not uid:
             raise RuntimeError(f"Could not resolve uid for macOS console user {user}.")
-        result = subprocess.run([
-            "launchctl", "asuser", uid,
-            "/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession",
-            "-suspend",
-        ], capture_output=True, text=True, timeout=20)
-        if result.returncode != 0:
-            raise RuntimeError((result.stderr or result.stdout or "macOS rejected the lock request.").strip())
-        return "The active macOS session was locked."
+
+        attempts = []
+        cg_session = "/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession"
+        if os.path.isfile(cg_session):
+            attempts.append((["/bin/launchctl", "asuser", uid, cg_session, "-suspend"], "The active macOS session was locked."))
+        if os.path.isfile("/usr/bin/osascript"):
+            attempts.append(([
+                "/bin/launchctl", "asuser", uid, "/usr/bin/osascript",
+                "-e", 'tell application "System Events" to key code 12 using {control down, command down}',
+            ], "The active macOS session lock shortcut was sent."))
+        screen_saver = "/System/Library/CoreServices/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine"
+        if os.path.isfile(screen_saver):
+            attempts.append((["/bin/launchctl", "asuser", uid, screen_saver], "The macOS screen saver lock fallback was started."))
+        if os.path.isfile("/usr/bin/open"):
+            attempts.append((["/bin/launchctl", "asuser", uid, "/usr/bin/open", "-a", "ScreenSaverEngine"], "The macOS screen saver lock fallback was started."))
+        if os.path.isfile("/usr/bin/pmset"):
+            attempts.append((["/usr/bin/pmset", "displaysleepnow"], "The macOS display sleep lock fallback was requested."))
+
+        errors = []
+        for command, message in attempts:
+            try:
+                result = subprocess.run(command, capture_output=True, text=True, timeout=20)
+                if result.returncode == 0:
+                    return message
+                errors.append((result.stderr or result.stdout or f"{command[0]} exited with {result.returncode}").strip())
+            except Exception as exc:
+                errors.append(str(exc))
+        detail = errors[-1] if errors else "No supported lock command exists on this macOS device."
+        raise RuntimeError(f"macOS rejected the lock request. {detail}")
 
     for command in (["loginctl", "lock-sessions"], ["dm-tool", "lock"]):
         try:
