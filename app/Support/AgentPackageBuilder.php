@@ -38,11 +38,22 @@ while [ $# -gt 0 ]; do
 done
 
 if [ "$(id -u)" -ne 0 ]; then
-  echo "Run this installer with sudo." >&2
-  exit 1
+  if ! command -v sudo >/dev/null 2>&1; then
+    echo "Administrator permission is required, but sudo is not available." >&2
+    exit 1
+  fi
+  echo "Administrator permission is required to install the OpsBridge agent."
+  exec sudo bash "$0" "$@"
+fi
+
+if [ -z "$ENDPOINT" ]; then
+  read -r -p "Agent API Endpoint: " ENDPOINT
+fi
+if [ -z "$TOKEN" ]; then
+  read -r -p "Setup or enrollment token: " TOKEN
 fi
 if [ -z "$ENDPOINT" ] || [ -z "$TOKEN" ]; then
-  echo "Usage: sudo ./OpsBridge-Agent-Installer.sh --endpoint https://example.com/api/v1/agent/check-in --token ops_agent_..." >&2
+  echo "Endpoint and token are required." >&2
   exit 1
 fi
 if ! command -v python3 >/dev/null 2>&1; then

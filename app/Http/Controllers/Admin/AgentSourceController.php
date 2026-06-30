@@ -110,6 +110,14 @@ class AgentSourceController extends Controller
         ]);
     }
 
+    public function downloadMacosInstaller()
+    {
+        return response(AgentPackageBuilder::unixInstallerScript(), 200, [
+            'Content-Type' => 'application/x-sh',
+            'Content-Disposition' => 'attachment; filename="OpsBridge-Agent-Installer.command"',
+        ]);
+    }
+
     public function downloadWindowsInstaller()
     {
         $installer = base_path('agent/windows/dist/OpsBridge-Agent-Setup.exe');

@@ -88,4 +88,12 @@ class DeviceController extends Controller
             'Content-Disposition' => 'attachment; filename="OpsBridge-Agent-Installer.sh"',
         ]);
     }
+
+    public function downloadMacosInstaller()
+    {
+        return response(AgentPackageBuilder::unixInstallerScript(), 200, [
+            'Content-Type' => 'application/x-sh',
+            'Content-Disposition' => 'attachment; filename="OpsBridge-Agent-Installer.command"',
+        ]);
+    }
 }

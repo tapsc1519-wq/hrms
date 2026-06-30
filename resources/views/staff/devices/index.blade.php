@@ -43,12 +43,12 @@
                         </a>
                     </div>
                     <div class="col-md-6">
-                        <a href="{{ route('staff.devices.unix-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark">
+                        <a href="{{ route('staff.devices.macos-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark">
                             <div class="fs-3 text-primary"><i class="bi bi-apple"></i></div>
                             <div>
                                 <div class="fw-semibold">macOS</div>
-                                <div class="small text-muted">Download the shell installer for your Apple device.</div>
-                                <span class="badge bg-primary mt-2">Download SH</span>
+                                <div class="small text-muted">Download the Terminal installer for your Apple device.</div>
+                                <span class="badge bg-primary mt-2">Download COMMAND</span>
                             </div>
                         </a>
                     </div>
