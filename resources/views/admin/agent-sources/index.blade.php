@@ -11,7 +11,7 @@
 @if(session('new_agent_token'))
 <div class="alert alert-warning">
     <div class="fw-bold mb-2"><i class="bi bi-exclamation-triangle me-1"></i>Copy this enrollment token now. It cannot be displayed again.</div>
-    <div class="input-group"><input id="newAgentToken" type="text" class="form-control font-monospace" value="{{ session('new_agent_token') }}" readonly><button type="button" class="btn btn-outline-dark" onclick="navigator.clipboard.writeText(document.getElementById('newAgentToken').value)"><i class="bi bi-copy me-1"></i>Copy</button></div>
+    <div class="input-group"><input id="newAgentToken" type="text" class="form-control font-monospace" value="{{ session('new_agent_token') }}" readonly><button type="button" class="btn btn-outline-dark" data-copy-target="newAgentToken"><i class="bi bi-copy me-1"></i>Copy</button></div>
 </div>
 @endif
 
@@ -85,7 +85,7 @@
                     <label class="form-label small fw-semibold mb-1">Agent API Endpoint</label>
                     <div class="input-group input-group-sm">
                         <input id="downloadAgentEndpointAdmin" type="text" class="form-control font-monospace" value="{{ url('/api/v1/agent/check-in') }}" readonly>
-                        <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('downloadAgentEndpointAdmin').value)" title="Copy endpoint"><i class="bi bi-copy"></i></button>
+                        <button type="button" class="btn btn-outline-secondary" data-copy-target="downloadAgentEndpointAdmin" title="Copy endpoint"><i class="bi bi-copy"></i></button>
                     </div>
                     <div class="form-text">Use this endpoint in the installer together with a valid enrollment token.</div>
                 </div>
@@ -102,7 +102,7 @@
                         <div class="fw-semibold mb-2">Copy this enrollment token now.</div>
                         <div class="input-group input-group-sm">
                             <input id="downloadModalNewAgentTokenAdmin" type="text" class="form-control font-monospace" value="{{ session('new_agent_token') }}" readonly>
-                            <button type="button" class="btn btn-outline-dark" onclick="navigator.clipboard.writeText(document.getElementById('downloadModalNewAgentTokenAdmin').value)"><i class="bi bi-copy me-1"></i>Copy</button>
+                            <button type="button" class="btn btn-outline-dark" data-copy-target="downloadModalNewAgentTokenAdmin"><i class="bi bi-copy me-1"></i>Copy</button>
                         </div>
                     </div>
                     @endif
@@ -271,7 +271,7 @@
 
 <details class="table-card mb-4" data-tour="endpoint-deployment-setup" @if(session('new_agent_token')) open @endif>
     <summary class="card-header d-flex justify-content-between align-items-center" style="cursor:pointer"><span class="fw-semibold"><i class="bi bi-gear me-1"></i>Deployment Setup</span><span class="small text-muted">{{ $stats['active_tokens'] }} active enrollment {{ Str::plural('token', $stats['active_tokens']) }}</span></summary>
-    <div class="card-body border-top"><div class="row g-3"><div class="col-lg-7"><label class="form-label">Inventory API Endpoint</label><div class="input-group"><input id="agentEndpoint" type="text" class="form-control font-monospace" value="{{ url('/api/v1/agent/check-in') }}" readonly><button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('agentEndpoint').value)" title="Copy endpoint"><i class="bi bi-copy"></i></button></div></div><div class="col-lg-5"><label class="form-label">Authentication</label><div class="form-control bg-light text-muted">Enrollment token, then a unique device key</div></div></div></div>
+    <div class="card-body border-top"><div class="row g-3"><div class="col-lg-7"><label class="form-label">Inventory API Endpoint</label><div class="input-group"><input id="agentEndpoint" type="text" class="form-control font-monospace" value="{{ url('/api/v1/agent/check-in') }}" readonly><button type="button" class="btn btn-outline-secondary" data-copy-target="agentEndpoint" title="Copy endpoint"><i class="bi bi-copy"></i></button></div></div><div class="col-lg-5"><label class="form-label">Authentication</label><div class="form-control bg-light text-muted">Enrollment token, then a unique device key</div></div></div></div>
     <div class="table-responsive border-top"><table class="table align-middle mb-0"><thead><tr><th class="ps-4">Enrollment Token</th><th>Prefix</th><th>Created</th><th>Last Used</th><th>Expiry</th><th>Status</th><th class="text-end pe-4">Action</th></tr></thead><tbody>
     @forelse($tokens as $token)<tr><td class="ps-4"><div class="fw-bold">{{ $token->name }}</div><div class="text-muted small">by {{ $token->createdBy?->name ?? 'Unknown user' }}</div>@if($token->assignedUser)<div class="small text-primary"><i class="bi bi-person-check me-1"></i>Employee install for {{ $token->assignedUser->name }}</div>@endif</td><td class="font-monospace">{{ $token->token_prefix }}...</td><td>{{ $token->created_at->format('d M Y') }}</td><td>{{ $token->last_used_at?->diffForHumans() ?? 'Never' }}</td><td>{{ $token->expires_at?->format('d M Y') ?? 'No expiry' }}</td><td><span class="badge bg-{{ $token->is_active ? 'success' : 'secondary' }}">{{ $token->is_active ? 'Active' : ($token->revoked_at ? 'Revoked' : 'Expired') }}</span></td><td class="text-end pe-4">@if($token->is_active)<form method="POST" action="{{ route('admin.agent-sources.tokens.revoke', $token) }}" onsubmit="return confirm('Revoke this enrollment token? It will no longer enroll devices.')">@csrf @method('PATCH')<button class="btn btn-sm btn-outline-danger"><i class="bi bi-slash-circle me-1"></i>Revoke</button></form>@else<span class="text-muted small">No action</span>@endif</td></tr>
     @empty<tr><td colspan="7" class="text-center text-muted py-4">No enrollment tokens have been created.</td></tr>@endforelse
@@ -286,6 +286,25 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-copy-target]').forEach(function (copyButton) {
+        copyButton.addEventListener('click', function () {
+            const target = document.getElementById(copyButton.dataset.copyTarget);
+            if (!target || !navigator.clipboard) {
+                return;
+            }
+
+            const originalHtml = copyButton.innerHTML;
+            navigator.clipboard.writeText(target.value || target.textContent || '').then(function () {
+                copyButton.innerHTML = '<i class="bi bi-check2 me-1"></i>Copied';
+                copyButton.disabled = true;
+                setTimeout(function () {
+                    copyButton.innerHTML = originalHtml;
+                    copyButton.disabled = false;
+                }, 1200);
+            });
+        });
+    });
+
     const selectAll = document.getElementById('selectPageDevices');
     const selectors = Array.from(document.querySelectorAll('.device-selector'));
     const button = document.getElementById('bulkRefreshButton');

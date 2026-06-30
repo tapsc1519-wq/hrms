@@ -42,7 +42,7 @@
                     <label class="form-label small fw-semibold mb-1">Agent API Endpoint</label>
                     <div class="input-group input-group-sm">
                         <input id="downloadAgentEndpointStaff" type="text" class="form-control font-monospace" value="{{ $agentEndpoint }}" readonly>
-                        <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('downloadAgentEndpointStaff').value)" title="Copy endpoint"><i class="bi bi-copy"></i></button>
+                        <button type="button" class="btn btn-outline-secondary" data-copy-target="downloadAgentEndpointStaff" title="Copy endpoint"><i class="bi bi-copy"></i></button>
                     </div>
                     <div class="form-text">Use this endpoint in the installer together with your setup token.</div>
                 </div>
@@ -62,7 +62,7 @@
                         <div class="fw-semibold mb-2">Copy this setup token now.</div>
                         <div class="input-group input-group-sm">
                             <input id="downloadModalNewAgentTokenStaff" type="text" class="form-control font-monospace" value="{{ session('new_agent_token') }}" readonly>
-                            <button type="button" class="btn btn-outline-dark" onclick="navigator.clipboard.writeText(document.getElementById('downloadModalNewAgentTokenStaff').value)"><i class="bi bi-copy me-1"></i>Copy</button>
+                            <button type="button" class="btn btn-outline-dark" data-copy-target="downloadModalNewAgentTokenStaff"><i class="bi bi-copy me-1"></i>Copy</button>
                         </div>
                     </div>
                     @endif
@@ -234,7 +234,7 @@
     <div class="fw-bold mb-2"><i class="bi bi-exclamation-triangle me-1"></i>Copy this setup token now. It is shown only once and expires in 24 hours.</div>
     <div class="input-group">
         <input id="newAgentToken" type="text" class="form-control font-monospace" value="{{ session('new_agent_token') }}" readonly>
-        <button type="button" class="btn btn-outline-dark" onclick="navigator.clipboard.writeText(document.getElementById('newAgentToken').value)">
+        <button type="button" class="btn btn-outline-dark" data-copy-target="newAgentToken">
             <i class="bi bi-copy me-1"></i>Copy
         </button>
     </div>
@@ -266,7 +266,7 @@
                     <label class="form-label">Agent API Endpoint</label>
                     <div class="input-group">
                         <input id="agentEndpoint" type="text" class="form-control font-monospace" value="{{ $agentEndpoint }}" readonly>
-                        <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('agentEndpoint').value)" title="Copy endpoint">
+                        <button type="button" class="btn btn-outline-secondary" data-copy-target="agentEndpoint" title="Copy endpoint">
                             <i class="bi bi-copy"></i>
                         </button>
                     </div>
@@ -327,15 +327,34 @@
 </div>
 @endsection
 
-@if(session('new_agent_token'))
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-copy-target]').forEach(function (copyButton) {
+        copyButton.addEventListener('click', function () {
+            const target = document.getElementById(copyButton.dataset.copyTarget);
+            if (!target || !navigator.clipboard) {
+                return;
+            }
+
+            const originalHtml = copyButton.innerHTML;
+            navigator.clipboard.writeText(target.value || target.textContent || '').then(function () {
+                copyButton.innerHTML = '<i class="bi bi-check2 me-1"></i>Copied';
+                copyButton.disabled = true;
+                setTimeout(function () {
+                    copyButton.innerHTML = originalHtml;
+                    copyButton.disabled = false;
+                }, 1200);
+            });
+        });
+    });
+
+    @if(session('new_agent_token'))
     const downloadModal = document.getElementById('downloadAgentModal');
     if (downloadModal && window.bootstrap) {
         bootstrap.Modal.getOrCreateInstance(downloadModal).show();
     }
+    @endif
 });
 </script>
 @endpush
-@endif
