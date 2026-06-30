@@ -103,14 +103,14 @@
                                 </div>
                             </a>
                         @else
-                            <a href="{{ route('admin.agent-sources.macos-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark agent-download-option">
+                            <button type="button" class="border rounded-3 p-3 h-100 w-100 d-flex gap-3 text-start bg-white agent-download-option" data-bs-toggle="collapse" data-bs-target="#adminMacosInstallGuide" aria-expanded="false" aria-controls="adminMacosInstallGuide">
                                 <div class="fs-3 text-primary"><i class="bi bi-apple"></i></div>
                                 <div>
                                     <div class="fw-semibold">macOS</div>
-                                    <div class="small text-muted">Download the temporary Terminal installer while signed PKG is pending.</div>
-                                    <span class="badge bg-warning text-dark mt-2">Temporary COMMAND</span>
+                                    <div class="small text-muted">Open the guided macOS installer steps before downloading.</div>
+                                    <span class="badge bg-primary mt-2">Guided COMMAND Installer</span>
                                 </div>
-                            </a>
+                            </button>
                         @endif
                     </div>
                     <div class="col-md-6">
@@ -145,13 +145,14 @@
                     </div>
                 </div>
                 @unless($macosPkgAvailable)
-                <div class="border rounded-3 p-3 mt-3 bg-light">
+                <div class="collapse border rounded-3 p-3 mt-3 bg-light" id="adminMacosInstallGuide">
                     <div class="d-flex align-items-start gap-2 mb-3">
                         <i class="bi bi-apple fs-4 text-primary"></i>
-                        <div>
-                            <div class="fw-semibold">macOS temporary installer guide</div>
-                            <div class="small text-muted">Use these steps while the signed PKG installer is pending. macOS may block the file once because it is not Apple-signed yet.</div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">macOS installer guide</div>
+                            <div class="small text-muted">Follow these steps before installing the macOS command installer. macOS may block the file once because it is not Apple-signed.</div>
                         </div>
+                        <a href="{{ route('admin.agent-sources.macos-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i>Download macOS Installer</a>
                     </div>
                     <div class="row g-3 small">
                         <div class="col-md-6">
@@ -164,7 +165,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">3</span>If macOS blocks it</div>
-                            <div class="text-muted">If the user sees “Apple could not verify” or “cannot be opened,” go to System Settings &gt; Privacy &amp; Security and click Open Anyway for the OpsBridge installer.</div>
+                            <div class="text-muted">If the user sees "Apple could not verify" or "cannot be opened," go to System Settings &gt; Privacy &amp; Security and click Open Anyway for the OpsBridge installer.</div>
                         </div>
                         <div class="col-md-6">
                             <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">4</span>Allow execution</div>
@@ -188,6 +189,9 @@
                             <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">8</span>Confirm check-in</div>
                             <div class="text-muted">After success, the Mac appears in Enrolled Devices. If needed, run <span class="font-monospace">sudo python3 /opt/opsbridge-agent/opsbridge_agent.py --once</span> to force one check-in.</div>
                         </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <a href="{{ route('admin.agent-sources.macos-installer') }}" class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i>Download macOS Installer</a>
                     </div>
                 </div>
                 @endunless
