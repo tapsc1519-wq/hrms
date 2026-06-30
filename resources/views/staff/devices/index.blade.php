@@ -130,8 +130,8 @@
                             <div class="font-monospace bg-white border rounded p-2">sudo ./OpsBridge-Agent-Installer*.command</div>
                         </div>
                         <div class="col-md-6">
-                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">5</span>Enter details</div>
-                            <div class="text-muted">Paste the API endpoint shown on this page and your setup token when Terminal asks.</div>
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">5</span>Enter details in setup window</div>
+                            <div class="text-muted">A small OpsBridge Agent Setup window asks for the API endpoint shown on this page and your setup token. The token field is hidden while typing.</div>
                         </div>
                         <div class="col-md-6">
                             <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">6</span>Confirm check-in</div>

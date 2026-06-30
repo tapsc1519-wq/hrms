@@ -35,6 +35,23 @@ INTERVAL_MINUTES="60"
 ROOT="/opt/opsbridge-agent"
 CONFIG_DIR="/etc/opsbridge-agent"
 
+prompt_value() {
+  local title="$1"
+  local message="$2"
+  local hidden="${3:-false}"
+  local value=""
+  if [ "$(uname -s)" = "Darwin" ] && command -v osascript >/dev/null 2>&1; then
+    if [ "$hidden" = "true" ]; then
+      value="$(osascript -e "text returned of (display dialog \"$message\" default answer \"\" with title \"$title\" with hidden answer buttons {\"Cancel\", \"Continue\"} default button \"Continue\")" 2>/dev/null)" || return 1
+    else
+      value="$(osascript -e "text returned of (display dialog \"$message\" default answer \"\" with title \"$title\" buttons {\"Cancel\", \"Continue\"} default button \"Continue\")" 2>/dev/null)" || return 1
+    fi
+    printf '%s' "$value"
+    return 0
+  fi
+  return 1
+}
+
 while [ $# -gt 0 ]; do
   case "$1" in
     --endpoint) ENDPOINT="${2:-}"; shift 2 ;;
@@ -47,24 +64,23 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+if [ -z "$ENDPOINT" ]; then
+  ENDPOINT="$(prompt_value "OpsBridge Agent Setup" "Enter Agent API Endpoint")" || read -r -p "Agent API Endpoint: " ENDPOINT
+fi
+if [ -z "$TOKEN" ]; then
+  TOKEN="$(prompt_value "OpsBridge Agent Setup" "Enter Setup or Enrollment Token" true)" || read -r -p "Setup or enrollment token: " TOKEN
+fi
+if [ -z "$ENDPOINT" ] || [ -z "$TOKEN" ]; then
+  echo "Endpoint and token are required." >&2
+  exit 1
+fi
 if [ "$(id -u)" -ne 0 ]; then
   if ! command -v sudo >/dev/null 2>&1; then
     echo "Administrator permission is required, but sudo is not available." >&2
     exit 1
   fi
   echo "Administrator permission is required to install the OpsBridge agent."
-  exec sudo bash "$0" "$@"
-fi
-
-if [ -z "$ENDPOINT" ]; then
-  read -r -p "Agent API Endpoint: " ENDPOINT
-fi
-if [ -z "$TOKEN" ]; then
-  read -r -p "Setup or enrollment token: " TOKEN
-fi
-if [ -z "$ENDPOINT" ] || [ -z "$TOKEN" ]; then
-  echo "Endpoint and token are required." >&2
-  exit 1
+  exec sudo bash "$0" --endpoint "$ENDPOINT" --token "$TOKEN" --asset-tag "$ASSET_TAG" --employee-code "$EMPLOYEE_CODE" --employee-email "$EMPLOYEE_EMAIL" --interval "$INTERVAL_MINUTES"
 fi
 if ! command -v python3 >/dev/null 2>&1; then
   echo "python3 is required." >&2
