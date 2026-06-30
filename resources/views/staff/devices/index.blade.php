@@ -46,8 +46,18 @@
                         <a href="{{ route('staff.devices.unix-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark">
                             <div class="fs-3 text-primary"><i class="bi bi-apple"></i></div>
                             <div>
-                                <div class="fw-semibold">macOS / Linux</div>
-                                <div class="small text-muted">Download the self-contained shell installer.</div>
+                                <div class="fw-semibold">macOS</div>
+                                <div class="small text-muted">Download the shell installer for your Apple device.</div>
+                                <span class="badge bg-primary mt-2">Download SH</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ route('staff.devices.unix-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark">
+                            <div class="fs-3 text-primary"><i class="bi bi-ubuntu"></i></div>
+                            <div>
+                                <div class="fw-semibold">Linux</div>
+                                <div class="small text-muted">Download the shell installer for your Linux computer.</div>
                                 <span class="badge bg-primary mt-2">Download SH</span>
                             </div>
                         </a>
@@ -99,7 +109,7 @@
                 <div class="row g-3">
                     @foreach([
                         ['Create setup token', 'Generate a token from this page. It is tied to your employee account and expires in 24 hours.'],
-                        ['Download installer', 'Choose the Windows installer or the macOS/Linux installer for your company device.'],
+                        ['Download installer', 'Choose Windows, macOS, or Linux from the Download Agent selector.'],
                         ['Paste endpoint and token', 'Use the API endpoint below and paste your one-time setup token during installation.'],
                         ['Wait for check-in', 'After the first successful check-in, your device appears here and in admin Endpoint Management.'],
                     ] as [$title, $description])
@@ -120,7 +130,7 @@
                             <i class="bi bi-copy"></i>
                         </button>
                     </div>
-                    <div class="form-text">Current Windows agent version: v{{ $currentVersion }}. macOS/Linux installer uses the same API endpoint and setup token.</div>
+                    <div class="form-text">Current Windows agent version: v{{ $currentVersion }}. macOS and Linux installers use the same API endpoint and setup token.</div>
                 </div>
             </div>
         </div>

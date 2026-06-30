@@ -96,8 +96,18 @@
                         <a href="{{ route('admin.agent-sources.unix-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark agent-download-option">
                             <div class="fs-3 text-primary"><i class="bi bi-apple"></i></div>
                             <div>
-                                <div class="fw-semibold">macOS / Linux</div>
-                                <div class="small text-muted">Download the self-contained shell installer.</div>
+                                <div class="fw-semibold">macOS</div>
+                                <div class="small text-muted">Download the shell installer for Apple devices.</div>
+                                <span class="badge bg-primary mt-2">Download SH</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.agent-sources.unix-installer') }}" class="border rounded-3 p-3 h-100 d-flex gap-3 text-decoration-none text-dark agent-download-option">
+                            <div class="fs-3 text-primary"><i class="bi bi-ubuntu"></i></div>
+                            <div>
+                                <div class="fw-semibold">Linux</div>
+                                <div class="small text-muted">Download the shell installer for Linux computers.</div>
                                 <span class="badge bg-primary mt-2">Download SH</span>
                             </div>
                         </a>
