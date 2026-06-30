@@ -144,6 +144,45 @@
                         </div>
                     </div>
                 </div>
+                @unless($macosPkgAvailable)
+                <div class="border rounded-3 p-3 mt-3 bg-light">
+                    <div class="d-flex align-items-start gap-2 mb-3">
+                        <i class="bi bi-apple fs-4 text-primary"></i>
+                        <div>
+                            <div class="fw-semibold">macOS temporary installer guide</div>
+                            <div class="small text-muted">Use these steps while the signed PKG installer is pending. The user may see macOS security prompts because the file is not Apple-signed yet.</div>
+                        </div>
+                    </div>
+                    <div class="row g-3 small">
+                        <div class="col-md-6">
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">1</span>Create token</div>
+                            <div class="text-muted">Create an enrollment token first. The installer asks for this token during setup and then the device receives its own API key.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">2</span>Download file</div>
+                            <div class="text-muted">Click macOS and save <span class="font-monospace">OpsBridge-Agent-Installer.command</span> in Downloads.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">3</span>Allow execution</div>
+                            <div class="text-muted mb-2">If macOS says the file cannot be executed, open Terminal and run:</div>
+                            <div class="font-monospace bg-white border rounded p-2">cd ~/Downloads<br>chmod +x OpsBridge-Agent-Installer*.command</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">4</span>Run installer</div>
+                            <div class="text-muted mb-2">Run it with admin permission:</div>
+                            <div class="font-monospace bg-white border rounded p-2">sudo ./OpsBridge-Agent-Installer*.command</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">5</span>Enter details</div>
+                            <div class="text-muted">Paste the API endpoint and enrollment token when Terminal asks. Optional asset or employee hints can be left blank unless IT wants them.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold mb-1"><span class="badge bg-primary me-2">6</span>Confirm check-in</div>
+                            <div class="text-muted">After success, the Mac appears in Enrolled Devices. If needed, run <span class="font-monospace">sudo python3 /opt/opsbridge-agent/opsbridge_agent.py --once</span> to force one check-in.</div>
+                        </div>
+                    </div>
+                </div>
+                @endunless
                 <div class="alert alert-info small mt-3 mb-0"><i class="bi bi-info-circle me-1"></i>Create an enrollment token before installing the agent on a new device.</div>
             </div>
         </div>
