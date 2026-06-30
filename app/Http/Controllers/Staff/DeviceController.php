@@ -29,8 +29,9 @@ class DeviceController extends Controller
 
         $currentVersion = config('agent.current_version', '0.1.0');
         $agentEndpoint = url('/api/v1/agent/check-in');
+        $macosPkgAvailable = AgentPackageBuilder::hasMacosPkg();
 
-        return view('staff.devices.index', compact('devices', 'tokens', 'currentVersion', 'agentEndpoint'));
+        return view('staff.devices.index', compact('devices', 'tokens', 'currentVersion', 'agentEndpoint', 'macosPkgAvailable'));
     }
 
     public function createToken(Request $request)
@@ -91,6 +92,12 @@ class DeviceController extends Controller
 
     public function downloadMacosInstaller()
     {
+        if (AgentPackageBuilder::hasMacosPkg()) {
+            return response()->download(AgentPackageBuilder::macosPkgPath(), 'OpsBridge-Agent-Setup.pkg', [
+                'Content-Type' => 'application/octet-stream',
+            ]);
+        }
+
         return response(AgentPackageBuilder::unixInstallerScript(), 200, [
             'Content-Type' => 'application/x-sh',
             'Content-Disposition' => 'attachment; filename="OpsBridge-Agent-Installer.command"',

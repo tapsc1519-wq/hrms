@@ -62,8 +62,9 @@ class AgentSourceController extends Controller
 
         $assets = Asset::where('organization_id', $organizationId)->orderBy('asset_tag')->get(['id', 'asset_tag', 'name']);
         $users = User::where('organization_id', $organizationId)->whereIn('role', ['admin', 'staff'])->orderBy('name')->get(['id', 'name', 'employee_id']);
+        $macosPkgAvailable = AgentPackageBuilder::hasMacosPkg();
 
-        return view('admin.agent-sources.index', compact('devices', 'tokens', 'stats', 'versions', 'currentVersion', 'perPage', 'assets', 'users'));
+        return view('admin.agent-sources.index', compact('devices', 'tokens', 'stats', 'versions', 'currentVersion', 'perPage', 'assets', 'users', 'macosPkgAvailable'));
     }
 
     public function createToken(Request $request)
@@ -112,6 +113,12 @@ class AgentSourceController extends Controller
 
     public function downloadMacosInstaller()
     {
+        if (AgentPackageBuilder::hasMacosPkg()) {
+            return response()->download(AgentPackageBuilder::macosPkgPath(), 'OpsBridge-Agent-Setup.pkg', [
+                'Content-Type' => 'application/octet-stream',
+            ]);
+        }
+
         return response(AgentPackageBuilder::unixInstallerScript(), 200, [
             'Content-Type' => 'application/x-sh',
             'Content-Disposition' => 'attachment; filename="OpsBridge-Agent-Installer.command"',

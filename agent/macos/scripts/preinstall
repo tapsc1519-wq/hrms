@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+launchctl bootout system /Library/LaunchDaemons/com.opsbridge.agent.plist >/dev/null 2>&1 || true
+exit 0

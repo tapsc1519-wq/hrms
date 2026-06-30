@@ -6,6 +6,16 @@ use Illuminate\Support\Facades\File;
 
 class AgentPackageBuilder
 {
+    public static function macosPkgPath(): string
+    {
+        return base_path('agent/macos/dist/OpsBridge-Agent-Setup.pkg');
+    }
+
+    public static function hasMacosPkg(): bool
+    {
+        return File::isFile(self::macosPkgPath());
+    }
+
     public static function unixInstallerScript(): string
     {
         $agentPath = base_path('agent/unix/opsbridge_agent.py');

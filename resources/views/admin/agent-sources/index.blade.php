@@ -97,8 +97,8 @@
                             <div class="fs-3 text-primary"><i class="bi bi-apple"></i></div>
                             <div>
                                 <div class="fw-semibold">macOS</div>
-                                <div class="small text-muted">Download the Terminal installer for Apple devices.</div>
-                                <span class="badge bg-primary mt-2">Download COMMAND</span>
+                                <div class="small text-muted">{{ $macosPkgAvailable ? 'Download the signed package installer for Apple devices.' : 'Download the Terminal installer for Apple devices.' }}</div>
+                                <span class="badge bg-primary mt-2">{{ $macosPkgAvailable ? 'Download PKG' : 'Download COMMAND' }}</span>
                             </div>
                         </a>
                     </div>

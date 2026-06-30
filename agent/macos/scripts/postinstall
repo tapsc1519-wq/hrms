@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p /opt/opsbridge-agent /etc/opsbridge-agent
+chmod 755 /opt/opsbridge-agent
+chmod 755 /usr/local/bin/opsbridge-agent-run /usr/local/bin/opsbridge-agent-setup
+chmod 755 /opt/opsbridge-agent/opsbridge_agent.py
+chown root:wheel /Library/LaunchDaemons/com.opsbridge.agent.plist
+chmod 644 /Library/LaunchDaemons/com.opsbridge.agent.plist
+
+echo "OpsBridge agent installed. Run 'sudo opsbridge-agent-setup' to enroll this Mac."
+exit 0
