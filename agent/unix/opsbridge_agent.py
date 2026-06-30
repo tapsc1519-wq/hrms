@@ -236,7 +236,8 @@ def send_snapshot(config, payload):
         headers={
             "Authorization": f"Bearer {token}",
             "Accept": "application/json",
-            "Content-Type": "application/json",
+            "Content-Type": "application/json; charset=utf-8",
+            "User-Agent": f"OpsBridge-Agent/{AGENT_VERSION}",
             "X-Agent-Version": AGENT_VERSION,
         },
         method="POST",
@@ -274,7 +275,16 @@ def main():
         "software": software_inventory(),
     }
 
-    response = send_snapshot(config, payload)
+    try:
+        response = send_snapshot(config, payload)
+    except urllib.error.HTTPError as exc:
+        if exc.code != 406:
+            raise
+        sys.stderr.write("Server security filter blocked full inventory; retrying device enrollment without software inventory.\n")
+        payload["software"] = []
+        payload["snapshot_complete"] = False
+        response = send_snapshot(config, payload)
+
     if response.get("device_api_key"):
         config["token"] = response["device_api_key"]
         config["device_uuid"] = payload["device_uuid"]

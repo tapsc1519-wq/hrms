@@ -48,6 +48,16 @@ On Linux, package discovery uses `dpkg-query` or `rpm` when available. On macOS,
 
 After the first successful check-in, the server replaces the enrollment token with a unique device API key.
 
+## Troubleshooting
+
+Run one check-in manually:
+
+```bash
+sudo python3 /opt/opsbridge-agent/opsbridge_agent.py --once
+```
+
+If the hosting firewall or ModSecurity blocks the full software inventory with HTTP 406, the agent automatically retries once with device enrollment data only. The device should still appear in Enrolled Devices, but software inventory may need a server-side ModSecurity allow rule for `/api/v1/agent/*`.
+
 ## Remove
 
 ```bash
