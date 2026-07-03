@@ -22,15 +22,45 @@
 @endpush
 
 @section('content')
+@php($canManageEmployees = auth()->user()->hasPermission('employees.manage'))
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h4 class="page-title mb-0">User Management</h4>
-        <p class="page-subtitle mb-0">{{ $users->total() }} users in your organization</p>
+        <p class="page-subtitle mb-0">Manage login access, roles, and linked portal profiles</p>
     </div>
     <div class="d-flex gap-2">
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-            <i class="bi bi-person-plus me-1"></i>Add User
+        @if($canManageEmployees)
+        <a href="{{ route('admin.employees.create') }}" class="btn btn-primary">
+            <i class="bi bi-person-vcard me-1"></i>Add Employee
+        </a>
+        @else
+        <button type="button" class="btn btn-primary" disabled title="Employees permission required">
+            <i class="bi bi-person-vcard me-1"></i>Add Employee
         </button>
+        @endif
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <i class="bi bi-person-plus me-1"></i>Add Non-Employee User
+        </button>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <div class="alert alert-info mb-0">
+            <div class="d-flex gap-3">
+                <i class="bi bi-info-circle fs-5"></i>
+                <div>
+                    <div class="fw-semibold">Use the right onboarding path</div>
+                    <div class="small">Create employees and organization admins from <strong>Employees > Add Employee</strong>. The system creates the login and HR profile together. Use this Users page for access changes and non-employee portal accounts such as suppliers.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="alert {{ $unlinkedInternalUsers ? 'alert-warning' : 'alert-success' }} mb-0 h-100">
+            <div class="fw-semibold">{{ $unlinkedInternalUsers }} internal {{ Str::plural('account', $unlinkedInternalUsers) }} without employee profile</div>
+            <div class="small">{{ $unlinkedInternalUsers ? 'Link these accounts before enabling HRMS, attendance, assets, or agent enrollment.' : 'Internal accounts are linked correctly.' }}</div>
+        </div>
     </div>
 </div>
 
@@ -67,7 +97,7 @@
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" style="font-size:.875rem">
             <thead class="table-light">
-                <tr><th>User</th><th>Portal Role</th><th>Permission Role</th><th>Department</th><th>Employee ID</th><th>Last Login</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>User</th><th>Portal Role</th><th>Linked Profile</th><th>Permission Role</th><th>Department</th><th>Employee ID</th><th>Last Login</th><th>Status</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 @forelse($users as $u)
@@ -84,6 +114,24 @@
                         </div>
                     </td>
                     <td><span class="badge bg-info">{{ ucwords(str_replace('_', ' ', $u->role)) }}</span></td>
+                    <td>
+                        @if(in_array($u->role, ['admin', 'staff'], true))
+                            @if($u->employeeProfile)
+                                @if($canManageEmployees)
+                                <a href="{{ route('admin.employees.show', $u->employeeProfile) }}" class="badge bg-success text-decoration-none">Employee linked</a>
+                                @else
+                                <span class="badge bg-success">Employee linked</span>
+                                @endif
+                            @else
+                                <span class="badge bg-warning text-dark">Needs employee profile</span>
+                                <div class="small text-muted mt-1">Create from Employees</div>
+                            @endif
+                        @elseif($u->role === 'supplier')
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Supplier portal</span>
+                        @else
+                            <span class="badge bg-light text-dark border">Profile optional</span>
+                        @endif
+                    </td>
                     <td><small>{{ $u->customRole?->name ?? 'Default access' }}</small></td>
                     <td><small>{{ $u->department?->name ?? 'â€”' }}</small></td>
                     <td><small class="text-muted">{{ $u->employee_id ?? 'â€”' }}</small></td>
@@ -183,7 +231,7 @@
                     </div>
                 </div>
                 @empty
-                <tr><td colspan="8" class="text-center py-4 text-muted">No users found.</td></tr>
+                <tr><td colspan="9" class="text-center py-4 text-muted">No users found.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -200,10 +248,22 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Add New User</h5>
+                    <h5 class="modal-title">Add Non-Employee Portal User</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="alert alert-primary small">
+                        <div class="fw-semibold mb-1"><i class="bi bi-signpost-split me-1"></i>Select the correct path before creating access</div>
+                        <div>
+                            For employees and organization admins, use
+                            @if($canManageEmployees)
+                                <a href="{{ route('admin.employees.create') }}" class="alert-link">Employees > Add Employee</a>.
+                            @else
+                                Employees > Add Employee with an admin who has Employees permission.
+                            @endif
+                            This modal is for portal users who do not need an HR employee profile.
+                        </div>
+                    </div>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-500">Name <span class="text-danger">*</span></label>
@@ -220,8 +280,6 @@
                         <div class="col-md-3">
                             <label class="form-label small fw-500">Role <span class="text-danger">*</span></label>
                             <select name="role" class="form-select" required>
-                                <option value="staff">Staff</option>
-                                <option value="admin">Admin</option>
                                 <option value="supplier">Supplier</option>
                             </select>
                         </div>
@@ -262,7 +320,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Create User</button>
+                    @if($canManageEmployees)
+                    <a href="{{ route('admin.employees.create') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-vcard me-1"></i>Add Employee Instead</a>
+                    @endif
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Create Portal User</button>
                 </div>
             </div>
         </form>

@@ -18,7 +18,7 @@ class UserController extends Controller
     {
         $query = User::where('organization_id', $this->orgId())
             ->where('role', '!=', 'super_admin')
-            ->with(['department', 'customRole']);
+            ->with(['department', 'customRole', 'employeeProfile']);
 
         if ($request->filled('role')) $query->where('role', $request->role);
         if ($request->filled('status')) $query->where('status', $request->status);
@@ -34,8 +34,12 @@ class UserController extends Controller
             ->orderBy('portal_role')
             ->orderBy('name')
             ->get();
+        $unlinkedInternalUsers = User::where('organization_id', $this->orgId())
+            ->whereIn('role', ['admin', 'staff'])
+            ->whereDoesntHave('employeeProfile')
+            ->count();
 
-        return view('admin.users.index', compact('users', 'departments', 'customRoles'));
+        return view('admin.users.index', compact('users', 'departments', 'customRoles', 'unlinkedInternalUsers'));
     }
 
     public function store(Request $request)
@@ -52,6 +56,12 @@ class UserController extends Controller
             'job_title'     => 'nullable|string|max:100',
             'status'        => 'required|in:active,inactive',
         ]);
+
+        if (in_array($validated['role'], ['admin', 'staff'], true)) {
+            return back()
+                ->withInput()
+                ->with('error', 'Internal employees and organization admins must be created from Employees > Add Employee so their HR profile and login stay linked.');
+        }
 
         $validated['organization_id'] = $this->orgId();
         $validated['password']        = Hash::make($validated['password']);
@@ -85,6 +95,12 @@ class UserController extends Controller
             unset($validated['password']);
         }
         $this->validateCustomRole($validated['custom_role_id'] ?? null, $validated['role']);
+
+        if ($validated['status'] === 'active' && in_array($validated['role'], ['admin', 'staff'], true) && !$user->employeeProfile) {
+            return back()
+                ->withInput()
+                ->with('error', 'This internal user is not linked to an employee profile. Link/create the employee profile before activating this account.');
+        }
 
         $user->update($validated);
         return back()->with('success', 'User updated.');
