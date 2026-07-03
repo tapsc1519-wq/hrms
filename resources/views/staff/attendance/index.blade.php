@@ -14,6 +14,21 @@
     <p>Sign in and sign out across multiple work sessions, and review your attendance history.</p>
 </div>
 
+@if(!$employee)
+<div class="form-card">
+    <div class="form-card-body text-center py-5">
+        <div class="mb-3">
+            <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning-subtle text-warning" style="width:64px;height:64px">
+                <i class="bi bi-person-vcard fs-2"></i>
+            </span>
+        </div>
+        <h5 class="fw-bold mb-2">Employee Profile Not Linked</h5>
+        <p class="text-muted mb-0">
+            Your staff login is active, but it is not connected to an employee profile yet. Please ask HR/Admin to open Employees and link this user account to your employee record.
+        </p>
+    </div>
+</div>
+@else
 <div class="row g-4 mb-4">
     <div class="col-lg-5">
         <div class="stat-card-gradient {{ $isSignedIn ? 'grad-green' : 'grad-blue' }}">
@@ -294,4 +309,5 @@
         </form>
     </div>
 </div>
+@endif
 @endsection

@@ -18,7 +18,16 @@ class AttendanceController extends Controller
 {
     public function index()
     {
-        $employee = EmployeeProfile::where('user_id', auth()->id())->with('shift')->firstOrFail();
+        $employee = EmployeeProfile::where('user_id', auth()->id())->with('shift')->first();
+
+        if (!$employee) {
+            $today = null;
+            $records = AttendanceRecord::whereRaw('0 = 1')->paginate(20);
+            $regularizations = collect();
+
+            return view('staff.attendance.index', compact('employee', 'today', 'records', 'regularizations'));
+        }
+
         $today = AttendanceRecord::where('user_id', auth()->id())->whereDate('attendance_date', today())->with(['shift', 'holiday', 'sessions'])->first();
         $records = AttendanceRecord::where('user_id', auth()->id())->with(['shift', 'holiday', 'sessions'])->latest('attendance_date')->paginate(20);
         $regularizations = AttendanceRegularizationRequest::where('user_id', auth()->id())
@@ -31,7 +40,11 @@ class AttendanceController extends Controller
 
     public function signIn(Request $request)
     {
-        $employee = EmployeeProfile::where('user_id', auth()->id())->with('shift')->firstOrFail();
+        $employee = EmployeeProfile::where('user_id', auth()->id())->with('shift')->first();
+        if (!$employee) {
+            return back()->with('error', 'Your staff account is not linked to an employee profile. Please contact HR/Admin.');
+        }
+
         $now = now();
         $metrics = AttendanceCalculator::calculate($employee->shift, today(), $now, null);
         $day = AttendanceDayResolver::resolve($employee, today());
@@ -99,7 +112,10 @@ class AttendanceController extends Controller
 
     public function regularize(Request $request)
     {
-        $employee = EmployeeProfile::where('user_id', auth()->id())->firstOrFail();
+        $employee = EmployeeProfile::where('user_id', auth()->id())->first();
+        if (!$employee) {
+            return back()->with('error', 'Your staff account is not linked to an employee profile. Please contact HR/Admin.');
+        }
 
         $data = $request->validate([
             'attendance_date' => ['required', 'date', 'before_or_equal:today'],
