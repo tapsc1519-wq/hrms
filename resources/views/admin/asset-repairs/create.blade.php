@@ -20,10 +20,13 @@
                         <div class="col-md-6">
                             <label class="form-label">Asset <span class="req">*</span></label>
                             <select name="asset_id" class="form-select @error('asset_id') is-invalid @enderror" required>
-                                <option value="">Select asset</option>
+                                <option value="" data-warranty="Select an asset to see warranty information.">Select asset</option>
                                 @foreach($assets as $asset)
-                                    <option value="{{ $asset->id }}" @selected(old('asset_id', $selectedAsset) == $asset->id) @disabled($asset->activeRepair)>
-                                        {{ $asset->name }} · {{ $asset->asset_tag }}{{ $asset->activeAssignment?->user ? ' · Assigned to '.$asset->activeAssignment->user->name : '' }}{{ $asset->activeRepair ? ' · Repair already open' : '' }}
+                                    <option value="{{ $asset->id }}"
+                                        data-warranty="{{ $asset->warranty_expiry_date ? ($asset->warranty_expiry_date->isPast() ? 'Warranty expired on '.$asset->warranty_expiry_date->format('d-m-Y') : 'Warranty valid until '.$asset->warranty_expiry_date->format('d-m-Y')) : 'Warranty date not set' }}"
+                                        @selected(old('asset_id', $selectedAsset) == $asset->id)
+                                        @disabled($asset->activeRepair)>
+                                        {{ $asset->name }} - {{ $asset->asset_tag }}{{ $asset->activeAssignment?->user ? ' - Assigned to '.$asset->activeAssignment->user->name : '' }}{{ $asset->activeRepair ? ' - Repair already open' : '' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -31,9 +34,9 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Repair Type <span class="req">*</span></label>
-                            <select name="repair_type" class="form-select" required>
-                                @foreach(['internal' => 'Internal IT', 'amc' => 'AMC Vendor', 'vendor' => 'Onboarded Vendor', 'market' => 'Market Repair', 'warranty' => 'Warranty'] as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('repair_type') === $value)>{{ $label }}</option>
+                            <select name="repair_type" class="form-select repair-type-select" required>
+                                @foreach(['internal' => 'Internal IT', 'amc' => 'AMC Contract', 'vendor' => 'Onboarded Vendor', 'market' => 'Market Repair', 'warranty' => 'Warranty Claim'] as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('repair_type', 'internal') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -71,35 +74,71 @@
         </div>
         <div class="col-lg-4">
             <div class="form-card">
-                <div class="form-card-header"><span class="icon-wrap icon-teal"><i class="bi bi-building"></i></span>Vendor / AMC</div>
+                <div class="form-card-header"><span class="icon-wrap icon-teal"><i class="bi bi-building"></i></span>Repair Source</div>
                 <div class="form-card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Vendor</label>
+                    <div class="alert alert-light border rounded-3 small repair-type-hint">
+                        Select a repair type to see only the required source details.
+                    </div>
+
+                    <div class="mb-3 repair-source-panel" data-repair-source="vendor">
+                        <label class="form-label">Vendor <span class="req">*</span></label>
                         <select name="vendor_id" class="form-select">
-                            <option value="">Internal or market repair</option>
+                            <option value="">Select vendor</option>
                             @foreach($suppliers as $supplier)
                                 <option value="{{ $supplier->id }}" @selected(old('vendor_id') == $supplier->id)>{{ $supplier->name }}</option>
                             @endforeach
                         </select>
                         <div class="form-text">Only records added in Vendors will appear here.</div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">AMC Contract</label>
+
+                    <div class="mb-3 repair-source-panel" data-repair-source="amc">
+                        <label class="form-label">AMC Contract <span class="req">*</span></label>
                         <select name="amc_contract_id" class="form-select">
-                            <option value="">No AMC selected</option>
+                            <option value="">Select AMC contract</option>
                             @foreach($amcContracts as $contract)
                                 <option value="{{ $contract->id }}" @selected(old('amc_contract_id') == $contract->id)>{{ $contract->title }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Market Vendor Name</label>
-                        <input type="text" name="market_vendor_name" class="form-control" value="{{ old('market_vendor_name') }}" placeholder="Required for market repair">
+
+                    <div class="repair-source-panel" data-repair-source="market">
+                        <div class="mb-3">
+                            <label class="form-label">Market Vendor Name <span class="req">*</span></label>
+                            <input type="text" name="market_vendor_name" class="form-control" value="{{ old('market_vendor_name') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Market Vendor Phone No.</label>
+                            <input type="text" name="market_vendor_phone" class="form-control" value="{{ old('market_vendor_phone') }}">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Market Vendor Phone</label>
-                        <input type="text" name="market_vendor_phone" class="form-control" value="{{ old('market_vendor_phone') }}">
+
+                    <div class="repair-source-panel" data-repair-source="warranty">
+                        <div class="alert alert-info border-0 rounded-3 small asset-warranty-note">
+                            Select an asset to see warranty information.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Warranty Provider <span class="req">*</span></label>
+                            <select name="warranty_provider_type" class="form-select warranty-provider-select">
+                                <option value="">Select warranty provider</option>
+                                <option value="original_supplier" @selected(old('warranty_provider_type') === 'original_supplier')>Original Supplier</option>
+                                <option value="manufacturer_service_center" @selected(old('warranty_provider_type') === 'manufacturer_service_center')>Manufacturer / Brand Service Center</option>
+                                <option value="other" @selected(old('warranty_provider_type') === 'other')>Other Warranty Provider</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 warranty-other-provider">
+                            <label class="form-label">Provider Name <span class="req">*</span></label>
+                            <input type="text" name="warranty_provider_name" class="form-control" value="{{ old('warranty_provider_name') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Provider Phone No.</label>
+                            <input type="text" name="warranty_provider_phone" class="form-control" value="{{ old('warranty_provider_phone') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Warranty Claim / Ticket No.</label>
+                            <input type="text" name="warranty_claim_number" class="form-control" value="{{ old('warranty_claim_number') }}">
+                        </div>
                     </div>
+
                     <div class="form-actions">
                         <a href="{{ route('admin.asset-repairs.index') }}" class="btn-cancel">Cancel</a>
                         <button type="submit" class="btn btn-primary btn-save"><i class="bi bi-check2-circle"></i>Create Job</button>
@@ -110,3 +149,51 @@
     </div>
 </form>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var repairTypeSelect = document.querySelector('.repair-type-select');
+    var assetSelect = document.querySelector('select[name="asset_id"]');
+    var warrantyProviderSelect = document.querySelector('.warranty-provider-select');
+
+    function setPanelState(panel, active) {
+        panel.style.display = active ? '' : 'none';
+        panel.querySelectorAll('input, select, textarea').forEach(function (field) {
+            field.disabled = !active;
+        });
+    }
+
+    function updateWarrantyNote() {
+        var note = document.querySelector('.asset-warranty-note');
+        if (!note || !assetSelect) return;
+        var selected = assetSelect.options[assetSelect.selectedIndex];
+        note.textContent = selected && selected.dataset.warranty ? selected.dataset.warranty : 'Select an asset to see warranty information.';
+    }
+
+    function updateWarrantyOther() {
+        var wrapper = document.querySelector('.warranty-other-provider');
+        if (!wrapper || !warrantyProviderSelect) return;
+        var isOther = warrantyProviderSelect.value === 'other';
+        wrapper.style.display = isOther ? '' : 'none';
+        wrapper.querySelectorAll('input, select, textarea').forEach(function (field) {
+            field.disabled = !isOther;
+        });
+    }
+
+    function updateRepairSourcePanels() {
+        var type = repairTypeSelect ? repairTypeSelect.value : 'internal';
+        document.querySelectorAll('.repair-source-panel').forEach(function (panel) {
+            setPanelState(panel, panel.dataset.repairSource === type);
+        });
+        updateWarrantyOther();
+        updateWarrantyNote();
+    }
+
+    if (repairTypeSelect) repairTypeSelect.addEventListener('change', updateRepairSourcePanels);
+    if (assetSelect) assetSelect.addEventListener('change', updateWarrantyNote);
+    if (warrantyProviderSelect) warrantyProviderSelect.addEventListener('change', updateWarrantyOther);
+    updateRepairSourcePanels();
+});
+</script>
+@endpush

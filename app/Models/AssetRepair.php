@@ -45,6 +45,10 @@ class AssetRepair extends Model
         'market_vendor_contact',
         'market_vendor_phone',
         'market_vendor_address',
+        'warranty_provider_type',
+        'warranty_provider_name',
+        'warranty_provider_phone',
+        'warranty_claim_number',
         'issue_summary',
         'diagnosis',
         'work_performed',
@@ -157,7 +161,7 @@ class AssetRepair extends Model
     public function getRepairTypeLabelAttribute(): string
     {
         return match ($this->repair_type) {
-            'amc' => 'AMC Vendor',
+            'amc' => 'AMC Contract',
             'market' => 'Market Repair',
             'warranty' => 'Warranty',
             'vendor' => 'Onboarded Vendor',

@@ -25,8 +25,8 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Repair Type</label>
-                            <select name="repair_type" class="form-select" required>
-                                @foreach(['internal' => 'Internal IT', 'amc' => 'AMC Vendor', 'vendor' => 'Onboarded Vendor', 'market' => 'Market Repair', 'warranty' => 'Warranty'] as $value => $label)
+                            <select name="repair_type" class="form-select repair-type-select" required>
+                                @foreach(['internal' => 'Internal IT', 'amc' => 'AMC Contract', 'vendor' => 'Onboarded Vendor', 'market' => 'Market Repair', 'warranty' => 'Warranty Claim'] as $value => $label)
                                     <option value="{{ $value }}" @selected(old('repair_type', $assetRepair->repair_type) === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
@@ -47,36 +47,66 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Vendor</label>
+                        <div class="col-md-6 repair-source-panel" data-repair-source="vendor">
+                            <label class="form-label">Vendor <span class="req">*</span></label>
                             <select name="vendor_id" class="form-select">
-                                <option value="">Internal or market repair</option>
+                                <option value="">Select vendor</option>
                                 @foreach($suppliers as $supplier)
                                     <option value="{{ $supplier->id }}" @selected(old('vendor_id', $assetRepair->vendor_id) == $supplier->id)>{{ $supplier->name }}</option>
                                 @endforeach
                             </select>
                             <div class="form-text">Only records added in Vendors will appear here.</div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">AMC Contract</label>
+                        <div class="col-md-6 repair-source-panel" data-repair-source="amc">
+                            <label class="form-label">AMC Contract <span class="req">*</span></label>
                             <select name="amc_contract_id" class="form-select">
-                                <option value="">No AMC selected</option>
+                                <option value="">Select AMC contract</option>
                                 @foreach($amcContracts as $contract)
                                     <option value="{{ $contract->id }}" @selected(old('amc_contract_id', $assetRepair->amc_contract_id) == $contract->id)>{{ $contract->title }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Market Vendor</label>
+                        <div class="col-md-4 repair-source-panel" data-repair-source="market">
+                            <label class="form-label">Market Vendor <span class="req">*</span></label>
                             <input type="text" name="market_vendor_name" class="form-control" value="{{ old('market_vendor_name', $assetRepair->market_vendor_name) }}">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 repair-source-panel" data-repair-source="market">
                             <label class="form-label">Market Contact</label>
                             <input type="text" name="market_vendor_contact" class="form-control" value="{{ old('market_vendor_contact', $assetRepair->market_vendor_contact) }}">
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Market Phone</label>
+                        <div class="col-md-4 repair-source-panel" data-repair-source="market">
+                            <label class="form-label">Market Phone No.</label>
                             <input type="text" name="market_vendor_phone" class="form-control" value="{{ old('market_vendor_phone', $assetRepair->market_vendor_phone) }}">
+                        </div>
+                        <div class="col-12 repair-source-panel" data-repair-source="warranty">
+                            <div class="alert alert-info border-0 rounded-3 small mb-0">
+                                @if($assetRepair->asset->warranty_expiry_date)
+                                    {{ $assetRepair->asset->warranty_expiry_date->isPast() ? 'Warranty expired on '.$assetRepair->asset->warranty_expiry_date->format('d-m-Y') : 'Warranty valid until '.$assetRepair->asset->warranty_expiry_date->format('d-m-Y') }}
+                                @else
+                                    Warranty date is not set for this asset.
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-md-4 repair-source-panel" data-repair-source="warranty">
+                            <label class="form-label">Warranty Provider <span class="req">*</span></label>
+                            <select name="warranty_provider_type" class="form-select warranty-provider-select">
+                                <option value="">Select warranty provider</option>
+                                <option value="original_supplier" @selected(old('warranty_provider_type', $assetRepair->warranty_provider_type) === 'original_supplier')>Original Supplier</option>
+                                <option value="manufacturer_service_center" @selected(old('warranty_provider_type', $assetRepair->warranty_provider_type) === 'manufacturer_service_center')>Manufacturer / Brand Service Center</option>
+                                <option value="other" @selected(old('warranty_provider_type', $assetRepair->warranty_provider_type) === 'other')>Other Warranty Provider</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 repair-source-panel warranty-other-provider" data-repair-source="warranty">
+                            <label class="form-label">Provider Name <span class="req">*</span></label>
+                            <input type="text" name="warranty_provider_name" class="form-control" value="{{ old('warranty_provider_name', $assetRepair->warranty_provider_name) }}">
+                        </div>
+                        <div class="col-md-4 repair-source-panel" data-repair-source="warranty">
+                            <label class="form-label">Provider Phone No.</label>
+                            <input type="text" name="warranty_provider_phone" class="form-control" value="{{ old('warranty_provider_phone', $assetRepair->warranty_provider_phone) }}">
+                        </div>
+                        <div class="col-md-4 repair-source-panel" data-repair-source="warranty">
+                            <label class="form-label">Warranty Claim / Ticket No.</label>
+                            <input type="text" name="warranty_claim_number" class="form-control" value="{{ old('warranty_claim_number', $assetRepair->warranty_claim_number) }}">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Requested</label>
@@ -175,6 +205,9 @@
                     <dt class="col-5 text-muted">Asset</dt><dd class="col-7"><a href="{{ route('admin.assets.show', $assetRepair->asset) }}">{{ $assetRepair->asset->name }}</a></dd>
                     <dt class="col-5 text-muted">Assigned To</dt><dd class="col-7">{{ $assetRepair->assignment?->user?->name ?? $assetRepair->asset->activeAssignment?->user?->name ?? 'Stock asset' }}</dd>
                     <dt class="col-5 text-muted">Vendor</dt><dd class="col-7">{{ $assetRepair->vendor?->name ?? $assetRepair->market_vendor_name ?? 'Internal' }}</dd>
+                    @if($assetRepair->repair_type === 'warranty')
+                    <dt class="col-5 text-muted">Warranty</dt><dd class="col-7">{{ ucwords(str_replace('_', ' ', $assetRepair->warranty_provider_type ?? 'Provider not set')) }}{{ $assetRepair->warranty_claim_number ? ' - '.$assetRepair->warranty_claim_number : '' }}</dd>
+                    @endif
                     <dt class="col-5 text-muted">Parts Cost</dt><dd class="col-7">&#8377;{{ number_format((float) $assetRepair->parts_cost, 2) }}</dd>
                     <dt class="col-5 text-muted">Service Cost</dt><dd class="col-7">&#8377;{{ number_format((float) $assetRepair->service_cost, 2) }}</dd>
                     <dt class="col-5 text-muted">Tax</dt><dd class="col-7">&#8377;{{ number_format((float) $assetRepair->tax_amount, 2) }}</dd>
@@ -246,3 +279,41 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var repairTypeSelect = document.querySelector('.repair-type-select');
+    var warrantyProviderSelect = document.querySelector('.warranty-provider-select');
+
+    function setPanelState(panel, active) {
+        panel.style.display = active ? '' : 'none';
+        panel.querySelectorAll('input, select, textarea').forEach(function (field) {
+            field.disabled = !active;
+        });
+    }
+
+    function updateWarrantyOther() {
+        var wrapper = document.querySelector('.warranty-other-provider');
+        if (!wrapper || !warrantyProviderSelect) return;
+        var isOther = warrantyProviderSelect.value === 'other';
+        wrapper.style.display = isOther ? '' : 'none';
+        wrapper.querySelectorAll('input, select, textarea').forEach(function (field) {
+            field.disabled = !isOther;
+        });
+    }
+
+    function updateRepairSourcePanels() {
+        var type = repairTypeSelect ? repairTypeSelect.value : 'internal';
+        document.querySelectorAll('.repair-source-panel').forEach(function (panel) {
+            setPanelState(panel, panel.dataset.repairSource === type);
+        });
+        updateWarrantyOther();
+    }
+
+    if (repairTypeSelect) repairTypeSelect.addEventListener('change', updateRepairSourcePanels);
+    if (warrantyProviderSelect) warrantyProviderSelect.addEventListener('change', updateWarrantyOther);
+    updateRepairSourcePanels();
+});
+</script>
+@endpush

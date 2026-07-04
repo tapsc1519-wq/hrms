@@ -212,8 +212,8 @@ class AssetRepairController extends Controller
     {
         return $request->validate([
             'asset_id' => [$creating ? 'required' : 'sometimes', 'exists:assets,id'],
-            'amc_contract_id' => ['nullable', 'exists:asset_amc_contracts,id'],
-            'vendor_id' => ['nullable', 'exists:suppliers,id'],
+            'amc_contract_id' => ['nullable', 'required_if:repair_type,amc', 'exists:asset_amc_contracts,id'],
+            'vendor_id' => ['nullable', 'required_if:repair_type,vendor', 'exists:suppliers,id'],
             'assigned_to' => ['nullable', 'exists:users,id'],
             'repair_type' => ['required', 'in:internal,amc,vendor,market,warranty'],
             'priority' => ['required', 'in:low,medium,high,critical'],
@@ -222,6 +222,10 @@ class AssetRepairController extends Controller
             'market_vendor_contact' => ['nullable', 'string', 'max:255'],
             'market_vendor_phone' => ['nullable', 'string', 'max:100'],
             'market_vendor_address' => ['nullable', 'string', 'max:1000'],
+            'warranty_provider_type' => ['nullable', 'required_if:repair_type,warranty', 'in:original_supplier,manufacturer_service_center,other'],
+            'warranty_provider_name' => ['nullable', 'required_if:warranty_provider_type,other', 'string', 'max:255'],
+            'warranty_provider_phone' => ['nullable', 'string', 'max:100'],
+            'warranty_claim_number' => ['nullable', 'string', 'max:150'],
             'issue_summary' => ['required', 'string', 'max:2000'],
             'diagnosis' => ['nullable', 'string', 'max:2000'],
             'work_performed' => ['nullable', 'string', 'max:2000'],
@@ -249,6 +253,44 @@ class AssetRepairController extends Controller
 
         foreach (['service_cost', 'tax_amount', 'discount_amount'] as $moneyField) {
             $data[$moneyField] = $data[$moneyField] ?? 0;
+        }
+
+        return $this->normalizeRepairTypeFields($data);
+    }
+
+    private function normalizeRepairTypeFields(array $data): array
+    {
+        $repairType = $data['repair_type'] ?? 'internal';
+
+        if ($repairType !== 'amc') {
+            $data['amc_contract_id'] = null;
+        }
+
+        if ($repairType !== 'vendor') {
+            $data['vendor_id'] = null;
+        }
+
+        if ($repairType === 'amc' && !empty($data['amc_contract_id'])) {
+            $contract = AssetAmcContract::where('organization_id', $this->orgId())->find($data['amc_contract_id']);
+            $data['vendor_id'] = $contract?->vendor_id;
+        }
+
+        if ($repairType !== 'market') {
+            $data['market_vendor_name'] = null;
+            $data['market_vendor_contact'] = null;
+            $data['market_vendor_phone'] = null;
+            $data['market_vendor_address'] = null;
+        }
+
+        if ($repairType !== 'warranty') {
+            $data['warranty_provider_type'] = null;
+            $data['warranty_provider_name'] = null;
+            $data['warranty_provider_phone'] = null;
+            $data['warranty_claim_number'] = null;
+        }
+
+        if (($data['warranty_provider_type'] ?? null) !== 'other') {
+            $data['warranty_provider_name'] = null;
         }
 
         return $data;

@@ -37,8 +37,8 @@
             <div class="col-md-3">
                 <select name="repair_type" class="form-select form-select-sm">
                     <option value="">All repair types</option>
-                    @foreach(['internal','amc','vendor','market','warranty'] as $type)
-                        <option value="{{ $type }}" @selected(request('repair_type') === $type)>{{ ucwords($type) }}</option>
+                    @foreach(['internal' => 'Internal IT', 'amc' => 'AMC Contract', 'vendor' => 'Onboarded Vendor', 'market' => 'Market Repair', 'warranty' => 'Warranty Claim'] as $type => $label)
+                        <option value="{{ $type }}" @selected(request('repair_type') === $type)>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
