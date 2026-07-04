@@ -97,6 +97,6 @@ class UserController extends Controller
         }
 
         $role = OrganizationRole::where('organization_id', $this->orgId())->findOrFail($roleId);
-        abort_if($role->portal_role !== $portalRole, 422, 'Permission role portal type must match the selected access type.');
+        abort_if($role->portal_role !== $portalRole, 422, 'Permission set type must match the selected access type.');
     }
 }

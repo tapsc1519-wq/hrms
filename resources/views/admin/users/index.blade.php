@@ -58,7 +58,7 @@
                 <i class="bi bi-info-circle fs-5"></i>
                 <div>
                     <div class="fw-semibold">Use the right onboarding path</div>
-                    <div class="small">Create employees, suppliers, vendors, auditors, and disposal buyers from their own sections. Use this page only to review existing login access, reset passwords, change permission roles, and activate or deactivate access.</div>
+                    <div class="small">Create employees, suppliers, vendors, auditors, and disposal buyers from their own sections. Use this page only to review existing login access, reset passwords, change permission sets, and activate or deactivate access.</div>
                 </div>
             </div>
         </div>
@@ -104,7 +104,7 @@
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" style="font-size:.875rem">
             <thead class="table-light">
-                <tr><th>Account</th><th>Access Type</th><th>Linked Identity</th><th>Permission Role</th><th>Department</th><th>Employee ID</th><th>Last Login</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>Account</th><th>Access Type</th><th>Linked Identity</th><th>Permission Set</th><th>Department</th><th>Employee ID</th><th>Last Login</th><th>Status</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 @forelse($users as $u)
@@ -139,7 +139,7 @@
                             <span class="badge bg-light text-dark border">Profile optional</span>
                         @endif
                     </td>
-                    <td><small>{{ $u->customRole?->name ?? 'Default access' }}</small></td>
+                    <td><small>{{ $u->customRole?->name ?? 'Default permissions' }}</small></td>
                     <td><small>{{ $u->department?->name ?? 'â€”' }}</small></td>
                     <td><small class="text-muted">{{ $u->employee_id ?? 'â€”' }}</small></td>
                     <td><small>{{ $u->last_login_at?->diffForHumans() ?? 'Never' }}</small></td>
@@ -198,9 +198,9 @@
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small fw-500">Permission Role</label>
+                                            <label class="form-label small fw-500">Permission Set</label>
                                             <select name="custom_role_id" class="form-select">
-                                                <option value="">Default access</option>
+                                                <option value="">Default permissions</option>
                                                 @foreach($customRoles as $role)
                                                 <option value="{{ $role->id }}" {{ $u->custom_role_id == $role->id ? 'selected' : '' }} @disabled($role->portal_role !== $u->role)>
                                                     {{ $role->name }} ({{ ucfirst($role->portal_role) }})

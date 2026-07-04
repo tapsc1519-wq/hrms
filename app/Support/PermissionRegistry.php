@@ -81,7 +81,7 @@ class PermissionRegistry
             ],
             'Administration' => [
                 'users.manage' => 'Manage access and permissions',
-                'roles.manage' => 'Manage roles and permissions',
+                'roles.manage' => 'Manage permission sets',
                 'reports.view' => 'View reports',
             ],
         ];

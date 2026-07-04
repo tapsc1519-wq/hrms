@@ -38,12 +38,13 @@
                         @error('employee_code') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Portal Role <span class="req">*</span></label>
+                        <label class="form-label">Access Level <span class="req">*</span></label>
                         <select name="role" id="portalRoleSelect" class="form-select @error('role') is-invalid @enderror" required>
-                            <option value="staff" @selected($selectedRole === 'staff')>Staff / Employee</option>
-                            <option value="admin" @selected($selectedRole === 'admin')>Admin</option>
+                            <option value="staff" @selected($selectedRole === 'staff')>Employee Self-Service</option>
+                            <option value="admin" @selected($selectedRole === 'admin')>Organization Admin</option>
                         </select>
                         @error('role') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="form-text">Choose whether this employee only uses self-service or can also manage organization modules.</div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Password {{ $isEdit ? '' : '' }}</label>
@@ -67,9 +68,9 @@
                         @error('department_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Permission Role</label>
+                        <label class="form-label">Permission Set</label>
                         <select name="custom_role_id" id="permissionRoleSelect" class="form-select @error('custom_role_id') is-invalid @enderror">
-                            <option value="">Default access</option>
+                            <option value="">Default permissions</option>
                             @foreach($customRoles as $role)
                                 <option value="{{ $role->id }}" data-portal-role="{{ $role->portal_role }}" @selected((string)$selectedPermissionRole === (string)$role->id)>
                                     {{ $role->name }} ({{ ucfirst($role->portal_role) }})
