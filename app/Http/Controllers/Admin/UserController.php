@@ -69,7 +69,7 @@ class UserController extends Controller
 
         User::create($validated);
 
-        return back()->with('success', 'User created successfully.');
+        return back()->with('success', 'Supplier portal access created successfully.');
     }
 
     public function update(Request $request, User $user)
@@ -99,11 +99,11 @@ class UserController extends Controller
         if ($validated['status'] === 'active' && in_array($validated['role'], ['admin', 'staff'], true) && !$user->employeeProfile) {
             return back()
                 ->withInput()
-                ->with('error', 'This internal user is not linked to an employee profile. Link/create the employee profile before activating this account.');
+                ->with('error', 'This internal account is not linked to an employee profile. Link/create the employee profile before activating this account.');
         }
 
         $user->update($validated);
-        return back()->with('success', 'User updated.');
+        return back()->with('success', 'Access updated.');
     }
 
     public function destroy(User $user)
@@ -111,7 +111,7 @@ class UserController extends Controller
         abort_if($user->organization_id !== $this->orgId(), 403);
         abort_if($user->id === auth()->id(), 403, 'Cannot delete your own account.');
         $user->delete();
-        return back()->with('success', 'User deleted.');
+        return back()->with('success', 'Access account deleted.');
     }
 
     private function validateCustomRole(?string $roleId, string $portalRole): void
@@ -121,6 +121,6 @@ class UserController extends Controller
         }
 
         $role = OrganizationRole::where('organization_id', $this->orgId())->findOrFail($roleId);
-        abort_if($role->portal_role !== $portalRole, 422, 'Custom role portal type must match the user role.');
+        abort_if($role->portal_role !== $portalRole, 422, 'Permission role portal type must match the selected access type.');
     }
 }

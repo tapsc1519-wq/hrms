@@ -80,7 +80,7 @@ class PermissionRegistry
                 'payroll.manage' => 'Full payroll access',
             ],
             'Administration' => [
-                'users.manage' => 'Manage users',
+                'users.manage' => 'Manage access and permissions',
                 'roles.manage' => 'Manage roles and permissions',
                 'reports.view' => 'View reports',
             ],

@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Users')
+@section('title', 'Access & Permissions')
 
 @push('styles')
 <style>
@@ -25,7 +25,7 @@
 @php($canManageEmployees = auth()->user()->hasPermission('employees.manage'))
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="page-title mb-0">User Management</h4>
+        <h4 class="page-title mb-0">Access & Permissions</h4>
         <p class="page-subtitle mb-0">Manage login access, roles, and linked portal profiles</p>
     </div>
     <div class="d-flex gap-2">
@@ -39,7 +39,7 @@
         </button>
         @endif
         <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-            <i class="bi bi-person-plus me-1"></i>Add Non-Employee User
+            <i class="bi bi-person-plus me-1"></i>Add Supplier Access
         </button>
     </div>
 </div>
@@ -51,7 +51,7 @@
                 <i class="bi bi-info-circle fs-5"></i>
                 <div>
                     <div class="fw-semibold">Use the right onboarding path</div>
-                    <div class="small">Create employees and organization admins from <strong>Employees > Add Employee</strong>. The system creates the login and HR profile together. Use this Users page for access changes and non-employee portal accounts such as suppliers.</div>
+                    <div class="small">Create employees and organization admins from <strong>Employees > Add Employee</strong>. The system creates the login and HR profile together. Use this page only for access changes and supplier portal access.</div>
                 </div>
             </div>
         </div>
@@ -97,7 +97,7 @@
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" style="font-size:.875rem">
             <thead class="table-light">
-                <tr><th>User</th><th>Portal Role</th><th>Linked Profile</th><th>Permission Role</th><th>Department</th><th>Employee ID</th><th>Last Login</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>Account</th><th>Access Type</th><th>Linked Identity</th><th>Permission Role</th><th>Department</th><th>Employee ID</th><th>Last Login</th><th>Status</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 @forelse($users as $u)
@@ -144,7 +144,7 @@
                             </button>
                             @if($u->id !== auth()->id())
                             <form action="{{ route('admin.users.destroy', $u) }}" method="POST"
-                                  onsubmit="return confirm('Delete user {{ $u->name }}?')">
+                                  onsubmit="return confirm('Delete access account for {{ $u->name }}?')">
                                 @csrf @method('DELETE')
                                 <button class="btn btn-sm btn-outline-danger user-action-btn"><i class="bi bi-trash"></i></button>
                             </form>
@@ -153,14 +153,14 @@
                     </td>
                 </tr>
 
-                <!-- Edit User Modal -->
+                <!-- Edit Access Modal -->
                 <div class="modal fade" id="editUserModal{{ $u->id }}" tabindex="-1">
                     <div class="modal-dialog modal-lg">
                         <form action="{{ route('admin.users.update', $u) }}" method="POST">
                             @csrf @method('PATCH')
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Edit User: {{ $u->name }}</h5>
+                                    <h5 class="modal-title">Edit Access: {{ $u->name }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
@@ -231,7 +231,7 @@
                     </div>
                 </div>
                 @empty
-                <tr><td colspan="9" class="text-center py-4 text-muted">No users found.</td></tr>
+                <tr><td colspan="9" class="text-center py-4 text-muted">No access accounts found.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -241,14 +241,14 @@
     @endif
 </div>
 
-<!-- Add User Modal -->
+<!-- Add Supplier Access Modal -->
 <div class="modal fade" id="addUserModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <form action="{{ route('admin.users.store') }}" method="POST">
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Non-Employee Portal User</h5>
+                    <h5 class="modal-title">Add Supplier Portal Access</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -261,7 +261,7 @@
                             @else
                                 Employees > Add Employee with an admin who has Employees permission.
                             @endif
-                            This modal is for portal users who do not need an HR employee profile.
+                            This modal is for supplier portal access that does not need an HR employee profile.
                         </div>
                     </div>
                     <div class="row g-3">
@@ -323,7 +323,7 @@
                     @if($canManageEmployees)
                     <a href="{{ route('admin.employees.create') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-vcard me-1"></i>Add Employee Instead</a>
                     @endif
-                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Create Portal User</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Create Supplier Access</button>
                 </div>
             </div>
         </form>

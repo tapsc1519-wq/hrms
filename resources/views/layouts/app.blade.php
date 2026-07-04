@@ -1151,7 +1151,7 @@
             </a>
             <a href="{{ route('super-admin.users.index') }}"
                class="sidebar-link {{ request()->routeIs('super-admin.users.*') ? 'active' : '' }}">
-                <i class="bi bi-people-fill"></i> All Users
+                <i class="bi bi-people-fill"></i> All Accounts
             </a>
             <div class="sidebar-section-title">Configuration</div>
             <a href="{{ route('super-admin.pricing.edit') }}"
@@ -1390,7 +1390,7 @@
             </a>
             <a href="{{ route('admin.users.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                <i class="bi bi-people-fill"></i> Users
+                <i class="bi bi-shield-lock-fill"></i> Access & Permissions
             </a>
             <a href="{{ route('admin.roles.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
