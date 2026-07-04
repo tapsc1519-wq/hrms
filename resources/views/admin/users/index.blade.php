@@ -23,6 +23,7 @@
 
 @section('content')
 @php($canManageEmployees = auth()->user()->hasPermission('employees.manage'))
+@php($canManageSuppliers = auth()->user()->hasPermission('suppliers.manage'))
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h4 class="page-title mb-0">Access & Permissions</h4>
@@ -38,9 +39,15 @@
             <i class="bi bi-person-vcard me-1"></i>Add Employee
         </button>
         @endif
-        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-            <i class="bi bi-person-plus me-1"></i>Add Supplier Access
+        @if($canManageSuppliers)
+        <a href="{{ route('admin.suppliers.create') }}" class="btn btn-outline-primary">
+            <i class="bi bi-building-add me-1"></i>Add Supplier
+        </a>
+        @else
+        <button type="button" class="btn btn-outline-primary" disabled title="Suppliers permission required">
+            <i class="bi bi-building-add me-1"></i>Add Supplier
         </button>
+        @endif
     </div>
 </div>
 
@@ -51,7 +58,7 @@
                 <i class="bi bi-info-circle fs-5"></i>
                 <div>
                     <div class="fw-semibold">Use the right onboarding path</div>
-                    <div class="small">Create employees and organization admins from <strong>Employees > Add Employee</strong>. The system creates the login and HR profile together. Use this page only for access changes and supplier portal access.</div>
+                    <div class="small">Create employees, suppliers, vendors, auditors, and disposal buyers from their own sections. Use this page only to review existing login access, reset passwords, change permission roles, and activate or deactivate access.</div>
                 </div>
             </div>
         </div>
@@ -73,7 +80,7 @@
             </div>
             <div class="col-md-2">
                 <select name="role" class="form-select form-select-sm">
-                    <option value="">All Roles</option>
+                    <option value="">All Access Types</option>
                     <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                     <option value="supplier" {{ request('role') == 'supplier' ? 'selected' : '' }}>Supplier</option>
                     <option value="staff" {{ request('role') == 'staff' ? 'selected' : '' }}>Staff</option>
@@ -178,12 +185,10 @@
                                             <input type="password" name="password" class="form-control" minlength="8">
                                         </div>
                                         <div class="col-md-3">
-                                            <label class="form-label small fw-500">Role</label>
-                                            <select name="role" class="form-select">
-                                                <option value="admin" {{ $u->role === 'admin' ? 'selected' : '' }}>Admin</option>
-                                                <option value="supplier" {{ $u->role === 'supplier' ? 'selected' : '' }}>Supplier</option>
-                                                <option value="staff" {{ $u->role === 'staff' ? 'selected' : '' }}>Staff</option>
-                                            </select>
+                                            <label class="form-label small fw-500">Access Type</label>
+                                            <input type="hidden" name="role" value="{{ $u->role }}">
+                                            <div class="form-control bg-light text-muted">{{ ucwords(str_replace('_', ' ', $u->role)) }}</div>
+                                            <div class="form-text">Change identity type from the related section.</div>
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label small fw-500">Status</label>
@@ -192,33 +197,21 @@
                                                 <option value="inactive" {{ $u->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-6">
                                             <label class="form-label small fw-500">Permission Role</label>
                                             <select name="custom_role_id" class="form-select">
                                                 <option value="">Default access</option>
                                                 @foreach($customRoles as $role)
-                                                <option value="{{ $role->id }}" {{ $u->custom_role_id == $role->id ? 'selected' : '' }}>
+                                                <option value="{{ $role->id }}" {{ $u->custom_role_id == $role->id ? 'selected' : '' }} @disabled($role->portal_role !== $u->role)>
                                                     {{ $role->name }} ({{ ucfirst($role->portal_role) }})
                                                 </option>
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label small fw-500">Department</label>
-                                            <select name="department_id" class="form-select">
-                                                <option value="">â€” None â€”</option>
-                                                @foreach($departments as $d)
-                                                <option value="{{ $d->id }}" {{ $u->department_id == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label small fw-500">Employee ID</label>
-                                            <input type="text" name="employee_id" class="form-control" value="{{ $u->employee_id }}">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label small fw-500">Job Title</label>
-                                            <input type="text" name="job_title" class="form-control" value="{{ $u->job_title }}">
+                                        <div class="col-12">
+                                            <div class="alert alert-light border small mb-0">
+                                                Change employee, supplier, vendor, auditor, or buyer identity details from their own section. This page only controls login access.
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -241,93 +234,5 @@
     @endif
 </div>
 
-<!-- Add Supplier Access Modal -->
-<div class="modal fade" id="addUserModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <form action="{{ route('admin.users.store') }}" method="POST">
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Supplier Portal Access</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-primary small">
-                        <div class="fw-semibold mb-1"><i class="bi bi-signpost-split me-1"></i>Select the correct path before creating access</div>
-                        <div>
-                            For employees and organization admins, use
-                            @if($canManageEmployees)
-                                <a href="{{ route('admin.employees.create') }}" class="alert-link">Employees > Add Employee</a>.
-                            @else
-                                Employees > Add Employee with an admin who has Employees permission.
-                            @endif
-                            This modal is for supplier portal access that does not need an HR employee profile.
-                        </div>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-500">Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-500">Email <span class="text-danger">*</span></label>
-                            <input type="email" name="email" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-500">Password <span class="text-danger">*</span></label>
-                            <input type="password" name="password" class="form-control" required minlength="8">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-500">Role <span class="text-danger">*</span></label>
-                            <select name="role" class="form-select" required>
-                                <option value="supplier">Supplier</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-500">Status</label>
-                            <select name="status" class="form-select">
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-500">Permission Role</label>
-                            <select name="custom_role_id" class="form-select">
-                                <option value="">Default access</option>
-                                @foreach($customRoles as $role)
-                                <option value="{{ $role->id }}">{{ $role->name }} ({{ ucfirst($role->portal_role) }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-500">Department</label>
-                            <select name="department_id" class="form-select">
-                                <option value="">â€” None â€”</option>
-                                @foreach($departments as $d)
-                                <option value="{{ $d->id }}">{{ $d->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-500">Employee ID</label>
-                            <input type="text" name="employee_id" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-500">Job Title</label>
-                            <input type="text" name="job_title" class="form-control">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    @if($canManageEmployees)
-                    <a href="{{ route('admin.employees.create') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-vcard me-1"></i>Add Employee Instead</a>
-                    @endif
-                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Create Supplier Access</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
 @endsection
 

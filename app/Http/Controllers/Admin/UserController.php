@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Department;
 use App\Models\OrganizationRole;
 use App\Models\User;
-use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -28,7 +26,6 @@ class UserController extends Controller
         }
 
         $users       = $query->latest()->paginate(20)->withQueryString();
-        $departments = Department::where('organization_id', $this->orgId())->where('status', 'active')->get();
         $customRoles = OrganizationRole::where('organization_id', $this->orgId())
             ->where('status', 'active')
             ->orderBy('portal_role')
@@ -39,37 +36,14 @@ class UserController extends Controller
             ->whereDoesntHave('employeeProfile')
             ->count();
 
-        return view('admin.users.index', compact('users', 'departments', 'customRoles', 'unlinkedInternalUsers'));
+        return view('admin.users.index', compact('users', 'customRoles', 'unlinkedInternalUsers'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name'          => 'required|string|max:255',
-            'email'         => 'required|email|unique:users,email',
-            'password'      => 'required|string|min:8',
-            'role'          => 'required|in:admin,supplier,staff',
-            'custom_role_id'=> 'nullable|exists:organization_roles,id',
-            'department_id' => 'nullable|exists:departments,id',
-            'phone'         => 'nullable|string|max:50',
-            'employee_id'   => 'nullable|string|max:50',
-            'job_title'     => 'nullable|string|max:100',
-            'status'        => 'required|in:active,inactive',
-        ]);
-
-        if (in_array($validated['role'], ['admin', 'staff'], true)) {
-            return back()
-                ->withInput()
-                ->with('error', 'Internal employees and organization admins must be created from Employees > Add Employee so their HR profile and login stay linked.');
-        }
-
-        $validated['organization_id'] = $this->orgId();
-        $validated['password']        = Hash::make($validated['password']);
-        $this->validateCustomRole($validated['custom_role_id'] ?? null, $validated['role']);
-
-        User::create($validated);
-
-        return back()->with('success', 'Supplier portal access created successfully.');
+        return back()
+            ->withInput()
+            ->with('error', 'Create employees, suppliers, vendors, auditors, and disposal buyers from their own sections. Access & Permissions only manages existing login access.');
     }
 
     public function update(Request $request, User $user)
@@ -82,12 +56,14 @@ class UserController extends Controller
             'password'      => 'nullable|string|min:8',
             'role'          => 'required|in:admin,supplier,staff',
             'custom_role_id'=> 'nullable|exists:organization_roles,id',
-            'department_id' => 'nullable|exists:departments,id',
-            'phone'         => 'nullable|string|max:50',
-            'employee_id'   => 'nullable|string|max:50',
-            'job_title'     => 'nullable|string|max:100',
             'status'        => 'required|in:active,inactive',
         ]);
+
+        if ($validated['role'] !== $user->role) {
+            return back()
+                ->withInput()
+                ->with('error', 'Change identity type from the related section. Access & Permissions only controls existing login access.');
+        }
 
         if ($validated['password']) {
             $validated['password'] = Hash::make($validated['password']);
