@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\AssetDisposalController;
 use App\Http\Controllers\Admin\AssetIssueReportController;
 use App\Http\Controllers\Admin\AssetRepairController;
 use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\AssignmentController;
 use App\Http\Controllers\Admin\MaintenanceController;
@@ -107,6 +108,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::resource('assets', AssetController::class)->only(['edit', 'update'])->middleware('permission:assets.edit');
     Route::resource('assets', AssetController::class)->only(['destroy'])->middleware('permission:assets.delete');
     Route::resource('suppliers', SupplierController::class)->middleware('permission:suppliers.manage');
+    Route::resource('vendors', VendorController::class)->except(['show'])->middleware('permission:vendors.manage');
 
     Route::get('purchase-orders', [PurchaseOrderController::class, 'index'])->middleware('permission:purchase_orders.manage')->name('purchase-orders.index');
     Route::get('purchase-orders/create', [PurchaseOrderController::class, 'create'])->middleware('permission:purchase_orders.manage')->name('purchase-orders.create');

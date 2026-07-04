@@ -73,7 +73,7 @@ class AssetAmcContractController extends Controller
 
         return [
             'contract' => $contract,
-            'suppliers' => Supplier::where('organization_id', $this->orgId())->where('status', 'active')->orderBy('name')->get(),
+            'suppliers' => Supplier::where('organization_id', $this->orgId())->whereIn('partner_type', ['vendor', 'both'])->where('status', 'active')->orderBy('name')->get(),
             'assets' => Asset::where('organization_id', $this->orgId())->whereNotIn('status', ['disposed', 'lost'])->orderBy('name')->get(),
         ];
     }

@@ -74,13 +74,14 @@
                 <div class="form-card-header"><span class="icon-wrap icon-teal"><i class="bi bi-building"></i></span>Vendor / AMC</div>
                 <div class="form-card-body">
                     <div class="mb-3">
-                        <label class="form-label">Onboarded Vendor</label>
+                        <label class="form-label">Vendor</label>
                         <select name="vendor_id" class="form-select">
                             <option value="">Internal or market repair</option>
                             @foreach($suppliers as $supplier)
                                 <option value="{{ $supplier->id }}" @selected(old('vendor_id') == $supplier->id)>{{ $supplier->name }}</option>
                             @endforeach
                         </select>
+                        <div class="form-text">Only records added in Vendors will appear here.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">AMC Contract</label>

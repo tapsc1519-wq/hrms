@@ -64,7 +64,7 @@ class AssetRepairController extends Controller
             ->orderBy('name')
             ->get();
 
-        $suppliers = Supplier::where('organization_id', $this->orgId())->where('status', 'active')->orderBy('name')->get();
+        $suppliers = Supplier::where('organization_id', $this->orgId())->whereIn('partner_type', ['vendor', 'both'])->where('status', 'active')->orderBy('name')->get();
         $amcContracts = AssetAmcContract::where('organization_id', $this->orgId())->where('status', 'active')->orderBy('title')->get();
         $itUsers = User::where('organization_id', $this->orgId())->whereIn('role', ['admin', 'staff'])->where('status', 'active')->orderBy('name')->get();
         $selectedAsset = $request->integer('asset_id');
@@ -121,7 +121,7 @@ class AssetRepairController extends Controller
             'parts',
         ]);
 
-        $suppliers = Supplier::where('organization_id', $this->orgId())->where('status', 'active')->orderBy('name')->get();
+        $suppliers = Supplier::where('organization_id', $this->orgId())->whereIn('partner_type', ['vendor', 'both'])->where('status', 'active')->orderBy('name')->get();
         $amcContracts = AssetAmcContract::where('organization_id', $this->orgId())->where('status', 'active')->orderBy('title')->get();
         $itUsers = User::where('organization_id', $this->orgId())->whereIn('role', ['admin', 'staff'])->where('status', 'active')->orderBy('name')->get();
 

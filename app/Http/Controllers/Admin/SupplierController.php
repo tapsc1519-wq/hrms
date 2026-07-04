@@ -12,6 +12,7 @@ class SupplierController extends Controller
     public function index(Request $request)
     {
         $query = Supplier::where('organization_id', $this->orgId())
+            ->whereIn('partner_type', ['supplier', 'both'])
             ->withCount(['assets', 'purchaseOrders']);
 
         if ($request->filled('search')) {
@@ -56,6 +57,7 @@ class SupplierController extends Controller
         ]);
 
         $validated['organization_id'] = $this->orgId();
+        $validated['partner_type'] = 'supplier';
 
         if ($request->hasFile('logo')) {
             $validated['logo'] = $request->file('logo')->store('suppliers', 'public');

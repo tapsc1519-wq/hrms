@@ -38,6 +38,7 @@ class PermissionRegistry
             ],
             'Suppliers & Purchases' => [
                 'suppliers.manage' => 'Manage suppliers',
+                'vendors.manage' => 'Manage repair and service vendors',
                 'purchase_orders.manage' => 'Manage purchase orders',
             ],
             'Operations' => [

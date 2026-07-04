@@ -1107,6 +1107,7 @@
                 || $user?->hasPermission('requests.review')
                 || $user?->hasPermission('requests.fulfill')
                 || $user?->hasPermission('suppliers.manage')
+                || $user?->hasPermission('vendors.manage')
                 || $user?->hasPermission('purchase_orders.manage')
                 || $user?->hasPermission('maintenance.manage')
                 || $user?->hasPermission('asset.repairs.manage')
@@ -1235,6 +1236,10 @@
             <a href="{{ route('admin.suppliers.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.suppliers.*') ? 'active' : '' }}">
                 <i class="bi bi-building-fill"></i> Suppliers
+            </a>
+            <a href="{{ route('admin.vendors.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.vendors.*') ? 'active' : '' }}">
+                <i class="bi bi-tools"></i> Vendors
             </a>
             <a href="{{ route('admin.purchase-orders.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.purchase-orders.*') ? 'active' : '' }}">
@@ -1641,6 +1646,12 @@
             <a href="{{ route('admin.suppliers.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.suppliers.*') ? 'active' : '' }}">
                 <i class="bi bi-building-fill"></i> Suppliers
+            </a>
+            @endif
+            @if($user->hasPermission('vendors.manage'))
+            <a href="{{ route('admin.vendors.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.vendors.*') ? 'active' : '' }}">
+                <i class="bi bi-tools"></i> Vendors
             </a>
             @endif
             @if($user->hasPermission('purchase_orders.manage'))

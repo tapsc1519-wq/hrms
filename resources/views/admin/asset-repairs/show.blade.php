@@ -48,13 +48,14 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Onboarded Vendor</label>
+                            <label class="form-label">Vendor</label>
                             <select name="vendor_id" class="form-select">
                                 <option value="">Internal or market repair</option>
                                 @foreach($suppliers as $supplier)
                                     <option value="{{ $supplier->id }}" @selected(old('vendor_id', $assetRepair->vendor_id) == $supplier->id)>{{ $supplier->name }}</option>
                                 @endforeach
                             </select>
+                            <div class="form-text">Only records added in Vendors will appear here.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">AMC Contract</label>
