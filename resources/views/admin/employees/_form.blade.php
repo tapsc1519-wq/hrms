@@ -68,9 +68,9 @@
                         @error('department_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Permission Set</label>
+                        <label class="form-label">Roles & Permissions</label>
                         <select name="custom_role_id" id="permissionRoleSelect" class="form-select @error('custom_role_id') is-invalid @enderror">
-                            <option value="">Default permissions</option>
+                            <option value="">Default role permissions</option>
                             @foreach($customRoles as $role)
                                 <option value="{{ $role->id }}" data-portal-role="{{ $role->portal_role }}" @selected((string)$selectedPermissionRole === (string)$role->id)>
                                     {{ $role->name }} ({{ ucfirst($role->portal_role) }})

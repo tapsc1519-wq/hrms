@@ -58,7 +58,7 @@
                 <i class="bi bi-info-circle fs-5"></i>
                 <div>
                     <div class="fw-semibold">Use the right onboarding path</div>
-                    <div class="small">Create employees, suppliers, vendors, auditors, and disposal buyers from their own sections. Use this page only to review existing login access, reset passwords, change permission sets, and activate or deactivate access.</div>
+                    <div class="small">Create employees, suppliers, vendors, auditors, and disposal buyers from their own sections. Use this page only to review existing login access, reset passwords, change roles and permissions, and activate or deactivate access.</div>
                 </div>
             </div>
         </div>
@@ -104,7 +104,7 @@
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" style="font-size:.875rem">
             <thead class="table-light">
-                <tr><th>Account</th><th>Access Type</th><th>Linked Identity</th><th>Permission Set</th><th>Department</th><th>Employee ID</th><th>Last Login</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>Account</th><th>Access Type</th><th>Linked Identity</th><th>Roles & Permissions</th><th>Department</th><th>Employee ID</th><th>Last Login</th><th>Status</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 @forelse($users as $u)
@@ -198,7 +198,7 @@
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small fw-500">Permission Set</label>
+                                            <label class="form-label small fw-500">Roles & Permissions</label>
                                             <select name="custom_role_id" class="form-select">
                                                 <option value="">Default permissions</option>
                                                 @foreach($customRoles as $role)

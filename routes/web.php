@@ -19,8 +19,6 @@ use App\Http\Controllers\Admin\MaintenanceController;
 use App\Http\Controllers\Admin\RequestController as AdminRequestController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\FacilityController;
-use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\UserBulkImportController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
@@ -164,11 +162,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::post('departments', [DepartmentController::class, 'store'])->middleware('permission:departments.manage')->name('departments.store');
     Route::patch('departments/{department}', [DepartmentController::class, 'update'])->middleware('permission:departments.manage')->name('departments.update');
     Route::delete('departments/{department}', [DepartmentController::class, 'destroy'])->middleware('permission:departments.manage')->name('departments.destroy');
-
-    Route::get('users', [AdminUserController::class, 'index'])->middleware('permission:users.manage')->name('users.index');
-    Route::post('users', [AdminUserController::class, 'store'])->middleware('permission:users.manage')->name('users.store');
-    Route::patch('users/{user}', [AdminUserController::class, 'update'])->middleware('permission:users.manage')->name('users.update');
-    Route::delete('users/{user}', [AdminUserController::class, 'destroy'])->middleware('permission:users.manage')->name('users.destroy');
 
     Route::get('roles', [AdminRoleController::class, 'index'])->middleware('permission:roles.manage')->name('roles.index');
     Route::post('roles', [AdminRoleController::class, 'store'])->middleware('permission:roles.manage')->name('roles.store');

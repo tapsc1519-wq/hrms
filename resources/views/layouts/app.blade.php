@@ -1388,10 +1388,6 @@
                class="sidebar-link {{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
                 <i class="bi bi-diagram-3-fill"></i> Departments
             </a>
-            <a href="{{ route('admin.users.index') }}"
-               class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                <i class="bi bi-shield-lock-fill"></i> Access & Permissions
-            </a>
             <a href="{{ route('admin.roles.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
                 <i class="bi bi-shield-lock-fill"></i> Roles & Permissions
