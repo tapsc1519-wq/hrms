@@ -67,6 +67,10 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.po
 Route::post('/auth/sso/redirect', [AuthController::class, 'redirectToSso'])->name('sso.redirect');
 Route::get('/auth/sso/callback', [AuthController::class, 'handleSsoCallback'])->name('sso.callback');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::middleware('auth')->group(function () {
+    Route::get('/account/password', [AuthController::class, 'editPassword'])->name('account.password.edit');
+    Route::patch('/account/password', [AuthController::class, 'updatePassword'])->name('account.password.update');
+});
 
 // ─── Super Admin ──────────────────────────────────────────────────────────────
 Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:super_admin'])->group(function () {

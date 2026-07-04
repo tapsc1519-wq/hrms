@@ -1791,6 +1791,12 @@
                     </li>
                     <li><hr class="dropdown-divider my-1"></li>
                     <li>
+                        <a href="{{ route('account.password.edit') }}" class="dropdown-item py-2">
+                            <i class="bi bi-key me-2"></i>Change Password
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider my-1"></li>
+                    <li>
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
                             <button type="submit" class="dropdown-item text-danger py-2">

@@ -194,6 +194,25 @@ class AuthController extends Controller
             ->with('success', 'Your organization account is ready. Your one-month free trial has started.');
     }
 
+    public function editPassword()
+    {
+        return view('auth.change-password');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $request->user()->forceFill([
+            'password' => Hash::make($validated['password']),
+        ])->save();
+
+        return back()->with('success', 'Your password has been changed successfully.');
+    }
+
     public function logout(Request $request)
     {
         Auth::logout();
