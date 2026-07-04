@@ -10,8 +10,10 @@ use App\Http\Controllers\SuperAdmin\UserController as SAUserController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\AgentSourceController;
 use App\Http\Controllers\Admin\AssetController;
+use App\Http\Controllers\Admin\AssetAmcContractController;
 use App\Http\Controllers\Admin\AssetDisposalController;
 use App\Http\Controllers\Admin\AssetIssueReportController;
+use App\Http\Controllers\Admin\AssetRepairController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\AssignmentController;
@@ -131,6 +133,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::post('bulk-import/confirm', [BulkImportController::class, 'import'])->middleware('permission:assets.import')->name('bulk-import.confirm');
 
     Route::resource('maintenance', MaintenanceController::class)->except(['destroy'])->middleware('permission:maintenance.manage');
+    Route::get('asset-repairs', [AssetRepairController::class, 'index'])->middleware('permission:asset.repairs.manage')->name('asset-repairs.index');
+    Route::get('asset-repairs/create', [AssetRepairController::class, 'create'])->middleware('permission:asset.repairs.manage')->name('asset-repairs.create');
+    Route::post('asset-repairs', [AssetRepairController::class, 'store'])->middleware('permission:asset.repairs.manage')->name('asset-repairs.store');
+    Route::get('asset-repairs/{assetRepair}', [AssetRepairController::class, 'show'])->middleware('permission:asset.repairs.manage')->name('asset-repairs.show');
+    Route::patch('asset-repairs/{assetRepair}', [AssetRepairController::class, 'update'])->middleware('permission:asset.repairs.manage')->name('asset-repairs.update');
+    Route::patch('asset-repairs/{assetRepair}/quality-check', [AssetRepairController::class, 'qualityCheck'])->middleware('permission:asset.repairs.qc')->name('asset-repairs.quality-check');
+    Route::patch('asset-repairs/{assetRepair}/close', [AssetRepairController::class, 'close'])->middleware('permission:asset.repairs.close')->name('asset-repairs.close');
+    Route::resource('asset-amc-contracts', AssetAmcContractController::class)->except(['show', 'destroy'])->middleware('permission:asset.repairs.manage');
 
     Route::get('requests', [AdminRequestController::class, 'index'])->middleware('permission:requests.view')->name('requests.index');
     Route::get('requests/{assetRequest}', [AdminRequestController::class, 'show'])->middleware('permission:requests.view')->name('requests.show');
@@ -382,6 +392,7 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'role:staff'])->grou
     Route::middleware('module:itam')->group(function () {
     Route::get('my-assets', [StaffAssetController::class, 'index'])->name('my-assets.index');
     Route::post('my-assets/{assignment}/issue-report', [StaffAssetController::class, 'reportIssue'])->name('my-assets.issue-report');
+    Route::post('my-assets/{assignment}/repair-request', [StaffAssetController::class, 'requestRepair'])->name('my-assets.repair-request');
     Route::patch('my-assets/{assignment}/handover', [StaffAssetController::class, 'handover'])->name('my-assets.handover');
     Route::patch('my-assets/handovers/{handover}/accept', [StaffAssetController::class, 'acceptHandover'])->name('my-assets.handovers.accept');
     Route::patch('my-assets/handovers/{handover}/reject', [StaffAssetController::class, 'rejectHandover'])->name('my-assets.handovers.reject');

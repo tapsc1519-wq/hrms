@@ -45,4 +45,9 @@ class AssetAssignment extends Model
     {
         return $this->hasMany(AssetIssueReport::class);
     }
+
+    public function repairs(): HasMany
+    {
+        return $this->hasMany(AssetRepair::class);
+    }
 }

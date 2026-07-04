@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AssetIssueReport extends Model
 {
@@ -58,6 +59,11 @@ class AssetIssueReport extends Model
     public function disposal(): BelongsTo
     {
         return $this->belongsTo(AssetDisposal::class, 'asset_disposal_id');
+    }
+
+    public function repair(): HasOne
+    {
+        return $this->hasOne(AssetRepair::class);
     }
 
     public function getIssueTypeLabelAttribute(): string

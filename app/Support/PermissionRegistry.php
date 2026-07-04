@@ -22,6 +22,9 @@ class PermissionRegistry
                 'assets.disposal.approve' => 'Approve or reject disposal requests',
                 'assets.disposal.complete' => 'Complete approved disposals',
                 'assets.disposal.view' => 'View disposal history',
+                'asset.repairs.manage' => 'Manage asset repairs and AMC workflow',
+                'asset.repairs.qc' => 'Perform asset repair quality checks',
+                'asset.repairs.close' => 'Close repair jobs and return assets',
             ],
             'Assignments' => [
                 'assignments.view' => 'View assignments',
@@ -142,6 +145,10 @@ class PermissionRegistry
             ],
             'assets.disposal.complete' => [
                 'assets.disposal.view',
+            ],
+            'asset.repairs.manage' => [
+                'asset.repairs.qc',
+                'asset.repairs.close',
             ],
             'software.manage' => [
                 'software.requests.view',

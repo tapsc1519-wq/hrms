@@ -125,6 +125,16 @@ class Asset extends Model
         return $this->hasMany(AssetIssueReport::class);
     }
 
+    public function repairs(): HasMany
+    {
+        return $this->hasMany(AssetRepair::class);
+    }
+
+    public function activeRepair(): HasOne
+    {
+        return $this->hasOne(AssetRepair::class)->whereIn('status', AssetRepair::OPEN_STATUSES)->latestOfMany();
+    }
+
     public function activeDisposal(): HasOne
     {
         return $this->hasOne(AssetDisposal::class)->whereIn('status', ['pending', 'approved'])->latestOfMany();

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AssetAssignment;
 use App\Models\AssetHandoverRequest;
 use App\Models\AssetIssueReport;
+use App\Models\AssetRepair;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +50,14 @@ class AssetController extends Controller
             ->get()
             ->keyBy('asset_assignment_id');
 
-        return view('staff.assets.index', compact('assignments', 'staffUsers', 'incomingHandovers', 'outgoingHandovers', 'openIssues'));
+        $openRepairs = AssetRepair::where('requested_by', auth()->id())
+            ->whereIn('status', AssetRepair::OPEN_STATUSES)
+            ->with('asset')
+            ->latest()
+            ->get()
+            ->keyBy('asset_assignment_id');
+
+        return view('staff.assets.index', compact('assignments', 'staffUsers', 'incomingHandovers', 'outgoingHandovers', 'openIssues', 'openRepairs'));
     }
 
     public function handover(Request $request, AssetAssignment $assignment)
@@ -142,6 +150,40 @@ class AssetController extends Controller
         ]);
 
         return back()->with('success', 'Asset issue reported to Admin/IT for review.');
+    }
+
+    public function requestRepair(Request $request, AssetAssignment $assignment)
+    {
+        abort_if($assignment->user_id !== auth()->id(), 403);
+        abort_if($assignment->status !== 'active', 422, 'Only active assignments can be sent for repair request.');
+
+        $data = $request->validate([
+            'priority' => ['required', 'in:low,medium,high,critical'],
+            'requested_date' => ['required', 'date'],
+            'issue_summary' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $openRepair = AssetRepair::where('asset_assignment_id', $assignment->id)
+            ->whereIn('status', AssetRepair::OPEN_STATUSES)
+            ->exists();
+
+        if ($openRepair) {
+            return back()->with('error', 'A repair request is already open for this asset.');
+        }
+
+        AssetRepair::create([
+            ...$data,
+            'organization_id' => auth()->user()->organization_id,
+            'asset_id' => $assignment->asset_id,
+            'asset_assignment_id' => $assignment->id,
+            'requested_by' => auth()->id(),
+            'repair_number' => 'REP-' . now()->format('YmdHis') . '-' . $assignment->id,
+            'source' => 'employee',
+            'repair_type' => 'internal',
+            'status' => 'request_raised',
+        ]);
+
+        return back()->with('success', 'Repair request submitted to Admin/IT Support.');
     }
 
     public function acceptHandover(Request $request, AssetHandoverRequest $handover)

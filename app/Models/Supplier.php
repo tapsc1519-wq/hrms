@@ -47,4 +47,14 @@ class Supplier extends Model
     {
         return $this->hasMany(MaintenanceRecord::class, 'vendor_id');
     }
+
+    public function assetRepairs(): HasMany
+    {
+        return $this->hasMany(AssetRepair::class, 'vendor_id');
+    }
+
+    public function amcContracts(): HasMany
+    {
+        return $this->hasMany(AssetAmcContract::class, 'vendor_id');
+    }
 }

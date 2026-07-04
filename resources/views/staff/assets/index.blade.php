@@ -118,6 +118,7 @@
     @php
         $asset = $assignment->asset;
         $openIssue = $openIssues->get($assignment->id);
+        $openRepair = $openRepairs->get($assignment->id);
     @endphp
     <div class="col-md-6 col-xl-4">
         <div class="table-card h-100" style="padding:0;overflow:hidden">
@@ -200,10 +201,21 @@
                         <div>{{ $openIssue->issue_type_label }} is {{ str_replace('_', ' ', $openIssue->status) }}.</div>
                     </div>
                     @endif
+                    @if($openRepair)
+                    <div class="alert alert-info py-2 px-3 mb-2" style="font-size:.78rem">
+                        <div class="fw-700"><i class="bi bi-wrench-adjustable me-1"></i>Repair requested</div>
+                        <div>{{ $openRepair->repair_number }} is {{ str_replace('_', ' ', $openRepair->status) }}.</div>
+                    </div>
+                    @endif
                     <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-warning flex-fill" data-bs-toggle="modal" data-bs-target="#repairModal{{ $assignment->id }}" {{ $openRepair ? 'disabled' : '' }}>
+                            <i class="bi bi-wrench-adjustable me-1"></i>Repair
+                        </button>
                         <button type="button" class="btn btn-outline-danger flex-fill" data-bs-toggle="modal" data-bs-target="#issueModal{{ $assignment->id }}" {{ $openIssue ? 'disabled' : '' }}>
                             <i class="bi bi-exclamation-circle me-1"></i>Report Issue
                         </button>
+                    </div>
+                    <div class="d-flex gap-2 mt-2">
                         <button type="button" class="btn btn-outline-primary flex-fill" data-bs-toggle="modal" data-bs-target="#handoverModal{{ $assignment->id }}">
                             <i class="bi bi-arrow-left-right me-1"></i>Handover
                         </button>
@@ -270,6 +282,53 @@
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-danger">
                             <i class="bi bi-send me-1"></i>Submit Issue
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="repairModal{{ $assignment->id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <form action="{{ route('staff.my-assets.repair-request', $assignment) }}" method="POST">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title mb-0">Request Asset Repair</h5>
+                            <small class="text-muted">{{ $asset->name }} · {{ $asset->asset_tag }}</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-light border rounded-3 mb-3" style="font-size:.82rem">
+                            Use repair request when the assigned asset is faulty and needs Admin/IT support to inspect, repair, send to vendor, or return after quality check.
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-700">Priority <span class="text-danger">*</span></label>
+                                <select name="priority" class="form-select" required>
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-700">Request Date <span class="text-danger">*</span></label>
+                                <input type="date" name="requested_date" class="form-control" value="{{ today()->format('Y-m-d') }}" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-700">What needs repair? <span class="text-danger">*</span></label>
+                                <textarea name="issue_summary" class="form-control" rows="4" maxlength="2000" required placeholder="Describe the fault, error, damage, or performance issue."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-send me-1"></i>Submit Repair Request
                         </button>
                     </div>
                 </div>

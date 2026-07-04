@@ -1109,6 +1109,7 @@
                 || $user?->hasPermission('suppliers.manage')
                 || $user?->hasPermission('purchase_orders.manage')
                 || $user?->hasPermission('maintenance.manage')
+                || $user?->hasPermission('asset.repairs.manage')
                 || $user?->hasPermission('assets.disposal')
                 || $user?->hasPermission('assets.disposal.request')
                 || $user?->hasPermission('assets.disposal.approve')
@@ -1199,6 +1200,16 @@
             <a href="{{ route('admin.asset-issues.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.asset-issues.*') ? 'active' : '' }}">
                 <i class="bi bi-exclamation-triangle-fill"></i> Asset Issues
+            </a>
+            @endif
+            @if($user->hasPermission('asset.repairs.manage'))
+            <a href="{{ route('admin.asset-repairs.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.asset-repairs.*') ? 'active' : '' }}">
+                <i class="bi bi-wrench-adjustable-circle-fill"></i> Asset Repairs
+            </a>
+            <a href="{{ route('admin.asset-amc-contracts.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.asset-amc-contracts.*') ? 'active' : '' }}">
+                <i class="bi bi-shield-check"></i> AMC Contracts
             </a>
             @endif
             @if($user->hasPermission('assets.disposal.request'))
@@ -1596,6 +1607,16 @@
             <a href="{{ route('admin.asset-issues.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.asset-issues.*') ? 'active' : '' }}">
                 <i class="bi bi-exclamation-triangle-fill"></i> Asset Issues
+            </a>
+            @endif
+            @if($user->hasPermission('asset.repairs.manage'))
+            <a href="{{ route('admin.asset-repairs.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.asset-repairs.*') ? 'active' : '' }}">
+                <i class="bi bi-wrench-adjustable-circle-fill"></i> Asset Repairs
+            </a>
+            <a href="{{ route('admin.asset-amc-contracts.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.asset-amc-contracts.*') ? 'active' : '' }}">
+                <i class="bi bi-shield-check"></i> AMC Contracts
             </a>
             @endif
             @if($user->hasPermission('assets.disposal.request'))

@@ -150,6 +150,13 @@
                     <i class="bi bi-person-check me-1"></i>Assign
                 </a>
                 @endif
+                @if(auth()->user()->hasPermission('asset.repairs.manage'))
+                <a href="{{ $asset->activeRepair ? route('admin.asset-repairs.show', $asset->activeRepair) : route('admin.asset-repairs.create', ['asset_id' => $asset->id]) }}"
+                   class="btn btn-sm"
+                   style="background:#f59e0b;border:none;color:#fff;border-radius:8px;font-size:.78rem;font-weight:600;padding:.35rem .9rem">
+                    <i class="bi bi-wrench-adjustable me-1"></i>{{ $asset->activeRepair ? 'Open Repair' : 'Repair' }}
+                </a>
+                @endif
                 @if($asset->activeDisposal)
                 <a href="{{ route('admin.disposals.show', $asset->activeDisposal) }}"
                    class="btn btn-sm"
@@ -487,9 +494,50 @@
                 <div class="row g-2">
                     <div class="col-6"><div class="stat-mini"><div class="stat-mini-val">{{ $asset->assignments->count() }}</div><div class="stat-mini-lbl">Assignments</div></div></div>
                     <div class="col-6"><div class="stat-mini"><div class="stat-mini-val">{{ $asset->maintenanceRecords->count() }}</div><div class="stat-mini-lbl">Maintenance</div></div></div>
-                    <div class="col-12"><div class="stat-mini"><div class="stat-mini-val" style="font-size:1.2rem">&#8377;{{ number_format($asset->maintenanceRecords->sum('total_cost'),0) }}</div><div class="stat-mini-lbl">Maintenance Cost</div></div></div>
+                    <div class="col-6"><div class="stat-mini"><div class="stat-mini-val">{{ $asset->repairs->count() }}</div><div class="stat-mini-lbl">Repairs</div></div></div>
+                    <div class="col-6"><div class="stat-mini"><div class="stat-mini-val" style="font-size:1.2rem">&#8377;{{ number_format($asset->maintenanceRecords->sum('total_cost'),0) }}</div><div class="stat-mini-lbl">Maintenance Cost</div></div></div>
+                    <div class="col-6"><div class="stat-mini"><div class="stat-mini-val" style="font-size:1.2rem">&#8377;{{ number_format($asset->repairs->sum('total_cost'),0) }}</div><div class="stat-mini-lbl">Repair Cost</div></div></div>
                 </div>
             </div>
+        </div>
+
+        {{-- Repairs --}}
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <div class="detail-card-title">
+                    <div class="di" style="background:#fffbeb;color:#d97706"><i class="bi bi-wrench-adjustable"></i></div>
+                    Repair History
+                    <span style="background:#f1f5f9;color:#64748b;border-radius:6px;padding:.05rem .45rem;font-size:.72rem;font-weight:800;margin-left:.2rem">{{ $asset->repairs->count() }}</span>
+                </div>
+                @if(auth()->user()->hasPermission('asset.repairs.manage'))
+                <a href="{{ $asset->activeRepair ? route('admin.asset-repairs.show', $asset->activeRepair) : route('admin.asset-repairs.create', ['asset_id' => $asset->id]) }}"
+                   style="font-size:.72rem;font-weight:700;color:#d97706;text-decoration:none;background:#fffbeb;padding:.25rem .65rem;border-radius:8px">
+                    <i class="bi bi-plus-lg me-1"></i>{{ $asset->activeRepair ? 'Open Repair' : 'Create Repair' }}
+                </a>
+                @endif
+            </div>
+            @forelse($asset->repairs->sortByDesc('requested_date')->take(6) as $repair)
+            <div style="padding:.7rem 1.25rem;border-bottom:1px solid #f8fafc;font-size:.8rem">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <a href="{{ route('admin.asset-repairs.show', $repair) }}" class="fw-bold text-decoration-none">{{ $repair->repair_number }}</a>
+                        <div class="text-muted">{{ $repair->repair_type_label }} · {{ $repair->requestedBy?->name ?? 'Admin/IT' }}</div>
+                    </div>
+                    <span class="badge bg-{{ $repair->status_badge }}">{{ $repair->status_label }}</span>
+                </div>
+                <div class="text-muted mt-1">
+                    {{ $repair->requested_date?->format('d-m-Y') ?? 'Date not set' }}
+                    @if($repair->total_cost > 0)
+                        · &#8377;{{ number_format((float) $repair->total_cost, 2) }}
+                    @endif
+                </div>
+            </div>
+            @empty
+            <div style="padding:1.5rem;text-align:center;color:#94a3b8">
+                <i class="bi bi-wrench-adjustable text-warning" style="font-size:1.5rem;display:block;margin-bottom:.4rem"></i>
+                <div style="font-size:.82rem;font-weight:600">No repair jobs</div>
+            </div>
+            @endforelse
         </div>
 
         {{-- Maintenance --}}
