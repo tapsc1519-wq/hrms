@@ -1212,6 +1212,10 @@
                class="sidebar-link {{ request()->routeIs('admin.asset-amc-contracts.*') ? 'active' : '' }}">
                 <i class="bi bi-shield-check"></i> AMC Contracts
             </a>
+            <a href="{{ route('admin.vendors.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.vendors.*') ? 'active' : '' }}">
+                <i class="bi bi-tools"></i> Vendors
+            </a>
             @endif
             @if($user->hasPermission('assets.disposal.request'))
             <a href="{{ route('admin.disposals.requests') }}"
@@ -1236,10 +1240,6 @@
             <a href="{{ route('admin.suppliers.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.suppliers.*') ? 'active' : '' }}">
                 <i class="bi bi-building-fill"></i> Suppliers
-            </a>
-            <a href="{{ route('admin.vendors.index') }}"
-               class="sidebar-link {{ request()->routeIs('admin.vendors.*') ? 'active' : '' }}">
-                <i class="bi bi-tools"></i> Vendors
             </a>
             <a href="{{ route('admin.purchase-orders.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.purchase-orders.*') ? 'active' : '' }}">
