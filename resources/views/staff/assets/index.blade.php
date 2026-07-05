@@ -103,6 +103,35 @@
 </div>
 @endif
 
+@if($recentRepairs->isNotEmpty())
+<div class="table-card mb-4" style="padding:0;overflow:hidden">
+    <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="background:#fffbeb">
+        <div>
+            <div class="fw-700" style="color:#b45309"><i class="bi bi-wrench-adjustable me-2"></i>Recent Repair Requests</div>
+            <div class="text-muted small">Track the latest repair activity for your assigned assets.</div>
+        </div>
+        <a href="{{ route('staff.my-assets.repairs') }}" class="btn btn-sm btn-warning">View All</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0" style="font-size:.84rem">
+            <tbody>
+            @foreach($recentRepairs as $repair)
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-bold">{{ $repair->asset?->name }}</div>
+                        <div class="text-muted small">{{ $repair->repair_number }} - {{ $repair->requested_date?->format('d-m-Y') }}</div>
+                    </td>
+                    <td>{{ $repair->repair_type_label }}</td>
+                    <td><span class="badge bg-{{ $repair->status_badge }}">{{ $repair->status_label }}</span></td>
+                    <td class="text-end pe-4">{{ $repair->expected_return_date ? 'Expected '.$repair->expected_return_date->format('d-m-Y') : 'Expected date pending' }}</td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
 @if($assignments->isEmpty())
 <div class="table-card text-center py-5">
     <i class="bi bi-box-seam fs-1 d-block mb-3 opacity-25"></i>
@@ -291,7 +320,7 @@
 
     <div class="modal fade" id="repairModal{{ $assignment->id }}" tabindex="-1">
         <div class="modal-dialog">
-            <form action="{{ route('staff.my-assets.repair-request', $assignment) }}" method="POST">
+            <form action="{{ route('staff.my-assets.repair-request', $assignment) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-content">
                     <div class="modal-header">
@@ -322,6 +351,11 @@
                             <div class="col-12">
                                 <label class="form-label small fw-700">What needs repair? <span class="text-danger">*</span></label>
                                 <textarea name="issue_summary" class="form-control" rows="4" maxlength="2000" required placeholder="Describe the fault, error, damage, or performance issue."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-700">Photos / Documents</label>
+                                <input type="file" name="attachments[]" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt,.zip">
+                                <div class="form-text">Optional. Upload up to 5 files, 10 MB each.</div>
                             </div>
                         </div>
                     </div>

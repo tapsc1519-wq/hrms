@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\AssetAmcContract;
 use App\Models\AssetRepair;
+use App\Models\AssetRepairAttachment;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class AssetRepairController extends Controller
 {
@@ -119,6 +121,7 @@ class AssetRepairController extends Controller
             'vendor',
             'amcContract',
             'parts',
+            'attachments.uploadedBy',
         ]);
 
         $suppliers = Supplier::where('organization_id', $this->orgId())->whereIn('partner_type', ['vendor', 'both'])->where('status', 'active')->orderBy('name')->get();
@@ -206,6 +209,46 @@ class AssetRepairController extends Controller
         });
 
         return redirect()->route('admin.asset-repairs.index')->with('success', 'Repair job closed and asset status updated.');
+    }
+
+    public function storeAttachment(Request $request, AssetRepair $assetRepair)
+    {
+        $this->authorizeRepair($assetRepair);
+
+        $data = $request->validate([
+            'type' => ['required', 'in:invoice,repair_photo,warranty_document,estimate,supporting_document'],
+            'visibility' => ['required', 'in:internal,employee'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'files' => ['required', 'array', 'max:5'],
+            'files.*' => ['file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx,txt,zip'],
+        ]);
+
+        foreach ($request->file('files', []) as $file) {
+            $assetRepair->attachments()->create([
+                'organization_id' => $this->orgId(),
+                'uploaded_by' => auth()->id(),
+                'type' => $data['type'],
+                'visibility' => $data['visibility'],
+                'file_path' => $file->store('asset-repairs/' . $assetRepair->id, 'public'),
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getClientMimeType(),
+                'file_size' => $file->getSize(),
+                'notes' => $data['notes'] ?? null,
+            ]);
+        }
+
+        return back()->with('success', 'Repair attachment uploaded.');
+    }
+
+    public function destroyAttachment(AssetRepair $assetRepair, AssetRepairAttachment $attachment)
+    {
+        $this->authorizeRepair($assetRepair);
+        abort_if($attachment->asset_repair_id !== $assetRepair->id || $attachment->organization_id !== $this->orgId(), 403);
+
+        Storage::disk('public')->delete($attachment->file_path);
+        $attachment->delete();
+
+        return back()->with('success', 'Repair attachment removed.');
     }
 
     private function validatedRepairData(Request $request, bool $creating): array

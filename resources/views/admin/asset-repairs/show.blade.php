@@ -246,6 +246,63 @@
         </div>
 
         <div class="form-card">
+            <div class="form-card-header"><span class="icon-wrap icon-blue"><i class="bi bi-paperclip"></i></span>Repair Documents</div>
+            <div class="form-card-body">
+                <form method="POST" action="{{ route('admin.asset-repairs.attachments.store', $assetRepair) }}" enctype="multipart/form-data" class="mb-3">
+                    @csrf
+                    <div class="mb-2">
+                        <label class="form-label">Document Type</label>
+                        <select name="type" class="form-select form-select-sm" required>
+                            <option value="invoice">Invoice</option>
+                            <option value="estimate">Repair Estimate</option>
+                            <option value="repair_photo">Repair Photo</option>
+                            <option value="warranty_document">Warranty Document</option>
+                            <option value="supporting_document">Supporting Document</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Visibility</label>
+                        <select name="visibility" class="form-select form-select-sm" required>
+                            <option value="internal">Internal only</option>
+                            <option value="employee">Visible to employee</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Files</label>
+                        <input type="file" name="files[]" class="form-control form-control-sm" multiple required accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt,.zip">
+                        <div class="form-text">Upload up to 5 files, 10 MB each.</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control form-control-sm" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-upload me-1"></i>Upload Documents</button>
+                </form>
+
+                @forelse($assetRepair->attachments as $attachment)
+                    <div class="border rounded-3 p-2 mb-2">
+                        <div class="d-flex justify-content-between gap-2">
+                            <div class="min-w-0">
+                                <a href="{{ $attachment->url }}" target="_blank" class="fw-bold text-decoration-none text-truncate d-block">{{ $attachment->original_name }}</a>
+                                <div class="text-muted small">{{ $attachment->type_label }} - {{ $attachment->file_size_human }} - {{ ucfirst($attachment->visibility) }}</div>
+                                @if($attachment->notes)
+                                    <div class="small mt-1">{{ $attachment->notes }}</div>
+                                @endif
+                            </div>
+                            <form method="POST" action="{{ route('admin.asset-repairs.attachments.destroy', [$assetRepair, $attachment]) }}" onsubmit="return confirm('Remove this document?')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center text-muted py-3 small">No repair documents uploaded yet.</div>
+                @endforelse
+            </div>
+        </div>
+
+        <div class="form-card">
             <div class="form-card-header"><span class="icon-wrap icon-green"><i class="bi bi-check2-square"></i></span>Close Repair</div>
             <div class="form-card-body">
                 <form method="POST" action="{{ route('admin.asset-repairs.close', $assetRepair) }}">

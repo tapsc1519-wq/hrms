@@ -57,7 +57,25 @@ class AssetController extends Controller
             ->get()
             ->keyBy('asset_assignment_id');
 
-        return view('staff.assets.index', compact('assignments', 'staffUsers', 'incomingHandovers', 'outgoingHandovers', 'openIssues', 'openRepairs'));
+        $recentRepairs = AssetRepair::where('requested_by', auth()->id())
+            ->with(['asset.category'])
+            ->latest('requested_date')
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('staff.assets.index', compact('assignments', 'staffUsers', 'incomingHandovers', 'outgoingHandovers', 'openIssues', 'openRepairs', 'recentRepairs'));
+    }
+
+    public function repairs()
+    {
+        $repairs = AssetRepair::where('requested_by', auth()->id())
+            ->with(['asset.category', 'vendor', 'amcContract', 'attachments' => fn($query) => $query->where('visibility', 'employee')->latest()])
+            ->latest('requested_date')
+            ->latest()
+            ->paginate(15);
+
+        return view('staff.assets.repairs', compact('repairs'));
     }
 
     public function handover(Request $request, AssetAssignment $assignment)
@@ -161,6 +179,8 @@ class AssetController extends Controller
             'priority' => ['required', 'in:low,medium,high,critical'],
             'requested_date' => ['required', 'date'],
             'issue_summary' => ['required', 'string', 'max:2000'],
+            'attachments' => ['array', 'max:5'],
+            'attachments.*' => ['file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,txt,zip'],
         ]);
 
         $openRepair = AssetRepair::where('asset_assignment_id', $assignment->id)
@@ -171,7 +191,9 @@ class AssetController extends Controller
             return back()->with('error', 'A repair request is already open for this asset.');
         }
 
-        AssetRepair::create([
+        unset($data['attachments']);
+
+        $repair = AssetRepair::create([
             ...$data,
             'organization_id' => auth()->user()->organization_id,
             'asset_id' => $assignment->asset_id,
@@ -182,6 +204,19 @@ class AssetController extends Controller
             'repair_type' => 'internal',
             'status' => 'request_raised',
         ]);
+
+        foreach ($request->file('attachments', []) as $file) {
+            $repair->attachments()->create([
+                'organization_id' => auth()->user()->organization_id,
+                'uploaded_by' => auth()->id(),
+                'type' => 'repair_photo',
+                'visibility' => 'employee',
+                'file_path' => $file->store('asset-repairs/' . $repair->id, 'public'),
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getClientMimeType(),
+                'file_size' => $file->getSize(),
+            ]);
+        }
 
         return back()->with('success', 'Repair request submitted to Admin/IT Support.');
     }

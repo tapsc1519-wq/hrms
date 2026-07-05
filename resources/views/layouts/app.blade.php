@@ -1478,8 +1478,12 @@
             @endif
             @if($hasItam)
             <a href="{{ route('staff.my-assets.index') }}"
-               class="sidebar-link {{ request()->routeIs('staff.my-assets.*') ? 'active' : '' }}">
+               class="sidebar-link {{ request()->routeIs('staff.my-assets.index') ? 'active' : '' }}">
                 <i class="bi bi-box-seam-fill"></i> My Assets
+            </a>
+            <a href="{{ route('staff.my-assets.repairs') }}"
+               class="sidebar-link {{ request()->routeIs('staff.my-assets.repairs') ? 'active' : '' }}">
+                <i class="bi bi-wrench-adjustable"></i> My Repairs
             </a>
             <a href="{{ route('staff.requests.index') }}"
                class="sidebar-link {{ request()->routeIs('staff.requests.*') ? 'active' : '' }}">

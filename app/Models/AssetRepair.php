@@ -141,6 +141,11 @@ class AssetRepair extends Model
         return $this->hasMany(AssetRepairPart::class);
     }
 
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(AssetRepairAttachment::class);
+    }
+
     public function getStatusLabelAttribute(): string
     {
         return ucwords(str_replace('_', ' ', $this->status));

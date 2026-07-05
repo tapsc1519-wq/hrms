@@ -140,6 +140,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::post('asset-repairs', [AssetRepairController::class, 'store'])->middleware('permission:asset.repairs.manage')->name('asset-repairs.store');
     Route::get('asset-repairs/{assetRepair}', [AssetRepairController::class, 'show'])->middleware('permission:asset.repairs.manage')->name('asset-repairs.show');
     Route::patch('asset-repairs/{assetRepair}', [AssetRepairController::class, 'update'])->middleware('permission:asset.repairs.manage')->name('asset-repairs.update');
+    Route::post('asset-repairs/{assetRepair}/attachments', [AssetRepairController::class, 'storeAttachment'])->middleware('permission:asset.repairs.manage')->name('asset-repairs.attachments.store');
+    Route::delete('asset-repairs/{assetRepair}/attachments/{attachment}', [AssetRepairController::class, 'destroyAttachment'])->middleware('permission:asset.repairs.manage')->name('asset-repairs.attachments.destroy');
     Route::patch('asset-repairs/{assetRepair}/quality-check', [AssetRepairController::class, 'qualityCheck'])->middleware('permission:asset.repairs.qc')->name('asset-repairs.quality-check');
     Route::patch('asset-repairs/{assetRepair}/close', [AssetRepairController::class, 'close'])->middleware('permission:asset.repairs.close')->name('asset-repairs.close');
     Route::resource('asset-amc-contracts', AssetAmcContractController::class)->except(['show', 'destroy'])->middleware('permission:asset.repairs.manage');
@@ -393,6 +395,7 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'role:staff'])->grou
 
     Route::middleware('module:itam')->group(function () {
     Route::get('my-assets', [StaffAssetController::class, 'index'])->name('my-assets.index');
+    Route::get('my-assets/repairs', [StaffAssetController::class, 'repairs'])->name('my-assets.repairs');
     Route::post('my-assets/{assignment}/issue-report', [StaffAssetController::class, 'reportIssue'])->name('my-assets.issue-report');
     Route::post('my-assets/{assignment}/repair-request', [StaffAssetController::class, 'requestRepair'])->name('my-assets.repair-request');
     Route::patch('my-assets/{assignment}/handover', [StaffAssetController::class, 'handover'])->name('my-assets.handover');
