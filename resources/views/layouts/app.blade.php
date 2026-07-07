@@ -222,9 +222,17 @@
     .sidebar-group-body {
         display: flex;
         flex-direction: column;
+        max-height: 900px;
+        opacity: 1;
         overflow: hidden;
+        transition: max-height .24s ease, opacity .18s ease;
+        will-change: max-height, opacity;
     }
-    .sidebar-group-body.collapsed { display: none; }
+    .sidebar-group-body.collapsed {
+        max-height: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
     .sidebar-group-body .sidebar-link { margin-block: .05rem; }
 
     /* Sidebar user footer */
@@ -2050,6 +2058,7 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
             if (otherBody === activeBody) return;
 
             var otherToggle = otherBody.previousElementSibling;
+            otherBody.style.maxHeight = '0px';
             otherBody.classList.add('collapsed');
             if (otherToggle && otherToggle.classList.contains('sidebar-group-toggle')) {
                 otherToggle.classList.add('collapsed');
@@ -2095,6 +2104,7 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
             if (open && collapseOthers !== false) {
                 collapseOtherGroups(body);
             }
+            body.style.maxHeight = open ? body.scrollHeight + 'px' : '0px';
             body.classList.toggle('collapsed', !open);
             toggle.classList.toggle('collapsed', !open);
             toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -2109,6 +2119,12 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
             link.addEventListener('click', function () {
                 setOpen(true);
             });
+        });
+    });
+
+    window.addEventListener('resize', function () {
+        Array.from(nav.querySelectorAll('.sidebar-group-body:not(.collapsed)')).forEach(function (body) {
+            body.style.maxHeight = body.scrollHeight + 'px';
         });
     });
 })();
