@@ -1203,20 +1203,6 @@
                 <i class="bi bi-exclamation-triangle-fill"></i> Asset Issues
             </a>
             @endif
-            @if($user->hasPermission('asset.repairs.manage'))
-            <a href="{{ route('admin.asset-repairs.index') }}"
-               class="sidebar-link {{ request()->routeIs('admin.asset-repairs.*') ? 'active' : '' }}">
-                <i class="bi bi-wrench-adjustable-circle-fill"></i> Asset Repairs
-            </a>
-            <a href="{{ route('admin.asset-amc-contracts.index') }}"
-               class="sidebar-link {{ request()->routeIs('admin.asset-amc-contracts.*') ? 'active' : '' }}">
-                <i class="bi bi-shield-check"></i> AMC Contracts
-            </a>
-            <a href="{{ route('admin.vendors.index') }}"
-               class="sidebar-link {{ request()->routeIs('admin.vendors.*') ? 'active' : '' }}">
-                <i class="bi bi-tools"></i> Vendors
-            </a>
-            @endif
             @if($user->hasPermission('assets.disposal.request'))
             <a href="{{ route('admin.disposals.requests') }}"
                class="sidebar-link {{ request()->routeIs('admin.disposals.requests') || request()->routeIs('admin.disposals.create') || request()->routeIs('admin.disposals.bulk') ? 'active' : '' }}">
@@ -1234,6 +1220,34 @@
                class="sidebar-link {{ request()->routeIs('admin.disposals.history') ? 'active' : '' }}">
                 <i class="bi bi-clock-history"></i> Disposal History
             </a>
+            @endif
+
+            @if($user->hasPermission('asset.repairs.manage') || $user->hasPermission('asset.repairs.qc') || $user->hasPermission('asset.repairs.close') || $user->hasPermission('vendors.manage') || $user->hasPermission('reports.view'))
+            <div class="sidebar-section-title">AMC & Repairs</div>
+            @if($user->hasPermission('asset.repairs.manage') || $user->hasPermission('asset.repairs.qc') || $user->hasPermission('asset.repairs.close'))
+            <a href="{{ route('admin.asset-repairs.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.asset-repairs.*') ? 'active' : '' }}">
+                <i class="bi bi-wrench-adjustable-circle-fill"></i> Repair Jobs
+            </a>
+            @endif
+            @if($user->hasPermission('asset.repairs.manage'))
+            <a href="{{ route('admin.asset-amc-contracts.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.asset-amc-contracts.*') ? 'active' : '' }}">
+                <i class="bi bi-shield-check"></i> AMC Contracts
+            </a>
+            @endif
+            @if($user->hasPermission('vendors.manage'))
+            <a href="{{ route('admin.vendors.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.vendors.*') ? 'active' : '' }}">
+                <i class="bi bi-tools"></i> Repair Vendors
+            </a>
+            @endif
+            @if($user->hasPermission('reports.view'))
+            <a href="{{ route('admin.reports.maintenance') }}"
+               class="sidebar-link {{ request()->routeIs('admin.reports.maintenance') ? 'active' : '' }}">
+                <i class="bi bi-clipboard-data"></i> Repair Reports
+            </a>
+            @endif
             @endif
 
             <div class="sidebar-section-title">Procurement</div>
@@ -1627,16 +1641,6 @@
                 <i class="bi bi-exclamation-triangle-fill"></i> Asset Issues
             </a>
             @endif
-            @if($user->hasPermission('asset.repairs.manage'))
-            <a href="{{ route('admin.asset-repairs.index') }}"
-               class="sidebar-link {{ request()->routeIs('admin.asset-repairs.*') ? 'active' : '' }}">
-                <i class="bi bi-wrench-adjustable-circle-fill"></i> Asset Repairs
-            </a>
-            <a href="{{ route('admin.asset-amc-contracts.index') }}"
-               class="sidebar-link {{ request()->routeIs('admin.asset-amc-contracts.*') ? 'active' : '' }}">
-                <i class="bi bi-shield-check"></i> AMC Contracts
-            </a>
-            @endif
             @if($user->hasPermission('assets.disposal.request'))
             <a href="{{ route('admin.disposals.requests') }}"
                class="sidebar-link {{ request()->routeIs('admin.disposals.requests') || request()->routeIs('admin.disposals.create') || request()->routeIs('admin.disposals.bulk') ? 'active' : '' }}">
@@ -1655,16 +1659,41 @@
                 <i class="bi bi-clock-history"></i> Disposal History
             </a>
             @endif
-            @if($user->hasPermission('suppliers.manage'))
-            <a href="{{ route('admin.suppliers.index') }}"
-               class="sidebar-link {{ request()->routeIs('admin.suppliers.*') ? 'active' : '' }}">
-                <i class="bi bi-building-fill"></i> Suppliers
+
+            @if($user->hasPermission('asset.repairs.manage') || $user->hasPermission('asset.repairs.qc') || $user->hasPermission('asset.repairs.close') || $user->hasPermission('vendors.manage') || $user->hasPermission('reports.view'))
+            <div class="sidebar-section-title">AMC & Repairs</div>
+            @if($user->hasPermission('asset.repairs.manage') || $user->hasPermission('asset.repairs.qc') || $user->hasPermission('asset.repairs.close'))
+            <a href="{{ route('admin.asset-repairs.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.asset-repairs.*') ? 'active' : '' }}">
+                <i class="bi bi-wrench-adjustable-circle-fill"></i> Repair Jobs
+            </a>
+            @endif
+            @if($user->hasPermission('asset.repairs.manage'))
+            <a href="{{ route('admin.asset-amc-contracts.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.asset-amc-contracts.*') ? 'active' : '' }}">
+                <i class="bi bi-shield-check"></i> AMC Contracts
             </a>
             @endif
             @if($user->hasPermission('vendors.manage'))
             <a href="{{ route('admin.vendors.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.vendors.*') ? 'active' : '' }}">
-                <i class="bi bi-tools"></i> Vendors
+                <i class="bi bi-tools"></i> Repair Vendors
+            </a>
+            @endif
+            @if($user->hasPermission('reports.view'))
+            <a href="{{ route('admin.reports.maintenance') }}"
+               class="sidebar-link {{ request()->routeIs('admin.reports.maintenance') ? 'active' : '' }}">
+                <i class="bi bi-clipboard-data"></i> Repair Reports
+            </a>
+            @endif
+            @endif
+
+            @if($user->hasPermission('suppliers.manage') || $user->hasPermission('purchase_orders.manage'))
+            <div class="sidebar-section-title">Procurement</div>
+            @if($user->hasPermission('suppliers.manage'))
+            <a href="{{ route('admin.suppliers.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.suppliers.*') ? 'active' : '' }}">
+                <i class="bi bi-building-fill"></i> Suppliers
             </a>
             @endif
             @if($user->hasPermission('purchase_orders.manage'))
@@ -1672,6 +1701,7 @@
                class="sidebar-link {{ request()->routeIs('admin.purchase-orders.*') ? 'active' : '' }}">
                 <i class="bi bi-file-earmark-text-fill"></i> Purchase Orders
             </a>
+            @endif
             @endif
             @if($user->hasPermission('maintenance.manage'))
             <a href="{{ route('admin.maintenance.index') }}"

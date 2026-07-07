@@ -22,9 +22,6 @@ class PermissionRegistry
                 'assets.disposal.approve' => 'Approve or reject disposal requests',
                 'assets.disposal.complete' => 'Complete approved disposals',
                 'assets.disposal.view' => 'View disposal history',
-                'asset.repairs.manage' => 'Manage asset repairs and AMC workflow',
-                'asset.repairs.qc' => 'Perform asset repair quality checks',
-                'asset.repairs.close' => 'Close repair jobs and return assets',
             ],
             'Assignments' => [
                 'assignments.view' => 'View assignments',
@@ -38,8 +35,13 @@ class PermissionRegistry
             ],
             'Suppliers & Purchases' => [
                 'suppliers.manage' => 'Manage suppliers',
-                'vendors.manage' => 'Manage repair and service vendors',
                 'purchase_orders.manage' => 'Manage purchase orders',
+            ],
+            'AMC & Repairs' => [
+                'asset.repairs.manage' => 'Manage repair jobs and AMC contracts',
+                'asset.repairs.qc' => 'Perform repair quality checks',
+                'asset.repairs.close' => 'Close repair jobs and return assets',
+                'vendors.manage' => 'Manage repair and service vendors',
             ],
             'Operations' => [
                 'maintenance.manage' => 'Manage maintenance',
