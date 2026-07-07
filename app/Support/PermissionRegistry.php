@@ -17,11 +17,13 @@ class PermissionRegistry
                 'assets.delete' => 'Delete assets',
                 'assets.import' => 'Bulk import assets',
                 'assets.catalog' => 'Manage asset catalog',
+            ],
+            'Asset Disposal' => [
                 'assets.disposal' => 'Manage asset disposal',
                 'assets.disposal.request' => 'Raise disposal requests',
                 'assets.disposal.approve' => 'Approve or reject disposal requests',
                 'assets.disposal.complete' => 'Complete approved disposals',
-                'assets.disposal.view' => 'View disposal history',
+                'assets.disposal.view' => 'View disposal history and issue reports',
             ],
             'Assignments' => [
                 'assignments.view' => 'View assignments',

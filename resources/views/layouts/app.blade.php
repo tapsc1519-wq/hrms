@@ -1197,10 +1197,12 @@
                class="sidebar-link {{ request()->routeIs('admin.requests.*') ? 'active' : '' }}">
                 <i class="bi bi-clipboard-check-fill"></i> Requests
             </a>
+            @if($user->hasPermission('assets.disposal.view') || $user->hasPermission('assets.disposal.request') || $user->hasPermission('assets.disposal.approve') || $user->hasPermission('assets.disposal.complete'))
+            <div class="sidebar-section-title">Asset Disposal</div>
             @if($user->hasPermission('assets.disposal.view'))
             <a href="{{ route('admin.asset-issues.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.asset-issues.*') ? 'active' : '' }}">
-                <i class="bi bi-exclamation-triangle-fill"></i> Asset Issues
+                <i class="bi bi-exclamation-triangle-fill"></i> Reported Issues
             </a>
             @endif
             @if($user->hasPermission('assets.disposal.request'))
@@ -1220,6 +1222,7 @@
                class="sidebar-link {{ request()->routeIs('admin.disposals.history') ? 'active' : '' }}">
                 <i class="bi bi-clock-history"></i> Disposal History
             </a>
+            @endif
             @endif
 
             @if($user->hasPermission('asset.repairs.manage') || $user->hasPermission('asset.repairs.qc') || $user->hasPermission('asset.repairs.close') || $user->hasPermission('vendors.manage') || $user->hasPermission('reports.view'))
@@ -1635,10 +1638,12 @@
                 <i class="bi bi-clipboard-check-fill"></i> Asset Requests
             </a>
             @endif
+            @if($user->hasPermission('assets.disposal.view') || $user->hasPermission('assets.disposal.request') || $user->hasPermission('assets.disposal.approve') || $user->hasPermission('assets.disposal.complete'))
+            <div class="sidebar-section-title">Asset Disposal</div>
             @if($user->hasPermission('assets.disposal.view'))
             <a href="{{ route('admin.asset-issues.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.asset-issues.*') ? 'active' : '' }}">
-                <i class="bi bi-exclamation-triangle-fill"></i> Asset Issues
+                <i class="bi bi-exclamation-triangle-fill"></i> Reported Issues
             </a>
             @endif
             @if($user->hasPermission('assets.disposal.request'))
@@ -1658,6 +1663,7 @@
                class="sidebar-link {{ request()->routeIs('admin.disposals.history') ? 'active' : '' }}">
                 <i class="bi bi-clock-history"></i> Disposal History
             </a>
+            @endif
             @endif
 
             @if($user->hasPermission('asset.repairs.manage') || $user->hasPermission('asset.repairs.qc') || $user->hasPermission('asset.repairs.close') || $user->hasPermission('vendors.manage') || $user->hasPermission('reports.view'))
