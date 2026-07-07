@@ -2045,6 +2045,22 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
     if (!nav || nav.dataset.grouped === '1') return;
     nav.dataset.grouped = '1';
 
+    function collapseOtherGroups(activeBody) {
+        Array.from(nav.querySelectorAll('.sidebar-group-body')).forEach(function (otherBody) {
+            if (otherBody === activeBody) return;
+
+            var otherToggle = otherBody.previousElementSibling;
+            otherBody.classList.add('collapsed');
+            if (otherToggle && otherToggle.classList.contains('sidebar-group-toggle')) {
+                otherToggle.classList.add('collapsed');
+                otherToggle.setAttribute('aria-expanded', 'false');
+            }
+            if (otherBody.dataset.storageKey) {
+                localStorage.setItem(otherBody.dataset.storageKey, 'closed');
+            }
+        });
+    }
+
     Array.from(nav.querySelectorAll('.sidebar-section-title')).forEach(function (title, index) {
         var label = title.textContent.trim();
         if (!label) return;
@@ -2070,11 +2086,15 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
         toggle.insertAdjacentElement('afterend', body);
 
         var storageKey = 'sidebar-group:' + label;
+        body.dataset.storageKey = storageKey;
         var hasActive = !!body.querySelector('.sidebar-link.active');
         var saved = localStorage.getItem(storageKey);
         var shouldOpen = hasActive || label.toLowerCase() === 'overview' || saved === 'open';
 
-        function setOpen(open) {
+        function setOpen(open, collapseOthers) {
+            if (open && collapseOthers !== false) {
+                collapseOtherGroups(body);
+            }
             body.classList.toggle('collapsed', !open);
             toggle.classList.toggle('collapsed', !open);
             toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -2084,6 +2104,11 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
         setOpen(shouldOpen);
         toggle.addEventListener('click', function () {
             setOpen(body.classList.contains('collapsed'));
+        });
+        body.querySelectorAll('.sidebar-link').forEach(function (link) {
+            link.addEventListener('click', function () {
+                setOpen(true);
+            });
         });
     });
 })();
