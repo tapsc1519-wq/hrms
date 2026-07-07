@@ -47,7 +47,19 @@
                         <div class="p-3 rounded-3 border bg-light">
                             <div class="text-muted small text-uppercase fw-bold">Method</div>
                             <div class="fw-bold">{{ $disposal->method_label }}</div>
-                            <div class="small text-muted">{{ $disposal->recipient_name ?: 'No recipient recorded' }}</div>
+                            <div class="small text-muted">{{ $disposal->disposalBuyer?->name ?? $disposal->recipient_name ?? 'No recipient recorded' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light">
+                            <div class="text-muted small text-uppercase fw-bold">Buyer / Recipient</div>
+                            <div class="fw-bold">{{ $disposal->disposalBuyer?->name ?? $disposal->recipient_name ?? 'Not selected' }}</div>
+                            <div class="small text-muted">
+                                {{ $disposal->disposalBuyer?->type_label ?? 'One-time / manual entry' }}
+                                @if($disposal->payment_status)
+                                    &middot; Payment: {{ ucwords(str_replace('_', ' ', $disposal->payment_status)) }}
+                                @endif
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -119,6 +131,9 @@
                                 @if($disposal->certificate_number)
                                     <div class="text-muted small">Certificate: {{ $disposal->certificate_number }}</div>
                                 @endif
+                                @if($disposal->handover_reference)
+                                    <div class="text-muted small">Handover: {{ $disposal->handover_reference }}</div>
+                                @endif
                             </div>
                         </div>
                     @endif
@@ -170,12 +185,35 @@
                             <input type="number" step="0.01" min="0" name="disposal_cost" class="form-control">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Recipient / Recycler / Buyer</label>
+                            <label class="form-label">Saved Buyer / Recipient</label>
+                            <select name="disposal_buyer_id" class="form-select">
+                                <option value="">No saved buyer</option>
+                                @foreach($buyers as $buyer)
+                                    <option value="{{ $buyer->id }}" @selected(old('disposal_buyer_id', $disposal->disposal_buyer_id) == $buyer->id)>
+                                        {{ $buyer->name }} - {{ $buyer->type_label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">One-time Buyer / Recipient</label>
                             <input type="text" name="recipient_name" value="{{ $disposal->recipient_name }}" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Payment Status <span class="req">*</span></label>
+                            <select name="payment_status" class="form-select" required>
+                                @foreach(['not_required' => 'Not Required', 'pending' => 'Pending', 'partial' => 'Partial', 'paid' => 'Paid'] as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('payment_status', $disposal->payment_status ?? 'not_required') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Certificate Number</label>
                             <input type="text" name="certificate_number" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Handover / Invoice Reference</label>
+                            <input type="text" name="handover_reference" class="form-control">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Completion Notes</label>

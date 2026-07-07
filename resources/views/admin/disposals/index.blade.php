@@ -118,6 +118,7 @@
                 <tr>
                     <th class="ps-4">Asset</th>
                     <th>Method</th>
+                    <th>Buyer / Recipient</th>
                     <th>Requested</th>
                     <th>Requested By</th>
                     <th>Recovery</th>
@@ -133,6 +134,10 @@
                             <div class="text-muted small">{{ $disposal->asset?->asset_tag }} &middot; {{ $disposal->asset?->category?->name ?? 'Uncategorised' }}</div>
                         </td>
                         <td>{{ $disposal->method_label }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ $disposal->disposalBuyer?->name ?? $disposal->recipient_name ?? '-' }}</div>
+                            <div class="text-muted small">{{ $disposal->disposalBuyer?->type_label ?? 'Manual / pending' }}</div>
+                        </td>
                         <td>{{ $disposal->requested_date?->format('d-m-Y') }}</td>
                         <td>{{ $disposal->requestedBy?->name ?? '-' }}</td>
                         <td>
@@ -170,7 +175,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-5">
+                        <td colspan="8" class="text-center text-muted py-5">
                             <i class="bi bi-recycle fs-1 d-block mb-2 opacity-25"></i>
                             {{ $emptyText }}
                         </td>

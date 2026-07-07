@@ -14,6 +14,7 @@ class AssetDisposal extends Model
         'requested_by',
         'approved_by',
         'completed_by',
+        'disposal_buyer_id',
         'method',
         'status',
         'requested_date',
@@ -22,8 +23,10 @@ class AssetDisposal extends Model
         'expected_value',
         'recovered_value',
         'disposal_cost',
+        'payment_status',
         'recipient_name',
         'certificate_number',
+        'handover_reference',
         'reason',
         'approval_notes',
         'completion_notes',
@@ -61,6 +64,11 @@ class AssetDisposal extends Model
     public function completedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function disposalBuyer(): BelongsTo
+    {
+        return $this->belongsTo(DisposalBuyer::class);
     }
 
     public function issueReport(): HasOne

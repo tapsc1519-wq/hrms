@@ -141,7 +141,18 @@
                             <input type="number" step="0.01" min="0" name="expected_value" value="{{ old('expected_value') }}" class="form-control" placeholder="Optional">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Recipient / Recycler</label>
+                            <label class="form-label">Saved Buyer / Recipient</label>
+                            <select name="disposal_buyer_id" class="form-select">
+                                <option value="">Select when known</option>
+                                @foreach($buyers as $buyer)
+                                    <option value="{{ $buyer->id }}" @selected(old('disposal_buyer_id') == $buyer->id)>
+                                        {{ $buyer->name }} - {{ $buyer->type_label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">One-time Buyer / Recipient</label>
                             <input type="text" name="recipient_name" value="{{ old('recipient_name') }}" class="form-control" placeholder="Optional">
                         </div>
                         <div class="col-12">

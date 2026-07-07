@@ -1197,12 +1197,18 @@
                class="sidebar-link {{ request()->routeIs('admin.requests.*') ? 'active' : '' }}">
                 <i class="bi bi-clipboard-check-fill"></i> Requests
             </a>
-            @if($user->hasPermission('assets.disposal.view') || $user->hasPermission('assets.disposal.request') || $user->hasPermission('assets.disposal.approve') || $user->hasPermission('assets.disposal.complete'))
+            @if($user->hasPermission('assets.disposal') || $user->hasPermission('assets.disposal.view') || $user->hasPermission('assets.disposal.request') || $user->hasPermission('assets.disposal.approve') || $user->hasPermission('assets.disposal.complete'))
             <div class="sidebar-section-title">Asset Disposal</div>
             @if($user->hasPermission('assets.disposal.view'))
             <a href="{{ route('admin.asset-issues.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.asset-issues.*') ? 'active' : '' }}">
                 <i class="bi bi-exclamation-triangle-fill"></i> Reported Issues
+            </a>
+            @endif
+            @if($user->hasPermission('assets.disposal'))
+            <a href="{{ route('admin.disposal-buyers.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.disposal-buyers.*') ? 'active' : '' }}">
+                <i class="bi bi-person-vcard"></i> Disposal Buyers
             </a>
             @endif
             @if($user->hasPermission('assets.disposal.request'))
@@ -1638,12 +1644,18 @@
                 <i class="bi bi-clipboard-check-fill"></i> Asset Requests
             </a>
             @endif
-            @if($user->hasPermission('assets.disposal.view') || $user->hasPermission('assets.disposal.request') || $user->hasPermission('assets.disposal.approve') || $user->hasPermission('assets.disposal.complete'))
+            @if($user->hasPermission('assets.disposal') || $user->hasPermission('assets.disposal.view') || $user->hasPermission('assets.disposal.request') || $user->hasPermission('assets.disposal.approve') || $user->hasPermission('assets.disposal.complete'))
             <div class="sidebar-section-title">Asset Disposal</div>
             @if($user->hasPermission('assets.disposal.view'))
             <a href="{{ route('admin.asset-issues.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.asset-issues.*') ? 'active' : '' }}">
                 <i class="bi bi-exclamation-triangle-fill"></i> Reported Issues
+            </a>
+            @endif
+            @if($user->hasPermission('assets.disposal'))
+            <a href="{{ route('admin.disposal-buyers.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.disposal-buyers.*') ? 'active' : '' }}">
+                <i class="bi bi-person-vcard"></i> Disposal Buyers
             </a>
             @endif
             @if($user->hasPermission('assets.disposal.request'))

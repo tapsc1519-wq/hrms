@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\AssetAssignment;
 use App\Models\AssetDisposal;
+use App\Models\DisposalBuyer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -49,7 +50,7 @@ class AssetDisposalController extends Controller
     private function listDisposals(Request $request, array $defaultStatuses, array $meta)
     {
         $query = AssetDisposal::where('organization_id', $this->orgId())
-            ->with(['asset.category', 'requestedBy', 'approvedBy', 'completedBy'])
+            ->with(['asset.category', 'requestedBy', 'approvedBy', 'completedBy', 'disposalBuyer'])
             ->latest('requested_date');
 
         if ($request->filled('status')) {
@@ -108,7 +109,9 @@ class AssetDisposalController extends Controller
             $selectedAsset = Asset::where('organization_id', $this->orgId())->findOrFail($request->asset_id);
         }
 
-        return view('admin.disposals.create', compact('assets', 'selectedAsset'));
+        $buyers = $this->activeBuyers();
+
+        return view('admin.disposals.create', compact('assets', 'selectedAsset', 'buyers'));
     }
 
     public function bulk()
@@ -119,7 +122,9 @@ class AssetDisposalController extends Controller
             ->orderBy('asset_tag')
             ->get();
 
-        return view('admin.disposals.bulk', compact('assets'));
+        $buyers = $this->activeBuyers();
+
+        return view('admin.disposals.bulk', compact('assets', 'buyers'));
     }
 
     public function store(Request $request)
@@ -129,11 +134,14 @@ class AssetDisposalController extends Controller
             'method' => ['required', 'in:scrap,sell,donate,recycle,return_to_supplier,destroy,lost,stolen'],
             'requested_date' => ['required', 'date'],
             'expected_value' => ['nullable', 'numeric', 'min:0'],
+            'disposal_buyer_id' => ['nullable', 'integer', 'exists:disposal_buyers,id'],
             'recipient_name' => ['nullable', 'string', 'max:255'],
             'reason' => ['required', 'string', 'max:2000'],
         ]);
 
         $asset = Asset::where('organization_id', $this->orgId())->findOrFail($data['asset_id']);
+        $this->assertBuyerBelongsToOrganization($data['disposal_buyer_id'] ?? null);
+        $data = $this->applyBuyerSnapshot($data);
         abort_if(in_array($asset->status, ['disposed', 'lost'], true), 422, 'This asset cannot be disposed.');
 
         $openDisposal = AssetDisposal::where('asset_id', $asset->id)
@@ -160,9 +168,12 @@ class AssetDisposalController extends Controller
             'method' => ['required', 'in:scrap,sell,donate,recycle,return_to_supplier,destroy,lost,stolen'],
             'requested_date' => ['required', 'date'],
             'expected_value' => ['nullable', 'numeric', 'min:0'],
+            'disposal_buyer_id' => ['nullable', 'integer', 'exists:disposal_buyers,id'],
             'recipient_name' => ['nullable', 'string', 'max:255'],
             'reason' => ['required', 'string', 'max:2000'],
         ]);
+        $this->assertBuyerBelongsToOrganization($data['disposal_buyer_id'] ?? null);
+        $data = $this->applyBuyerSnapshot($data);
 
         $ids = collect($data['asset_ids'] ?? [])->filter()->map(fn ($id) => (int) $id);
         $identifiers = collect(preg_split('/[\r\n,;]+/', $data['asset_identifiers'] ?? ''))
@@ -211,6 +222,7 @@ class AssetDisposalController extends Controller
                     'status' => 'pending',
                     'requested_date' => $data['requested_date'],
                     'expected_value' => $data['expected_value'] ?? null,
+                    'disposal_buyer_id' => $data['disposal_buyer_id'] ?? null,
                     'recipient_name' => $data['recipient_name'] ?? null,
                     'reason' => $data['reason'],
                 ]);
@@ -239,9 +251,10 @@ class AssetDisposalController extends Controller
     public function show(AssetDisposal $disposal)
     {
         $this->authorizeDisposal($disposal);
-        $disposal->load(['asset.category', 'asset.supplier', 'asset.location', 'asset.activeAssignment.user', 'requestedBy', 'approvedBy', 'completedBy']);
+        $disposal->load(['asset.category', 'asset.supplier', 'asset.location', 'asset.activeAssignment.user', 'requestedBy', 'approvedBy', 'completedBy', 'disposalBuyer']);
+        $buyers = $this->activeBuyers();
 
-        return view('admin.disposals.show', compact('disposal'));
+        return view('admin.disposals.show', compact('disposal', 'buyers'));
     }
 
     public function approve(Request $request, AssetDisposal $disposal)
@@ -291,10 +304,15 @@ class AssetDisposalController extends Controller
             'disposed_date' => ['required', 'date'],
             'recovered_value' => ['nullable', 'numeric', 'min:0'],
             'disposal_cost' => ['nullable', 'numeric', 'min:0'],
+            'disposal_buyer_id' => ['nullable', 'integer', 'exists:disposal_buyers,id'],
             'recipient_name' => ['nullable', 'string', 'max:255'],
+            'payment_status' => ['required', 'in:not_required,pending,partial,paid'],
             'certificate_number' => ['nullable', 'string', 'max:255'],
+            'handover_reference' => ['nullable', 'string', 'max:255'],
             'completion_notes' => ['nullable', 'string', 'max:2000'],
         ]);
+        $this->assertBuyerBelongsToOrganization($data['disposal_buyer_id'] ?? null);
+        $data = $this->applyBuyerSnapshot($data);
 
         DB::transaction(function () use ($disposal, $data) {
             $disposal->update([
@@ -336,5 +354,33 @@ class AssetDisposalController extends Controller
     private function authorizeDisposal(AssetDisposal $disposal): void
     {
         abort_if($disposal->organization_id !== $this->orgId(), 403);
+    }
+
+    private function activeBuyers()
+    {
+        return DisposalBuyer::where('organization_id', $this->orgId())
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function assertBuyerBelongsToOrganization(?int $buyerId): void
+    {
+        if (!$buyerId) {
+            return;
+        }
+
+        abort_if(!DisposalBuyer::where('organization_id', $this->orgId())->whereKey($buyerId)->exists(), 403);
+    }
+
+    private function applyBuyerSnapshot(array $data): array
+    {
+        if (!empty($data['disposal_buyer_id']) && empty($data['recipient_name'])) {
+            $data['recipient_name'] = DisposalBuyer::where('organization_id', $this->orgId())
+                ->whereKey($data['disposal_buyer_id'])
+                ->value('name');
+        }
+
+        return $data;
     }
 }
