@@ -48,6 +48,7 @@ use App\Http\Controllers\Admin\HrmsSettingController;
 use App\Http\Controllers\Admin\SsoSettingController;
 use App\Http\Controllers\Supplier\DashboardController as SupplierDashboard;
 use App\Http\Controllers\Supplier\PurchaseOrderController as SupplierPOController;
+use App\Http\Controllers\Supplier\RepairController as SupplierRepairController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboard;
 use App\Http\Controllers\Staff\AssetController as StaffAssetController;
 use App\Http\Controllers\Staff\RequestController as StaffRequestController;
@@ -367,6 +368,11 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'role:supplier
 
     Route::get('purchase-orders', [SupplierPOController::class, 'index'])->name('purchase-orders.index');
     Route::get('purchase-orders/{purchaseOrder}', [SupplierPOController::class, 'show'])->name('purchase-orders.show');
+    Route::get('repairs', [SupplierRepairController::class, 'index'])->name('repairs.index');
+    Route::get('repairs/{repair}', [SupplierRepairController::class, 'show'])->name('repairs.show');
+    Route::patch('repairs/{repair}', [SupplierRepairController::class, 'update'])->name('repairs.update');
+    Route::post('repairs/{repair}/attachments', [SupplierRepairController::class, 'storeAttachment'])->name('repairs.attachments.store');
+    Route::delete('repairs/{repair}/attachments/{attachment}', [SupplierRepairController::class, 'destroyAttachment'])->name('repairs.attachments.destroy');
 });
 
 // ─── Staff ────────────────────────────────────────────────────────────────────

@@ -91,6 +91,30 @@
         </div>
         <div class="col-lg-4">
             <div class="form-card">
+                <div class="form-card-header"><span class="icon-wrap icon-blue"><i class="bi bi-person-lock"></i></span>Portal Access</div>
+                <div class="form-card-body">
+                    <label class="form-check border rounded-3 p-3 mb-3">
+                        <input type="checkbox" name="enable_portal" value="1" class="form-check-input me-2" @checked(old('enable_portal', (bool) $vendor->user_id))>
+                        <span class="fw-bold">Enable vendor portal login</span>
+                        <div class="text-muted small mt-1">Vendor can log in and update assigned repair jobs.</div>
+                    </label>
+                    <div class="mb-3">
+                        <label class="form-label">Portal Email</label>
+                        <input type="email" name="portal_email" class="form-control" value="{{ old('portal_email', $vendor->user?->email ?? $vendor->email) }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ $vendor->user_id ? 'Reset Password' : 'Portal Password' }}</label>
+                        <input type="password" name="portal_password" class="form-control" autocomplete="new-password">
+                        <div class="form-text">{{ $vendor->user_id ? 'Leave blank to keep current password.' : 'Required when enabling portal access.' }}</div>
+                    </div>
+                    @if($vendor->user_id)
+                        <div class="alert alert-success py-2 small mb-0">
+                            <i class="bi bi-check-circle me-1"></i>Portal account is linked.
+                        </div>
+                    @endif
+                </div>
+            </div>
+            <div class="form-card">
                 <div class="form-card-header"><span class="icon-wrap icon-teal"><i class="bi bi-image"></i></span>Logo</div>
                 <div class="form-card-body">
                     <input type="file" name="logo" class="form-control" accept="image/*">

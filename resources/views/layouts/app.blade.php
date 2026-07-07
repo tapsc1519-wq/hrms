@@ -1436,15 +1436,24 @@
 
         {{-- ── VENDOR ─── --}}
         @if($user->isSupplier() && $hasSupplierPortal)
+            @php $portalPartner = $user->supplier; @endphp
             <div class="sidebar-section-title">Supplier Portal</div>
             <a href="{{ route('supplier.dashboard') }}"
                class="sidebar-link {{ request()->routeIs('supplier.dashboard') ? 'active' : '' }}">
                 <i class="bi bi-grid-1x2-fill"></i> Dashboard
             </a>
+            @if(in_array($portalPartner?->partner_type, ['supplier', 'both'], true))
             <a href="{{ route('supplier.purchase-orders.index') }}"
                class="sidebar-link {{ request()->routeIs('supplier.purchase-orders.*') ? 'active' : '' }}">
                 <i class="bi bi-file-earmark-text-fill"></i> Purchase Orders
             </a>
+            @endif
+            @if(in_array($portalPartner?->partner_type, ['vendor', 'both'], true))
+            <a href="{{ route('supplier.repairs.index') }}"
+               class="sidebar-link {{ request()->routeIs('supplier.repairs.*') ? 'active' : '' }}">
+                <i class="bi bi-wrench-adjustable"></i> Repair Jobs
+            </a>
+            @endif
         @endif
 
         {{-- ── STAFF ─── --}}

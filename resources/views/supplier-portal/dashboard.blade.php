@@ -7,7 +7,7 @@
 <div class="page-header d-flex justify-content-between align-items-start">
     <div>
         <h4>{{ $supplier->name }}</h4>
-        <p>Supplier Portal &mdash; {{ now()->format('l, d-m-Y') }}</p>
+        <p>{{ in_array($supplier->partner_type, ['vendor', 'both'], true) ? 'Vendor / Supplier Portal' : 'Supplier Portal' }} &mdash; {{ now()->format('l, d-m-Y') }}</p>
     </div>
     <span class="badge fs-6 mt-1 bg-{{ $supplier->status === 'active' ? 'success' : ($supplier->status === 'blacklisted' ? 'danger' : 'secondary') }}">
         <i class="bi bi-circle-fill me-1" style="font-size:.5rem;vertical-align:middle"></i>
@@ -16,6 +16,7 @@
 </div>
 
 {{-- Stat Cards --}}
+@if(in_array($supplier->partner_type, ['supplier', 'both'], true))
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="card stat-card-gradient grad-blue h-100">
@@ -74,6 +75,40 @@
         </div>
     </div>
 </div>
+@endif
+
+@if(in_array($supplier->partner_type, ['vendor', 'both'], true))
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card stat-card-gradient grad-orange h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">Open Repair Jobs</div>
+                        <div class="stat-number mt-1">{{ $stats['open_repairs'] }}</div>
+                        <div class="stat-sub"><i class="bi bi-wrench-adjustable me-1"></i>Assigned to your service team</div>
+                    </div>
+                    <div class="stat-icon"><i class="bi bi-wrench-adjustable"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card stat-card-gradient grad-teal h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">QC Pending</div>
+                        <div class="stat-number mt-1">{{ $stats['qc_pending_repairs'] }}</div>
+                        <div class="stat-sub"><i class="bi bi-clipboard-check me-1"></i>Completed repairs awaiting Admin QC</div>
+                    </div>
+                    <div class="stat-icon"><i class="bi bi-clipboard-check"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- Profile + Recent POs --}}
 <div class="row g-4">
@@ -142,6 +177,7 @@
     </div>
 
     {{-- Recent Purchase Orders --}}
+    @if(in_array($supplier->partner_type, ['supplier', 'both'], true))
     <div class="col-md-8">
         <div class="table-card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -193,6 +229,42 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
+
+@if(in_array($supplier->partner_type, ['vendor', 'both'], true))
+<div class="table-card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-600"><i class="bi bi-wrench-adjustable me-2 text-warning"></i>Recent Repair Jobs</span>
+        <a href="{{ route('supplier.repairs.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:.875rem">
+            <thead class="table-light">
+                <tr>
+                    <th>Repair</th>
+                    <th>Asset</th>
+                    <th>Organization</th>
+                    <th>Expected Return</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($recentRepairs as $repair)
+                    <tr>
+                        <td><a href="{{ route('supplier.repairs.show', $repair) }}" class="fw-bold text-decoration-none">{{ $repair->repair_number }}</a></td>
+                        <td>{{ $repair->asset?->name }}</td>
+                        <td>{{ $repair->asset?->organization?->name ?? 'Organization' }}</td>
+                        <td>{{ $repair->expected_return_date?->format('d-m-Y') ?? 'Pending' }}</td>
+                        <td><span class="badge bg-{{ $repair->status_badge }}">{{ $repair->status_label }}</span></td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" class="text-center text-muted py-4">No repair jobs assigned yet.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
 
 @endsection
