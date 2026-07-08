@@ -4,6 +4,8 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
+use App\Models\OrganizationProductSubscription;
+use App\Models\Product;
 use App\Support\ModuleRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -82,6 +84,7 @@ class OrganizationController extends Controller
             'billing_cycle' => 'monthly',
         ])->save();
         $organization->syncModules(ModuleRegistry::keys(), auth()->id());
+        $this->syncOpsBridgeSubscription($organization);
 
         return redirect()->route('super-admin.organizations.index')
             ->with('success', 'Organization created successfully.');
@@ -145,6 +148,7 @@ class OrganizationController extends Controller
         ])->save();
 
         $organization->syncModules($validated['modules'] ?? [], auth()->id());
+        $this->syncOpsBridgeSubscription($organization);
 
         return back()->with('success', 'Organization module access and pricing updated.');
     }
@@ -172,6 +176,7 @@ class OrganizationController extends Controller
             'last_payment_at' => $validated['payment_date'],
             'subscription_ends_at' => $validated['period_end'],
         ])->save();
+        $this->syncOpsBridgeSubscription($organization);
 
         return back()->with('success', 'Payment recorded and subscription activated.');
     }
@@ -181,5 +186,40 @@ class OrganizationController extends Controller
         $organization->delete();
         return redirect()->route('super-admin.organizations.index')
             ->with('success', 'Organization deleted successfully.');
+    }
+
+    private function syncOpsBridgeSubscription(Organization $organization): void
+    {
+        $product = Product::where('slug', 'opsbridge')->first();
+
+        if (!$product) {
+            return;
+        }
+
+        OrganizationProductSubscription::updateOrCreate(
+            [
+                'organization_id' => $organization->id,
+                'product_id' => $product->id,
+            ],
+            [
+                'status' => $organization->billing_status ?: 'trial',
+                'plan_name' => 'OpsBridge',
+                'billing_cycle' => $organization->billing_cycle ?: 'monthly',
+                'monthly_amount' => $organization->monthly_amount ?: $this->registeredOpsBridgeAmount(),
+                'trial_started_at' => $organization->trial_started_at,
+                'trial_ends_at' => $organization->trial_ends_at,
+                'subscription_started_at' => $organization->last_payment_at,
+                'subscription_ends_at' => $organization->subscription_ends_at,
+                'last_payment_at' => $organization->last_payment_at,
+                'product_database' => config('database.connections.' . config('database.product_connection', 'opsbridge') . '.database'),
+                'product_domain' => $product->domain ?: 'opsbridge.niyantron.com',
+            ]
+        );
+    }
+
+    private function registeredOpsBridgeAmount(): float
+    {
+        return collect(ModuleRegistry::keys())
+            ->sum(fn (string $key) => ModuleRegistry::monthlyPrice($key));
     }
 }

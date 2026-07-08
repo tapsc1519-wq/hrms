@@ -84,6 +84,11 @@ class Organization extends Model
         return $this->hasMany(OrganizationPayment::class);
     }
 
+    public function productSubscriptions(): HasMany
+    {
+        return $this->hasMany(OrganizationProductSubscription::class);
+    }
+
     public function ssoSettings(): HasMany
     {
         return $this->hasMany(OrganizationSsoSetting::class);

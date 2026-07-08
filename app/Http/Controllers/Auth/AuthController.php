@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
+use App\Models\OrganizationProductSubscription;
 use App\Models\OrganizationSsoSetting;
+use App\Models\Product;
 use App\Models\User;
 use App\Support\ModuleRegistry;
 use Illuminate\Http\Request;
@@ -176,6 +178,7 @@ class AuthController extends Controller
             ]);
 
             $organization->syncModules(ModuleRegistry::keys());
+            $this->syncOpsBridgeSubscription($organization);
 
             return User::create([
                 'organization_id' => $organization->id,
@@ -304,5 +307,35 @@ class AuthController extends Controller
         }
 
         return $slug;
+    }
+
+    private function syncOpsBridgeSubscription(Organization $organization): void
+    {
+        $product = Product::where('slug', 'opsbridge')->first();
+
+        if (!$product) {
+            return;
+        }
+
+        OrganizationProductSubscription::updateOrCreate(
+            [
+                'organization_id' => $organization->id,
+                'product_id' => $product->id,
+            ],
+            [
+                'status' => $organization->billing_status ?: 'trial',
+                'plan_name' => 'OpsBridge',
+                'billing_cycle' => $organization->billing_cycle ?: 'monthly',
+                'monthly_amount' => $organization->monthly_amount ?: collect(ModuleRegistry::keys())
+                    ->sum(fn (string $key) => ModuleRegistry::monthlyPrice($key)),
+                'trial_started_at' => $organization->trial_started_at,
+                'trial_ends_at' => $organization->trial_ends_at,
+                'subscription_started_at' => $organization->last_payment_at,
+                'subscription_ends_at' => $organization->subscription_ends_at,
+                'last_payment_at' => $organization->last_payment_at,
+                'product_database' => config('database.connections.' . config('database.product_connection', 'opsbridge') . '.database'),
+                'product_domain' => $product->domain ?: 'opsbridge.niyantron.com',
+            ]
+        );
     }
 }

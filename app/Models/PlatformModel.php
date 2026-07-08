@@ -1,0 +1,13 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+abstract class PlatformModel extends Model
+{
+    public function getConnectionName()
+    {
+        return config('database.platform_connection', 'platform');
+    }
+}

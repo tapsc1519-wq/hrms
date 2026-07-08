@@ -19,6 +19,10 @@ return [
 
     'default' => env('DB_CONNECTION', 'sqlite'),
 
+    'platform_connection' => env('DB_PLATFORM_CONNECTION', 'platform'),
+
+    'product_connection' => env('DB_PRODUCT_CONNECTION', 'opsbridge'),
+
     /*
     |--------------------------------------------------------------------------
     | Database Connections
@@ -61,6 +65,46 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        'platform' => [
+            'driver' => env('DB_PLATFORM_DRIVER', env('DB_CONNECTION', 'mysql')),
+            'url' => env('DB_PLATFORM_URL'),
+            'host' => env('DB_PLATFORM_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DB_PLATFORM_PORT', env('DB_PORT', '3306')),
+            'database' => env('DB_PLATFORM_DATABASE', env('DB_DATABASE', 'laravel')),
+            'username' => env('DB_PLATFORM_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('DB_PLATFORM_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_PLATFORM_SOCKET', env('DB_SOCKET', '')),
+            'charset' => env('DB_PLATFORM_CHARSET', env('DB_CHARSET', 'utf8mb4')),
+            'collation' => env('DB_PLATFORM_COLLATION', env('DB_COLLATION', 'utf8mb4_unicode_ci')),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                Mysql::ATTR_SSL_CA => env('DB_PLATFORM_SSL_CA', env('MYSQL_ATTR_SSL_CA')),
+            ]) : [],
+        ],
+
+        'opsbridge' => [
+            'driver' => env('DB_OPSBRIDGE_DRIVER', env('DB_CONNECTION', 'mysql')),
+            'url' => env('DB_OPSBRIDGE_URL'),
+            'host' => env('DB_OPSBRIDGE_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DB_OPSBRIDGE_PORT', env('DB_PORT', '3306')),
+            'database' => env('DB_OPSBRIDGE_DATABASE', env('DB_DATABASE', 'laravel')),
+            'username' => env('DB_OPSBRIDGE_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('DB_OPSBRIDGE_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_OPSBRIDGE_SOCKET', env('DB_SOCKET', '')),
+            'charset' => env('DB_OPSBRIDGE_CHARSET', env('DB_CHARSET', 'utf8mb4')),
+            'collation' => env('DB_OPSBRIDGE_COLLATION', env('DB_COLLATION', 'utf8mb4_unicode_ci')),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                Mysql::ATTR_SSL_CA => env('DB_OPSBRIDGE_SSL_CA', env('MYSQL_ATTR_SSL_CA')),
             ]) : [],
         ],
 

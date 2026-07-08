@@ -9,7 +9,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
+        $connection = config('database.platform_connection', 'platform');
+
+        Schema::connection($connection)->create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
@@ -24,7 +26,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::table('products')->insert([
+        DB::connection($connection)->table('products')->insert([
             'name' => 'OpsBridge',
             'slug' => 'opsbridge',
             'short_name' => 'OpsBridge',
@@ -42,6 +44,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::connection(config('database.platform_connection', 'platform'))->dropIfExists('products');
     }
 };

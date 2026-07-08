@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Support\ModuleRegistry;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Product extends Model
+class Product extends PlatformModel
 {
     protected $fillable = [
         'name',
@@ -33,5 +33,10 @@ class Product extends Model
     public function registeredModules()
     {
         return ModuleRegistry::forProduct($this->slug);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(OrganizationProductSubscription::class);
     }
 }
