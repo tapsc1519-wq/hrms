@@ -102,6 +102,8 @@
             </div>
         </div>
 
+        @include('super-admin.organizations._product-provisioning')
+
     </div>
 
     {{-- RIGHT --}}

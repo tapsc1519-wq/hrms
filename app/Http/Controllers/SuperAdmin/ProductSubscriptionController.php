@@ -8,6 +8,7 @@ use App\Models\OrganizationProductSubscription;
 use App\Models\Partner;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProductSubscriptionController extends Controller
 {
@@ -82,7 +83,7 @@ class ProductSubscriptionController extends Controller
     {
         $validated = $request->validate([
             'status' => ['required', 'in:' . implode(',', array_keys($this->statuses()))],
-            'partner_id' => ['nullable', 'exists:partners,id'],
+            'partner_id' => ['nullable', Rule::exists((new Partner())->getConnectionName() . '.partners', 'id')],
             'plan_name' => ['nullable', 'string', 'max:120'],
             'billing_cycle' => ['required', 'in:' . implode(',', array_keys($this->billingCycles()))],
             'monthly_amount' => ['required', 'numeric', 'min:0', 'max:99999999'],

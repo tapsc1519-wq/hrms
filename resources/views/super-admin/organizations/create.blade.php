@@ -99,6 +99,8 @@
             </div>
         </div>
 
+        @include('super-admin.organizations._product-provisioning', ['opsBridgeSubscription' => null])
+
     </div>
 
     {{-- RIGHT --}}
