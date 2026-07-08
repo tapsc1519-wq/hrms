@@ -29,6 +29,11 @@ class Partner extends PlatformModel
         return $this->hasMany(OrganizationProductSubscription::class);
     }
 
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(PartnerCommission::class);
+    }
+
     public function getStatusBadgeAttribute(): string
     {
         return match ($this->status) {

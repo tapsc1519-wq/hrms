@@ -70,11 +70,16 @@ class PartnerController extends Controller
 
     public function edit(Partner $partner)
     {
-        $partner->load(['subscriptions.organization', 'subscriptions.product']);
+        $partner->load(['subscriptions.organization', 'subscriptions.product', 'commissions']);
         $types = $this->types();
         $statuses = $this->statuses();
+        $commissionSummary = [
+            'pending' => $partner->commissions->where('status', 'pending')->sum('commission_amount'),
+            'approved' => $partner->commissions->where('status', 'approved')->sum('commission_amount'),
+            'paid' => $partner->commissions->where('status', 'paid')->sum('commission_amount'),
+        ];
 
-        return view('super-admin.partners.edit', compact('partner', 'types', 'statuses'));
+        return view('super-admin.partners.edit', compact('partner', 'types', 'statuses', 'commissionSummary'));
     }
 
     public function update(Request $request, Partner $partner)

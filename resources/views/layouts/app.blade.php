@@ -1171,6 +1171,10 @@
                class="sidebar-link {{ request()->routeIs('super-admin.partners.*') ? 'active' : '' }}">
                 <i class="bi bi-person-workspace"></i> Partners
             </a>
+            <a href="{{ route('super-admin.partner-commissions.index') }}"
+               class="sidebar-link {{ request()->routeIs('super-admin.partner-commissions.*') ? 'active' : '' }}">
+                <i class="bi bi-cash-coin"></i> Partner Commissions
+            </a>
             <a href="{{ route('super-admin.users.index') }}"
                class="sidebar-link {{ request()->routeIs('super-admin.users.*') ? 'active' : '' }}">
                 <i class="bi bi-people-fill"></i> All Accounts

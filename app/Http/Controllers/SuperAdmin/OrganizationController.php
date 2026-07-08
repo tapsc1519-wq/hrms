@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
 use App\Models\OrganizationProductSubscription;
+use App\Models\PartnerCommission;
 use App\Models\Product;
 use App\Support\ModuleRegistry;
 use Illuminate\Http\Request;
@@ -165,7 +166,7 @@ class OrganizationController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $organization->payments()->create([
+        $payment = $organization->payments()->create([
             ...$validated,
             'recorded_by' => auth()->id(),
         ]);
@@ -177,6 +178,7 @@ class OrganizationController extends Controller
             'subscription_ends_at' => $validated['period_end'],
         ])->save();
         $this->syncOpsBridgeSubscription($organization);
+        $this->createPartnerCommission($organization, $payment);
 
         return back()->with('success', 'Payment recorded and subscription activated.');
     }
@@ -221,5 +223,44 @@ class OrganizationController extends Controller
     {
         return collect(ModuleRegistry::keys())
             ->sum(fn (string $key) => ModuleRegistry::monthlyPrice($key));
+    }
+
+    private function createPartnerCommission(Organization $organization, $payment): void
+    {
+        $subscription = OrganizationProductSubscription::with(['partner', 'product'])
+            ->where('organization_id', $organization->id)
+            ->whereNotNull('partner_id')
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$subscription?->partner || !$subscription->product) {
+            return;
+        }
+
+        $commissionPercent = (float) ($subscription->commission_percent ?? $subscription->partner->default_commission_percent ?? 0);
+
+        if ($commissionPercent <= 0) {
+            return;
+        }
+
+        $paymentAmount = (float) $payment->amount;
+        $commissionAmount = round(($paymentAmount * $commissionPercent) / 100, 2);
+
+        PartnerCommission::updateOrCreate(
+            ['organization_payment_id' => $payment->id],
+            [
+                'partner_id' => $subscription->partner_id,
+                'product_id' => $subscription->product_id,
+                'organization_id' => $organization->id,
+                'organization_product_subscription_id' => $subscription->id,
+                'payment_amount' => $paymentAmount,
+                'commission_percent' => $commissionPercent,
+                'commission_amount' => $commissionAmount,
+                'payment_date' => $payment->payment_date,
+                'period_start' => $payment->period_start,
+                'period_end' => $payment->period_end,
+                'status' => 'pending',
+            ]
+        );
     }
 }

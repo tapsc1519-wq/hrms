@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class OrganizationPayment extends Model
 {
@@ -34,5 +35,10 @@ class OrganizationPayment extends Model
     public function recorder(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function partnerCommission(): HasOne
+    {
+        return $this->hasOne(PartnerCommission::class, 'organization_payment_id');
     }
 }

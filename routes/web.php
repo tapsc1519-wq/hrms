@@ -5,6 +5,7 @@ use App\Http\Controllers\SuperAdmin\DashboardController as SADashboard;
 use App\Http\Controllers\SuperAdmin\OrganizationController;
 use App\Http\Controllers\SuperAdmin\PaymentController as SAPaymentController;
 use App\Http\Controllers\SuperAdmin\PartnerController as SAPartnerController;
+use App\Http\Controllers\SuperAdmin\PartnerCommissionController as SAPartnerCommissionController;
 use App\Http\Controllers\SuperAdmin\PricingController;
 use App\Http\Controllers\SuperAdmin\ProductController as SAProductController;
 use App\Http\Controllers\SuperAdmin\ProductSubscriptionController as SAProductSubscriptionController;
@@ -90,6 +91,10 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::resource('products', SAProductController::class)->only(['index', 'edit', 'update']);
     Route::resource('product-subscriptions', SAProductSubscriptionController::class)->only(['index', 'edit', 'update']);
     Route::resource('partners', SAPartnerController::class)->except(['show']);
+    Route::get('partner-commissions', [SAPartnerCommissionController::class, 'index'])->name('partner-commissions.index');
+    Route::patch('partner-commissions/{partnerCommission}/approve', [SAPartnerCommissionController::class, 'approve'])->name('partner-commissions.approve');
+    Route::patch('partner-commissions/{partnerCommission}/paid', [SAPartnerCommissionController::class, 'markPaid'])->name('partner-commissions.paid');
+    Route::patch('partner-commissions/{partnerCommission}/cancel', [SAPartnerCommissionController::class, 'cancel'])->name('partner-commissions.cancel');
     Route::resource('users', SAUserController::class)->except(['show']);
 
     Route::get('pricing', [PricingController::class, 'edit'])->name('pricing.edit');

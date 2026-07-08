@@ -20,6 +20,27 @@
         </form>
     </div>
     <div class="col-lg-4">
+        <div class="table-card mb-3">
+            <div class="card-header bg-white fw-bold">Commission Summary</div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                    <span class="text-muted">Pending</span>
+                    <strong class="text-warning">&#8377;{{ number_format((float) $commissionSummary['pending'], 2) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                    <span class="text-muted">Approved</span>
+                    <strong class="text-primary">&#8377;{{ number_format((float) $commissionSummary['approved'], 2) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Paid</span>
+                    <strong class="text-success">&#8377;{{ number_format((float) $commissionSummary['paid'], 2) }}</strong>
+                </div>
+                <a href="{{ route('super-admin.partner-commissions.index', ['partner_id' => $partner->id]) }}" class="btn btn-sm btn-outline-primary w-100 mt-3">
+                    <i class="bi bi-cash-coin me-1"></i>View Commission Ledger
+                </a>
+            </div>
+        </div>
+
         <div class="table-card">
             <div class="card-header bg-white fw-bold">Linked Subscriptions</div>
             <div class="card-body">
