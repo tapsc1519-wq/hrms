@@ -1163,6 +1163,10 @@
                class="sidebar-link {{ request()->routeIs('super-admin.products.*') ? 'active' : '' }}">
                 <i class="bi bi-grid-3x3-gap-fill"></i> Products
             </a>
+            <a href="{{ route('super-admin.product-subscriptions.index') }}"
+               class="sidebar-link {{ request()->routeIs('super-admin.product-subscriptions.*') ? 'active' : '' }}">
+                <i class="bi bi-ui-checks-grid"></i> Product Subscriptions
+            </a>
             <a href="{{ route('super-admin.users.index') }}"
                class="sidebar-link {{ request()->routeIs('super-admin.users.*') ? 'active' : '' }}">
                 <i class="bi bi-people-fill"></i> All Accounts

@@ -92,7 +92,7 @@ class OrganizationController extends Controller
 
     public function show(Organization $organization)
     {
-        $organization->load(['users', 'assets', 'suppliers', 'modules', 'payments.recorder']);
+        $organization->load(['users', 'assets', 'suppliers', 'modules', 'payments.recorder', 'productSubscriptions.product']);
         $modules = ModuleRegistry::all();
 
         return view('super-admin.organizations.show', compact('organization', 'modules'));

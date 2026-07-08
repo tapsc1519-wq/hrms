@@ -315,6 +315,57 @@
 
             <div class="card org-detail-card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Subscribed Products</span>
+                    <a href="{{ route('super-admin.product-subscriptions.index', ['search' => $organization->name]) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-ui-checks-grid me-1"></i>Manage
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Status</th>
+                                <th>Billing</th>
+                                <th>Domain</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($organization->productSubscriptions as $subscription)
+                                <tr>
+                                    <td>
+                                        <strong>{{ $subscription->product?->name ?? 'Product #' . $subscription->product_id }}</strong>
+                                        <div class="text-muted" style="font-size:.72rem">{{ $subscription->plan_name ?: 'No plan name' }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ $subscription->status_badge }}">{{ ucfirst($subscription->status) }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>&#8377;{{ number_format((float) $subscription->monthly_amount, 2) }}</strong>
+                                        <div class="text-muted" style="font-size:.72rem">{{ ucfirst($subscription->billing_cycle) }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted" style="font-size:.72rem">{{ $subscription->product_domain ?: '-' }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ route('super-admin.product-subscriptions.edit', $subscription) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">No product subscription mapped yet.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card org-detail-card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Payments</span>
                     <span class="badge bg-{{ $organization->billing_status_badge }} org-count-badge">{{ ucfirst($organization->billing_status ?? 'trial') }}</span>
                 </div>
