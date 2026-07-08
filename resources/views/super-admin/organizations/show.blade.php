@@ -326,6 +326,7 @@
                             <tr>
                                 <th>Product</th>
                                 <th>Status</th>
+                                <th>Partner</th>
                                 <th>Billing</th>
                                 <th>Domain</th>
                                 <th></th>
@@ -342,6 +343,14 @@
                                         <span class="badge bg-{{ $subscription->status_badge }}">{{ ucfirst($subscription->status) }}</span>
                                     </td>
                                     <td>
+                                        @if($subscription->partner)
+                                            <span class="fw-semibold">{{ $subscription->partner->display_name }}</span>
+                                            <div class="text-muted" style="font-size:.72rem">{{ number_format((float) ($subscription->commission_percent ?? $subscription->partner->default_commission_percent), 2) }}%</div>
+                                        @else
+                                            <span class="text-muted" style="font-size:.72rem">Direct</span>
+                                        @endif
+                                    </td>
+                                    <td>
                                         <strong>&#8377;{{ number_format((float) $subscription->monthly_amount, 2) }}</strong>
                                         <div class="text-muted" style="font-size:.72rem">{{ ucfirst($subscription->billing_cycle) }}</div>
                                     </td>
@@ -356,7 +365,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-3">No product subscription mapped yet.</td>
+                                    <td colspan="6" class="text-center text-muted py-3">No product subscription mapped yet.</td>
                                 </tr>
                             @endforelse
                         </tbody>

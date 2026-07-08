@@ -1167,6 +1167,10 @@
                class="sidebar-link {{ request()->routeIs('super-admin.product-subscriptions.*') ? 'active' : '' }}">
                 <i class="bi bi-ui-checks-grid"></i> Product Subscriptions
             </a>
+            <a href="{{ route('super-admin.partners.index') }}"
+               class="sidebar-link {{ request()->routeIs('super-admin.partners.*') ? 'active' : '' }}">
+                <i class="bi bi-person-workspace"></i> Partners
+            </a>
             <a href="{{ route('super-admin.users.index') }}"
                class="sidebar-link {{ request()->routeIs('super-admin.users.*') ? 'active' : '' }}">
                 <i class="bi bi-people-fill"></i> All Accounts

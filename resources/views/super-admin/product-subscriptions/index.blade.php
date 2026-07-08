@@ -65,12 +65,23 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3 d-flex gap-2">
-                <button class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
-                @if(request()->hasAny(['search', 'product_id', 'status']))
-                    <a href="{{ route('super-admin.product-subscriptions.index') }}" class="btn btn-outline-secondary btn-sm">Clear</a>
-                @endif
+            <div class="col-md-2">
+                <label class="form-label">Partner</label>
+                <select name="partner_id" class="form-select form-select-sm">
+                    <option value="">All Partners</option>
+                    @foreach($partners as $partner)
+                        <option value="{{ $partner->id }}" {{ (int) request('partner_id') === $partner->id ? 'selected' : '' }}>{{ $partner->display_name }}</option>
+                    @endforeach
+                </select>
             </div>
+            <div class="col-md-1 d-flex gap-2">
+                <button class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+            </div>
+            @if(request()->hasAny(['search', 'product_id', 'status', 'partner_id']))
+                <div class="col-md-1 d-flex align-items-end">
+                    <a href="{{ route('super-admin.product-subscriptions.index') }}" class="btn btn-outline-secondary btn-sm">Clear</a>
+                </div>
+            @endif
         </form>
     </div>
 </div>
@@ -83,6 +94,7 @@
                     <th>Organization</th>
                     <th>Product</th>
                     <th>Status</th>
+                    <th>Partner</th>
                     <th>Plan</th>
                     <th>Billing</th>
                     <th>Domain</th>
@@ -105,6 +117,14 @@
                         </td>
                         <td><span class="fw-semibold">{{ $subscription->product?->name ?? 'Product #' . $subscription->product_id }}</span></td>
                         <td><span class="badge bg-{{ $subscription->status_badge }}">{{ $statuses[$subscription->status] ?? ucfirst($subscription->status) }}</span></td>
+                        <td>
+                            @if($subscription->partner)
+                                <span class="fw-semibold">{{ $subscription->partner->display_name }}</span>
+                                <div class="text-muted small">{{ number_format((float) ($subscription->commission_percent ?? $subscription->partner->default_commission_percent), 2) }}% commission</div>
+                            @else
+                                <span class="text-muted small">Direct</span>
+                            @endif
+                        </td>
                         <td>{{ $subscription->plan_name ?: '-' }}</td>
                         <td>
                             <strong>&#8377;{{ number_format((float) $subscription->monthly_amount, 2) }}</strong>
@@ -124,7 +144,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-5">
+                        <td colspan="10" class="text-center text-muted py-5">
                             <i class="bi bi-ui-checks-grid d-block mb-2" style="font-size:1.45rem"></i>
                             No product subscriptions found.
                         </td>

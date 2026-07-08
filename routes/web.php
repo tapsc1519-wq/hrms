@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SADashboard;
 use App\Http\Controllers\SuperAdmin\OrganizationController;
 use App\Http\Controllers\SuperAdmin\PaymentController as SAPaymentController;
+use App\Http\Controllers\SuperAdmin\PartnerController as SAPartnerController;
 use App\Http\Controllers\SuperAdmin\PricingController;
 use App\Http\Controllers\SuperAdmin\ProductController as SAProductController;
 use App\Http\Controllers\SuperAdmin\ProductSubscriptionController as SAProductSubscriptionController;
@@ -88,6 +89,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::resource('organizations', OrganizationController::class);
     Route::resource('products', SAProductController::class)->only(['index', 'edit', 'update']);
     Route::resource('product-subscriptions', SAProductSubscriptionController::class)->only(['index', 'edit', 'update']);
+    Route::resource('partners', SAPartnerController::class)->except(['show']);
     Route::resource('users', SAUserController::class)->except(['show']);
 
     Route::get('pricing', [PricingController::class, 'edit'])->name('pricing.edit');

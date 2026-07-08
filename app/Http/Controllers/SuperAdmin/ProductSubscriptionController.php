@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
 use App\Models\OrganizationProductSubscription;
+use App\Models\Partner;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
@@ -12,7 +13,7 @@ class ProductSubscriptionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = OrganizationProductSubscription::with(['organization', 'product'])
+        $query = OrganizationProductSubscription::with(['organization', 'product', 'partner'])
             ->latest();
 
         if ($request->filled('product_id')) {
@@ -21,6 +22,10 @@ class ProductSubscriptionController extends Controller
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        if ($request->filled('partner_id')) {
+            $query->where('partner_id', $request->partner_id);
         }
 
         if ($request->filled('search')) {
@@ -36,6 +41,7 @@ class ProductSubscriptionController extends Controller
         $summaryQuery = clone $query;
         $subscriptions = $query->paginate(20)->withQueryString();
         $products = Product::orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
+        $partners = Partner::where('status', 'active')->orderBy('name')->get(['id', 'name', 'company_name', 'default_commission_percent']);
         $statuses = $this->statuses();
 
         $totalSubscriptions = (clone $summaryQuery)->count();
@@ -48,6 +54,7 @@ class ProductSubscriptionController extends Controller
         return view('super-admin.product-subscriptions.index', compact(
             'subscriptions',
             'products',
+            'partners',
             'statuses',
             'totalSubscriptions',
             'activeSubscriptions',
@@ -58,14 +65,16 @@ class ProductSubscriptionController extends Controller
 
     public function edit(OrganizationProductSubscription $productSubscription)
     {
-        $productSubscription->load(['organization', 'product']);
+        $productSubscription->load(['organization', 'product', 'partner']);
         $statuses = $this->statuses();
         $billingCycles = $this->billingCycles();
+        $partners = Partner::where('status', 'active')->orderBy('name')->get(['id', 'name', 'company_name', 'default_commission_percent']);
 
         return view('super-admin.product-subscriptions.edit', compact(
             'productSubscription',
             'statuses',
-            'billingCycles'
+            'billingCycles',
+            'partners'
         ));
     }
 
@@ -73,9 +82,11 @@ class ProductSubscriptionController extends Controller
     {
         $validated = $request->validate([
             'status' => ['required', 'in:' . implode(',', array_keys($this->statuses()))],
+            'partner_id' => ['nullable', 'exists:partners,id'],
             'plan_name' => ['nullable', 'string', 'max:120'],
             'billing_cycle' => ['required', 'in:' . implode(',', array_keys($this->billingCycles()))],
             'monthly_amount' => ['required', 'numeric', 'min:0', 'max:99999999'],
+            'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'trial_started_at' => ['nullable', 'date'],
             'trial_ends_at' => ['nullable', 'date'],
             'subscription_started_at' => ['nullable', 'date'],

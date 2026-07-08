@@ -47,6 +47,15 @@
                         <span class="badge bg-light text-dark">&#8377;{{ number_format((float) $productSubscription->monthly_amount, 2) }}/mo</span>
                     </div>
                 </div>
+                <div class="border-top pt-3 mt-3">
+                    <div class="text-muted small text-uppercase fw-bold mb-2">Partner</div>
+                    @if($productSubscription->partner)
+                        <div class="fw-semibold">{{ $productSubscription->partner->display_name }}</div>
+                        <div class="text-muted small">{{ number_format((float) ($productSubscription->commission_percent ?? $productSubscription->partner->default_commission_percent), 2) }}% commission</div>
+                    @else
+                        <div class="text-muted small">Direct subscription, no partner linked.</div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
@@ -65,6 +74,20 @@
                             @endforeach
                         </select>
                         @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Partner</label>
+                        <select name="partner_id" class="form-select @error('partner_id') is-invalid @enderror" id="partnerSelect">
+                            <option value="">Direct / No Partner</option>
+                            @foreach($partners as $partner)
+                                <option value="{{ $partner->id }}"
+                                        data-commission="{{ $partner->default_commission_percent }}"
+                                        {{ (int) old('partner_id', $productSubscription->partner_id) === $partner->id ? 'selected' : '' }}>
+                                    {{ $partner->display_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('partner_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Plan Name</label>
@@ -86,6 +109,14 @@
                             <span class="input-group-text">&#8377;</span>
                             <input type="number" name="monthly_amount" step="0.01" min="0" value="{{ old('monthly_amount', $productSubscription->monthly_amount) }}" class="form-control @error('monthly_amount') is-invalid @enderror" required>
                             @error('monthly_amount')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Commission</label>
+                        <div class="input-group">
+                            <input type="number" name="commission_percent" id="commissionPercent" step="0.01" min="0" max="100" value="{{ old('commission_percent', $productSubscription->commission_percent) }}" class="form-control @error('commission_percent') is-invalid @enderror" placeholder="0.00">
+                            <span class="input-group-text">%</span>
+                            @error('commission_percent')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -139,3 +170,14 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.getElementById('partnerSelect')?.addEventListener('change', function () {
+    var selected = this.options[this.selectedIndex];
+    var commissionInput = document.getElementById('commissionPercent');
+    if (!commissionInput || commissionInput.value) return;
+    commissionInput.value = selected.dataset.commission || '';
+});
+</script>
+@endpush
