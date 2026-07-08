@@ -7,6 +7,8 @@ use App\Models\Partner;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class PartnerController extends Controller
@@ -111,6 +113,37 @@ class PartnerController extends Controller
             ->with('success', 'Partner deleted successfully.');
     }
 
+    public function sendInvitation(Partner $partner)
+    {
+        $partner->load('portalUser');
+
+        if (!$partner->portalUser) {
+            return back()->with('error', 'Create a partner portal account before sending invitation.');
+        }
+
+        $temporaryPassword = Str::password(12);
+        $partner->portalUser->forceFill([
+            'password' => Hash::make($temporaryPassword),
+            'status' => 'active',
+        ])->save();
+
+        $loginUrl = $this->platformLoginUrl();
+
+        Mail::send('emails.partner-invitation', [
+            'partner' => $partner,
+            'user' => $partner->portalUser,
+            'temporaryPassword' => $temporaryPassword,
+            'loginUrl' => $loginUrl,
+        ], function ($message) use ($partner) {
+            $message->to($partner->portalUser->email, $partner->portalUser->name)
+                ->subject('Your Niyantron Partner Portal invitation');
+        });
+
+        $partner->forceFill(['invitation_sent_at' => now()])->save();
+
+        return back()->with('success', 'Partner invitation sent successfully.');
+    }
+
     private function validated(Request $request, ?Partner $partner = null): array
     {
         return $request->validate([
@@ -177,6 +210,14 @@ class PartnerController extends Controller
 
         $user->save();
         $partner->forceFill(['user_id' => $user->id])->save();
+    }
+
+    private function platformLoginUrl(): string
+    {
+        $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: 'https';
+        $domain = config('niyantron.platform_domain');
+
+        return $scheme . '://' . $domain . '/login';
     }
 
     private function types(): array

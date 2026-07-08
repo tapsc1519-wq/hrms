@@ -10,6 +10,7 @@ class Partner extends PlatformModel
     protected $fillable = [
         'name',
         'user_id',
+        'invitation_sent_at',
         'company_name',
         'contact_person',
         'email',
@@ -24,6 +25,7 @@ class Partner extends PlatformModel
 
     protected $casts = [
         'default_commission_percent' => 'decimal:2',
+        'invitation_sent_at' => 'datetime',
     ];
 
     public function portalUser(): BelongsTo

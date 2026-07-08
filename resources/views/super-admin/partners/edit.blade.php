@@ -21,6 +21,30 @@
     </div>
     <div class="col-lg-4">
         <div class="table-card mb-3">
+            <div class="card-header bg-white fw-bold">Partner Invitation</div>
+            <div class="card-body">
+                @if($partner->portalUser)
+                    <div class="mb-2">
+                        <div class="text-muted small">Portal Login</div>
+                        <div class="fw-semibold">{{ $partner->portalUser->email }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small">Last Invitation</div>
+                        <div class="fw-semibold">{{ $partner->invitation_sent_at?->format('d-m-Y H:i') ?? 'Not sent yet' }}</div>
+                    </div>
+                    <form method="POST" action="{{ route('super-admin.partners.invitation', $partner) }}" onsubmit="return confirm('Send partner invitation and reset temporary password?')">
+                        @csrf
+                        <button class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-envelope-paper me-1"></i>{{ $partner->invitation_sent_at ? 'Resend Invitation' : 'Send Invitation' }}
+                        </button>
+                    </form>
+                @else
+                    <div class="text-muted small">Create a portal account in Partner Portal Access, then save the partner before sending invitation.</div>
+                @endif
+            </div>
+        </div>
+
+        <div class="table-card mb-3">
             <div class="card-header bg-white fw-bold">Commission Summary</div>
             <div class="card-body">
                 <div class="d-flex justify-content-between border-bottom pb-2 mb-2">

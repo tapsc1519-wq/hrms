@@ -96,6 +96,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['portal.domain:p
     Route::resource('product-subscriptions', SAProductSubscriptionController::class)->only(['index', 'edit', 'update']);
     Route::patch('partner-leads/{partnerLead}/convert', [SAPartnerLeadController::class, 'convert'])->name('partner-leads.convert');
     Route::resource('partner-leads', SAPartnerLeadController::class)->except(['show', 'destroy']);
+    Route::post('partners/{partner}/invitation', [SAPartnerController::class, 'sendInvitation'])->name('partners.invitation');
     Route::resource('partners', SAPartnerController::class)->except(['show']);
     Route::get('partner-commissions', [SAPartnerCommissionController::class, 'index'])->name('partner-commissions.index');
     Route::patch('partner-commissions/{partnerCommission}/approve', [SAPartnerCommissionController::class, 'approve'])->name('partner-commissions.approve');
