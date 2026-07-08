@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
             'module' => \App\Http\Middleware\ModuleMiddleware::class,
             'portal.domain' => \App\Http\Middleware\EnsurePortalDomain::class,
+            'product.access' => \App\Http\Middleware\EnsureProductAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

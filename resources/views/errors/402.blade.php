@@ -15,15 +15,15 @@
                 </p>
                 @php($user = auth()->user())
                 <div class="d-flex justify-content-center gap-2 mt-3">
-                    @if($user?->isAdmin())
+                    @if($user?->isAdmin() && !request()->routeIs('admin.dashboard'))
                         <a href="{{ route('admin.dashboard') }}" class="btn btn-primary btn-sm">
                             <i class="bi bi-grid-1x2-fill me-1"></i>Back to Dashboard
                         </a>
-                    @elseif($user?->isStaff())
+                    @elseif($user?->isStaff() && !request()->routeIs('staff.dashboard'))
                         <a href="{{ route('staff.dashboard') }}" class="btn btn-primary btn-sm">
                             <i class="bi bi-grid-1x2-fill me-1"></i>Back to Dashboard
                         </a>
-                    @elseif($user?->isSupplier())
+                    @else
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
                             <button class="btn btn-primary btn-sm">
