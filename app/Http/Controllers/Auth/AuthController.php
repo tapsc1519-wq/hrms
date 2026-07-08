@@ -221,7 +221,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('login');
+        return redirect('/login');
     }
 
     private function isSupportedSsoProvider(?string $provider): bool

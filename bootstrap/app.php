@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
             'module' => \App\Http\Middleware\ModuleMiddleware::class,
+            'portal.domain' => \App\Http\Middleware\EnsurePortalDomain::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

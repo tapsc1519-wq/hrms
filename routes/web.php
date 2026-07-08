@@ -82,7 +82,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // ─── Super Admin ──────────────────────────────────────────────────────────────
-Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:super_admin'])->group(function () {
+Route::prefix('super-admin')->name('super-admin.')->middleware(['portal.domain:platform', 'auth', 'role:super_admin'])->group(function () {
     Route::get('/dashboard', [SADashboard::class, 'index'])->name('dashboard');
 
     Route::patch('organizations/{organization}/modules', [OrganizationController::class, 'updateModules'])->name('organizations.modules.update');
@@ -110,7 +110,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
 });
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_admin'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', 'auth', 'role:admin,super_admin'])->group(function () {
     Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
     Route::get('sso-settings', [SsoSettingController::class, 'edit'])->name('sso-settings.edit');
     Route::put('sso-settings', [SsoSettingController::class, 'update'])->name('sso-settings.update');
@@ -376,7 +376,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
 });
 
 // ─── Supplier Portal ──────────────────────────────────────────────────────────
-Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'role:supplier', 'module:supplier_portal'])->group(function () {
+Route::prefix('supplier')->name('supplier.')->middleware(['portal.domain:opsbridge', 'auth', 'role:supplier', 'module:supplier_portal'])->group(function () {
     Route::get('/dashboard', [SupplierDashboard::class, 'index'])->name('dashboard');
 
     Route::get('purchase-orders', [SupplierPOController::class, 'index'])->name('purchase-orders.index');
@@ -389,7 +389,7 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'role:supplier
 });
 
 // ─── Staff ────────────────────────────────────────────────────────────────────
-Route::prefix('staff')->name('staff.')->middleware(['auth', 'role:staff'])->group(function () {
+Route::prefix('staff')->name('staff.')->middleware(['portal.domain:opsbridge', 'auth', 'role:staff'])->group(function () {
     Route::get('/dashboard', [StaffDashboard::class, 'index'])->name('dashboard');
 
     Route::middleware('module:hrms')->group(function () {
