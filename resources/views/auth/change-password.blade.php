@@ -22,7 +22,7 @@
             <div class="form-card-body">
                 <div class="alert alert-info border-0 rounded-3 small">
                     <i class="bi bi-info-circle me-2"></i>
-                    Enter your current password first, then choose a new password with at least 8 characters.
+                    {{ auth()->user()?->must_change_password ? 'Please set your own password before continuing to the portal.' : 'Enter your current password first, then choose a new password with at least 8 characters.' }}
                 </div>
 
                 <form method="POST" action="{{ route('account.password.update') }}">

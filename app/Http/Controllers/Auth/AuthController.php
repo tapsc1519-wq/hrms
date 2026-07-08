@@ -211,7 +211,13 @@ class AuthController extends Controller
 
         $request->user()->forceFill([
             'password' => Hash::make($validated['password']),
+            'must_change_password' => false,
         ])->save();
+
+        if ($request->user()->isPartner()) {
+            return redirect()->route('partner.dashboard')
+                ->with('success', 'Your password has been changed successfully.');
+        }
 
         return back()->with('success', 'Your password has been changed successfully.');
     }

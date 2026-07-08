@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             \App\Http\Middleware\SharePortalContext::class,
+            \App\Http\Middleware\EnsurePasswordChanged::class,
         ]);
 
         $middleware->alias([

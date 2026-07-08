@@ -125,6 +125,7 @@ class PartnerController extends Controller
         $partner->portalUser->forceFill([
             'password' => Hash::make($temporaryPassword),
             'status' => 'active',
+            'must_change_password' => true,
         ])->save();
 
         $loginUrl = $this->platformLoginUrl();

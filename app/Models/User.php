@@ -14,13 +14,14 @@ class User extends Authenticatable
 
     protected $fillable = [
         'organization_id', 'department_id', 'name', 'email', 'password',
-        'role', 'custom_role_id', 'phone', 'employee_id', 'avatar', 'job_title', 'status', 'last_login_at',
+        'must_change_password', 'role', 'custom_role_id', 'phone', 'employee_id', 'avatar', 'job_title', 'status', 'last_login_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
         'last_login_at' => 'datetime',
+        'must_change_password' => 'boolean',
     ];
 
     public function organization(): BelongsTo
