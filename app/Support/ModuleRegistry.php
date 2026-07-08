@@ -11,6 +11,7 @@ class ModuleRegistry
     {
         return [
             'itam' => [
+                'product_key' => 'opsbridge',
                 'name' => 'IT Asset Management',
                 'short_name' => 'ITAM',
                 'description' => 'Hardware assets, suppliers, purchases, assignments, maintenance, requests, catalog and asset reports.',
@@ -20,6 +21,7 @@ class ModuleRegistry
                 'depends_on' => [],
             ],
             'sam' => [
+                'product_key' => 'opsbridge',
                 'name' => 'Software Asset Management',
                 'short_name' => 'SAM',
                 'description' => 'Software catalog, license inventory, software assignment and compliance tracking.',
@@ -29,6 +31,7 @@ class ModuleRegistry
                 'depends_on' => [],
             ],
             'hrms' => [
+                'product_key' => 'opsbridge',
                 'name' => 'Human Resource Management',
                 'short_name' => 'HRMS',
                 'description' => 'Employees, profiles, documents, shifts, attendance, leaves, holidays and HR settings.',
@@ -38,6 +41,7 @@ class ModuleRegistry
                 'depends_on' => [],
             ],
             'payroll' => [
+                'product_key' => 'opsbridge',
                 'name' => 'Payroll',
                 'short_name' => 'Payroll',
                 'description' => 'Salary setup, payroll runs, payslips, approvals and bank payment exports.',
@@ -47,6 +51,7 @@ class ModuleRegistry
                 'depends_on' => ['hrms'],
             ],
             'support' => [
+                'product_key' => 'opsbridge',
                 'name' => 'Support Tickets',
                 'short_name' => 'Support',
                 'description' => 'Employee/admin ticket bridge with comments and supporting attachments.',
@@ -56,6 +61,7 @@ class ModuleRegistry
                 'depends_on' => [],
             ],
             'supplier_portal' => [
+                'product_key' => 'opsbridge',
                 'name' => 'Supplier Portal',
                 'short_name' => 'Supplier Portal',
                 'description' => 'Supplier login area for purchase order visibility and supplier collaboration.',
@@ -75,6 +81,14 @@ class ModuleRegistry
     public static function get(string $key): ?array
     {
         return static::all()[$key] ?? null;
+    }
+
+    public static function forProduct(string $productKey): array
+    {
+        return array_filter(
+            static::all(),
+            fn (array $module) => ($module['product_key'] ?? 'opsbridge') === $productKey
+        );
     }
 
     public static function monthlyPrice(string $key): float

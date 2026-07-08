@@ -5,6 +5,7 @@ use App\Http\Controllers\SuperAdmin\DashboardController as SADashboard;
 use App\Http\Controllers\SuperAdmin\OrganizationController;
 use App\Http\Controllers\SuperAdmin\PaymentController as SAPaymentController;
 use App\Http\Controllers\SuperAdmin\PricingController;
+use App\Http\Controllers\SuperAdmin\ProductController as SAProductController;
 use App\Http\Controllers\SuperAdmin\SettingController as SASettingController;
 use App\Http\Controllers\SuperAdmin\UserController as SAUserController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
@@ -84,6 +85,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::patch('organizations/{organization}/modules', [OrganizationController::class, 'updateModules'])->name('organizations.modules.update');
     Route::post('organizations/{organization}/payments', [OrganizationController::class, 'recordPayment'])->name('organizations.payments.store');
     Route::resource('organizations', OrganizationController::class);
+    Route::resource('products', SAProductController::class)->only(['index', 'edit', 'update']);
     Route::resource('users', SAUserController::class)->except(['show']);
 
     Route::get('pricing', [PricingController::class, 'edit'])->name('pricing.edit');
