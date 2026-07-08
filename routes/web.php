@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SADashboard;
+use App\Http\Controllers\SuperAdmin\MailSettingController as SAMailSettingController;
 use App\Http\Controllers\SuperAdmin\OrganizationController;
 use App\Http\Controllers\SuperAdmin\PaymentController as SAPaymentController;
 use App\Http\Controllers\SuperAdmin\PartnerController as SAPartnerController;
@@ -114,6 +115,8 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['portal.domain:p
     Route::put('settings', [SASettingController::class, 'update'])->name('settings.update');
     Route::delete('settings/logo', [SASettingController::class, 'removeLogo'])->name('settings.remove-logo');
     Route::delete('settings/favicon', [SASettingController::class, 'removeFavicon'])->name('settings.remove-favicon');
+    Route::get('mail-settings', [SAMailSettingController::class, 'index'])->name('mail-settings.index');
+    Route::post('mail-settings/test', [SAMailSettingController::class, 'sendTest'])->name('mail-settings.test');
 });
 
 // ─── Admin ────────────────────────────────────────────────────────────────────

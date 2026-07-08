@@ -1196,6 +1196,10 @@
                class="sidebar-link {{ request()->routeIs('super-admin.settings') ? 'active' : '' }}">
                 <i class="bi bi-gear-fill"></i> Settings
             </a>
+            <a href="{{ route('super-admin.mail-settings.index') }}"
+               class="sidebar-link {{ request()->routeIs('super-admin.mail-settings.*') ? 'active' : '' }}">
+                <i class="bi bi-envelope-check-fill"></i> Mail Settings
+            </a>
         @endif
 
         {{-- ── ADMIN ─── --}}
