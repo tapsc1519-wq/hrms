@@ -68,7 +68,7 @@ use App\Http\Controllers\Staff\PayrollController as StaffPayrollController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
-Route::get('/', fn() => redirect()->route('login'));
+Route::get('/', fn() => redirect('/login'));
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
