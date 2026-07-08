@@ -55,6 +55,9 @@ use App\Http\Controllers\Admin\SsoSettingController;
 use App\Http\Controllers\Supplier\DashboardController as SupplierDashboard;
 use App\Http\Controllers\Supplier\PurchaseOrderController as SupplierPOController;
 use App\Http\Controllers\Supplier\RepairController as SupplierRepairController;
+use App\Http\Controllers\Partner\DashboardController as PartnerDashboard;
+use App\Http\Controllers\Partner\LeadController as PartnerLeadPortalController;
+use App\Http\Controllers\Partner\CommissionController as PartnerCommissionPortalController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboard;
 use App\Http\Controllers\Staff\AssetController as StaffAssetController;
 use App\Http\Controllers\Staff\RequestController as StaffRequestController;
@@ -392,6 +395,14 @@ Route::prefix('supplier')->name('supplier.')->middleware(['portal.domain:opsbrid
 });
 
 // ─── Staff ────────────────────────────────────────────────────────────────────
+Route::prefix('partner')->name('partner.')->middleware(['portal.domain:platform', 'auth', 'role:partner'])->group(function () {
+    Route::get('/dashboard', [PartnerDashboard::class, 'index'])->name('dashboard');
+    Route::get('leads', [PartnerLeadPortalController::class, 'index'])->name('leads.index');
+    Route::get('leads/create', [PartnerLeadPortalController::class, 'create'])->name('leads.create');
+    Route::post('leads', [PartnerLeadPortalController::class, 'store'])->name('leads.store');
+    Route::get('commissions', [PartnerCommissionPortalController::class, 'index'])->name('commissions.index');
+});
+
 Route::prefix('staff')->name('staff.')->middleware(['portal.domain:opsbridge', 'auth', 'role:staff', 'product.access:opsbridge'])->group(function () {
     Route::get('/dashboard', [StaffDashboard::class, 'index'])->name('dashboard');
 

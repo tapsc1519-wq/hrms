@@ -38,6 +38,11 @@ class User extends Authenticatable
         return $this->belongsTo(Supplier::class, 'user_id', 'user_id');
     }
 
+    public function partner(): HasOne
+    {
+        return $this->hasOne(Partner::class);
+    }
+
     public function customRole(): BelongsTo
     {
         return $this->belongsTo(OrganizationRole::class, 'custom_role_id');
@@ -72,6 +77,7 @@ class User extends Authenticatable
     public function isAdmin(): bool { return $this->role === 'admin'; }
     public function isSupplier(): bool { return $this->role === 'supplier'; }
     public function isStaff(): bool { return $this->role === 'staff'; }
+    public function isPartner(): bool { return $this->role === 'partner'; }
 
     public function hasPermission(string $permission): bool
     {

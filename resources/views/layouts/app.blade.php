@@ -1508,6 +1508,22 @@
         @endif
 
         {{-- ── STAFF ─── --}}
+        @if($user->isPartner())
+            <div class="sidebar-section-title">Partner Portal</div>
+            <a href="{{ route('partner.dashboard') }}"
+               class="sidebar-link {{ request()->routeIs('partner.dashboard') ? 'active' : '' }}">
+                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            </a>
+            <a href="{{ route('partner.leads.index') }}"
+               class="sidebar-link {{ request()->routeIs('partner.leads.*') ? 'active' : '' }}">
+                <i class="bi bi-funnel"></i> My Leads
+            </a>
+            <a href="{{ route('partner.commissions.index') }}"
+               class="sidebar-link {{ request()->routeIs('partner.commissions.*') ? 'active' : '' }}">
+                <i class="bi bi-cash-coin"></i> Commissions
+            </a>
+        @endif
+
         @if($user->isStaff())
             <div class="sidebar-section-title">Overview</div>
             <a href="{{ route('staff.dashboard') }}"

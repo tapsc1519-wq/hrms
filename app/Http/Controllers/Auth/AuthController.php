@@ -290,6 +290,7 @@ class AuthController extends Controller
             'super_admin' => $this->redirectToPortalRoute('super-admin.dashboard', config('niyantron.platform_domain')),
             'admin'       => $this->redirectToPortalRoute('admin.dashboard', config('niyantron.products.opsbridge.domain')),
             'supplier'    => $this->redirectToPortalRoute('supplier.dashboard', config('niyantron.products.opsbridge.domain')),
+            'partner'     => $this->redirectToPortalRoute('partner.dashboard', config('niyantron.platform_domain')),
             'staff'       => $this->redirectToPortalRoute('staff.dashboard', config('niyantron.products.opsbridge.domain')),
             default       => redirect()->route('login'),
         };

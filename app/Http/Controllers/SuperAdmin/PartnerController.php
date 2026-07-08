@@ -4,7 +4,10 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class PartnerController extends Controller
 {
@@ -61,7 +64,9 @@ class PartnerController extends Controller
 
     public function store(Request $request)
     {
-        Partner::create($this->validated($request));
+        $validated = $this->validated($request);
+        $partner = Partner::create($this->partnerData($validated));
+        $this->syncPortalUser($partner, $validated);
 
         return redirect()
             ->route('super-admin.partners.index')
@@ -70,7 +75,7 @@ class PartnerController extends Controller
 
     public function edit(Partner $partner)
     {
-        $partner->load(['subscriptions.organization', 'subscriptions.product', 'commissions']);
+        $partner->load(['subscriptions.organization', 'subscriptions.product', 'commissions', 'portalUser']);
         $types = $this->types();
         $statuses = $this->statuses();
         $commissionSummary = [
@@ -84,7 +89,9 @@ class PartnerController extends Controller
 
     public function update(Request $request, Partner $partner)
     {
-        $partner->update($this->validated($request, $partner));
+        $validated = $this->validated($request, $partner);
+        $partner->update($this->partnerData($validated));
+        $this->syncPortalUser($partner, $validated);
 
         return redirect()
             ->route('super-admin.partners.index')
@@ -118,7 +125,58 @@ class PartnerController extends Controller
             'payout_method' => ['nullable', 'string', 'max:120'],
             'payout_details' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'create_portal_account' => ['nullable', 'boolean'],
+            'portal_email' => [
+                $partner?->user_id || $request->boolean('create_portal_account') ? 'required' : 'nullable',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($partner?->user_id),
+            ],
+            'portal_password' => [
+                $partner?->user_id || !$request->boolean('create_portal_account') ? 'nullable' : 'required',
+                'string',
+                'min:8',
+            ],
+            'portal_status' => ['nullable', 'in:active,inactive'],
         ]);
+    }
+
+    private function partnerData(array $validated): array
+    {
+        return collect($validated)->except([
+            'create_portal_account',
+            'portal_email',
+            'portal_password',
+            'portal_status',
+        ])->all();
+    }
+
+    private function syncPortalUser(Partner $partner, array $validated): void
+    {
+        if (!$partner->user_id && empty($validated['create_portal_account'])) {
+            return;
+        }
+
+        $user = $partner->portalUser ?: new User();
+        $user->forceFill([
+            'organization_id' => null,
+            'name' => $partner->contact_person ?: $partner->name,
+            'email' => $validated['portal_email'] ?? $partner->email,
+            'role' => 'partner',
+            'phone' => $partner->phone,
+            'status' => $validated['portal_status'] ?? 'active',
+        ]);
+
+        if (!empty($validated['portal_password'])) {
+            $user->password = Hash::make($validated['portal_password']);
+        }
+
+        if (!$user->exists && empty($user->password)) {
+            return;
+        }
+
+        $user->save();
+        $partner->forceFill(['user_id' => $user->id])->save();
     }
 
     private function types(): array

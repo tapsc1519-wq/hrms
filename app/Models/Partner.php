@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Partner extends PlatformModel
 {
     protected $fillable = [
         'name',
+        'user_id',
         'company_name',
         'contact_person',
         'email',
@@ -23,6 +25,11 @@ class Partner extends PlatformModel
     protected $casts = [
         'default_commission_percent' => 'decimal:2',
     ];
+
+    public function portalUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
     public function subscriptions(): HasMany
     {
