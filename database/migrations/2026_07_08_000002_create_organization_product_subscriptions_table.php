@@ -1,9 +1,7 @@
 <?php
 
-use App\Support\ModuleRegistry;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,6 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         $connection = config('database.platform_connection', 'platform');
+
+        if (Schema::connection($connection)->hasTable('organization_product_subscriptions')) {
+            return;
+        }
 
         Schema::connection($connection)->create('organization_product_subscriptions', function (Blueprint $table) {
             $table->id();
@@ -33,73 +35,6 @@ return new class extends Migration
             $table->unique(['organization_id', 'product_id'], 'org_product_subscriptions_unique');
             $table->index(['product_id', 'status'], 'org_product_status_idx');
         });
-
-        $productId = DB::connection($connection)
-            ->table('products')
-            ->where('slug', 'opsbridge')
-            ->value('id');
-
-        if (!$productId) {
-            return;
-        }
-
-        DB::connection(config('database.default'))
-            ->table('organizations')
-            ->orderBy('id')
-            ->select([
-                'id',
-                'billing_status',
-                'billing_cycle',
-                'monthly_amount',
-                'trial_started_at',
-                'trial_ends_at',
-                'subscription_ends_at',
-                'last_payment_at',
-            ])
-            ->chunkById(100, function ($organizations) use ($connection, $productId) {
-                $now = now();
-                $rows = $organizations->map(function ($organization) use ($productId, $now) {
-                    return [
-                        'organization_id' => $organization->id,
-                        'product_id' => $productId,
-                        'status' => $organization->billing_status ?: 'trial',
-                        'plan_name' => 'OpsBridge',
-                        'billing_cycle' => $organization->billing_cycle ?: 'monthly',
-                        'monthly_amount' => $organization->monthly_amount ?: collect(ModuleRegistry::keys())
-                            ->sum(fn (string $key) => ModuleRegistry::monthlyPrice($key)),
-                        'trial_started_at' => $organization->trial_started_at,
-                        'trial_ends_at' => $organization->trial_ends_at,
-                        'subscription_started_at' => $organization->last_payment_at,
-                        'subscription_ends_at' => $organization->subscription_ends_at,
-                        'last_payment_at' => $organization->last_payment_at,
-                        'product_database' => env('DB_OPSBRIDGE_DATABASE', env('DB_DATABASE')),
-                        'product_domain' => env('OPSBRIDGE_DOMAIN', 'opsbridge.niyantron.com'),
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ];
-                })->all();
-
-                DB::connection($connection)
-                    ->table('organization_product_subscriptions')
-                    ->upsert(
-                        $rows,
-                        ['organization_id', 'product_id'],
-                        [
-                            'status',
-                            'plan_name',
-                            'billing_cycle',
-                            'monthly_amount',
-                            'trial_started_at',
-                            'trial_ends_at',
-                            'subscription_started_at',
-                            'subscription_ends_at',
-                            'last_payment_at',
-                            'product_database',
-                            'product_domain',
-                            'updated_at',
-                        ]
-                    );
-            });
     }
 
     public function down(): void

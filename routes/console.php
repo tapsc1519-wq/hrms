@@ -2,6 +2,8 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use App\Models\Organization;
 
 Artisan::command('inspire', function () {
@@ -49,3 +51,71 @@ Artisan::command('billing:sync-status {--dry-run : Show affected organizations w
     $this->info('Updated organizations: ' . ($expiredTrials->count() + $expiredSubscriptions->count()));
     return 0;
 })->purpose('Mark expired trials and paid subscriptions as overdue');
+
+Artisan::command('platform:sync-data {--dry-run : Show what would be copied without writing to the platform database}', function () {
+    $dryRun = (bool) $this->option('dry-run');
+    $sourceConnection = env('DB_CONNECTION', config('database.default', 'mysql'));
+    $targetConnection = config('database.platform_connection', 'platform');
+
+    $tables = [
+        'products',
+        'organization_product_subscriptions',
+        'partners',
+        'partner_commissions',
+    ];
+
+    $sourceDatabase = DB::connection($sourceConnection)->getDatabaseName();
+    $targetDatabase = DB::connection($targetConnection)->getDatabaseName();
+
+    $this->info('Platform data sync');
+    $this->line("Source: {$sourceConnection} / {$sourceDatabase}");
+    $this->line("Target: {$targetConnection} / {$targetDatabase}");
+
+    if ($sourceDatabase === $targetDatabase) {
+        $this->warn('Source and target are the same database. Nothing was copied.');
+        return 0;
+    }
+
+    $rows = [];
+
+    foreach ($tables as $table) {
+        $sourceExists = Schema::connection($sourceConnection)->hasTable($table);
+        $targetExists = Schema::connection($targetConnection)->hasTable($table);
+
+        if (!$sourceExists || !$targetExists) {
+            $rows[] = [$table, $sourceExists ? 'yes' : 'missing', $targetExists ? 'yes' : 'missing', '-', 'skipped'];
+            continue;
+        }
+
+        $sourceCount = DB::connection($sourceConnection)->table($table)->count();
+        $targetCount = DB::connection($targetConnection)->table($table)->count();
+        $rows[] = [$table, $sourceCount, $targetCount, $sourceCount, $dryRun ? 'dry-run' : 'copy'];
+
+        if ($dryRun || $sourceCount === 0) {
+            continue;
+        }
+
+        DB::connection($sourceConnection)
+            ->table($table)
+            ->orderBy('id')
+            ->chunkById(200, function ($records) use ($targetConnection, $table) {
+                $payload = $records
+                    ->map(fn ($record) => (array) $record)
+                    ->all();
+
+                DB::connection($targetConnection)
+                    ->table($table)
+                    ->upsert($payload, ['id']);
+            });
+    }
+
+    $this->table(['Table', 'Source', 'Target Before', 'To Copy', 'Action'], $rows);
+
+    if ($dryRun) {
+        $this->warn('Dry run only. No records were copied.');
+    } else {
+        $this->info('Platform data sync complete.');
+    }
+
+    return 0;
+})->purpose('Copy platform data from the current product database into the configured platform database');
