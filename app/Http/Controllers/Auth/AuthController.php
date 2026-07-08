@@ -287,12 +287,32 @@ class AuthController extends Controller
     private function redirectByRole(string $role)
     {
         return match($role) {
-            'super_admin' => redirect()->route('super-admin.dashboard'),
-            'admin'       => redirect()->route('admin.dashboard'),
-            'supplier'      => redirect()->route('supplier.dashboard'),
-            'staff'       => redirect()->route('staff.dashboard'),
+            'super_admin' => $this->redirectToPortalRoute('super-admin.dashboard', config('niyantron.platform_domain')),
+            'admin'       => $this->redirectToPortalRoute('admin.dashboard', config('niyantron.products.opsbridge.domain')),
+            'supplier'    => $this->redirectToPortalRoute('supplier.dashboard', config('niyantron.products.opsbridge.domain')),
+            'staff'       => $this->redirectToPortalRoute('staff.dashboard', config('niyantron.products.opsbridge.domain')),
             default       => redirect()->route('login'),
         };
+    }
+
+    private function redirectToPortalRoute(string $routeName, ?string $domain)
+    {
+        if (!$this->shouldUsePortalDomain($domain)) {
+            return redirect()->route($routeName);
+        }
+
+        $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: 'https';
+
+        return redirect()->to($scheme . '://' . $domain . route($routeName, [], false));
+    }
+
+    private function shouldUsePortalDomain(?string $domain): bool
+    {
+        if (blank($domain) || app()->environment('local', 'testing')) {
+            return false;
+        }
+
+        return request()->getHost() !== $domain;
     }
 
     private function uniqueOrganizationSlug(string $name): string

@@ -8,8 +8,10 @@
         $siteSubtitle = \App\Models\Setting::get('site_subtitle', 'Workforce Operations');
         $siteLogo = \App\Models\Setting::get('site_logo');
         $siteFavicon = \App\Models\Setting::get('site_favicon');
+        $portal = $portalContext ?? [];
+        $brandTitle = $portal['brand_name'] ?? $siteTitle;
     @endphp
-    <title>@yield('title', 'Login') - {{ $siteTitle }}</title>
+    <title>@yield('title', 'Login') - {{ $brandTitle }}</title>
     @if($siteFavicon)
         <link rel="icon" href="{{ Storage::url($siteFavicon) }}">
     @endif
@@ -483,21 +485,21 @@
             <div class="auth-brand">
                 <div class="brand-icon">
                     @if($siteLogo)
-                        <img src="{{ Storage::url($siteLogo) }}" alt="{{ $siteTitle }}">
+                        <img src="{{ Storage::url($siteLogo) }}" alt="{{ $brandTitle }}">
                     @else
                         <i class="bi bi-grid-1x2-fill"></i>
                     @endif
                 </div>
                 <div>
-                    <div class="brand-name">{{ $siteTitle }}</div>
-                    <div class="brand-sub">{{ $siteSubtitle }}</div>
+                    <div class="brand-name">{{ $brandTitle }}</div>
+                    <div class="brand-sub">{{ ($portal['is_platform'] ?? false) ? 'Product Operations Platform' : $siteSubtitle }}</div>
                 </div>
             </div>
 
             <div class="auth-story">
-                <div class="auth-kicker"><i class="bi bi-layers-fill"></i> Modular Business Suite</div>
-                <h1>One portal for people, assets, software and payroll.</h1>
-                <p>A subscription-ready platform where every organization gets only the modules they need: HRMS, ITAM, SAM, Payroll, Support and Supplier collaboration.</p>
+                <div class="auth-kicker"><i class="bi bi-layers-fill"></i> {{ ($portal['is_platform'] ?? false) ? 'Niyantron Platform' : 'OpsBridge Workspace' }}</div>
+                <h1>{{ ($portal['is_platform'] ?? false) ? 'One control center for every Niyantron product.' : 'One portal for people, assets, software and payroll.' }}</h1>
+                <p>{{ ($portal['is_platform'] ?? false) ? 'Manage product access, organizations, partners, subscriptions and platform-level operations from one place.' : 'A subscription-ready platform where every organization gets only the modules they need: HRMS, ITAM, SAM, Payroll, Support and Supplier collaboration.' }}</p>
 
                 <div class="auth-capabilities">
                     <div class="capability">

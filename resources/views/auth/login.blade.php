@@ -4,6 +4,8 @@
 @php
     $siteTitle = \App\Models\Setting::get('site_title', 'ITAM Suite');
     $siteLogo = \App\Models\Setting::get('site_logo');
+    $portal = $portalContext ?? [];
+    $brandTitle = $portal['brand_name'] ?? $siteTitle;
     $activeAuthTab = old('organization') ? 'sso' : 'password';
 @endphp
 
@@ -11,13 +13,13 @@
 <div class="form-header">
     <div class="form-header-icon">
         @if($siteLogo)
-            <img src="{{ Storage::url($siteLogo) }}" alt="{{ $siteTitle }}">
+            <img src="{{ Storage::url($siteLogo) }}" alt="{{ $brandTitle }}">
         @else
             <i class="bi bi-grid-1x2-fill"></i>
         @endif
     </div>
-    <h2>Welcome back</h2>
-    <p>Choose how you want to access your workspace.</p>
+    <h2>{{ $portal['login_title'] ?? 'Welcome back' }}</h2>
+    <p>{{ $portal['login_subtitle'] ?? 'Choose how you want to access your workspace.' }}</p>
 </div>
 
 @if($errors->any())
@@ -137,9 +139,11 @@
     @endif
 </div>
 
+@if(!($portal['is_platform'] ?? false))
 <div class="auth-switch-link">
     New organization? <a href="{{ route('register') }}">Start a free trial</a>
 </div>
+@endif
 @endsection
 
 @push('scripts')
