@@ -89,6 +89,26 @@ Route::get('/', function () {
 
     return redirect('/login');
 })->name('public.home');
+Route::get('/about', function () {
+    $host = Str::lower(request()->getHost());
+    $mainDomain = Str::lower((string) config('niyantron.main_domain'));
+
+    if (in_array($host, [$mainDomain, 'www.' . $mainDomain], true)) {
+        return view('public.about');
+    }
+
+    return redirect('/');
+})->name('public.about');
+Route::get('/contact', function () {
+    $host = Str::lower(request()->getHost());
+    $mainDomain = Str::lower((string) config('niyantron.main_domain'));
+
+    if (in_array($host, [$mainDomain, 'www.' . $mainDomain], true)) {
+        return view('public.contact');
+    }
+
+    return redirect('/');
+})->name('public.contact');
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');

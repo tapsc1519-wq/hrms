@@ -31,6 +31,12 @@
         .product-preview { background:linear-gradient(135deg,#102033,#1e66f5); color:#fff; min-height:190px; padding:1.2rem; }
         .metric { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.15); border-radius:14px; padding:.8rem; }
         .cta-band { background:#102033; border-radius:24px; color:#fff; padding:2rem; }
+        .timeline { border-left:2px solid var(--line); padding-left:1.3rem; }
+        .timeline-item { margin-bottom:1.35rem; position:relative; }
+        .timeline-item:before { background:#1e66f5; border:4px solid #fff; border-radius:50%; box-shadow:0 0 0 1px var(--line); content:""; height:18px; left:-1.93rem; position:absolute; top:.2rem; width:18px; }
+        .soft-band { background:#eef6ff; border:1px solid #dceafd; border-radius:24px; padding:2rem; }
+        .product-chip { align-items:center; background:#fff; border:1px solid var(--line); border-radius:16px; display:flex; gap:.9rem; padding:1rem; }
+        .product-chip .icon-box { flex-shrink:0; }
         @media (max-width:767.98px) { .hero { padding-top:7rem; } .app-grid { grid-template-columns:1fr; } .nav-links { display:none!important; } }
     </style>
 </head>
@@ -43,6 +49,8 @@
             <div class="nav-links d-flex align-items-center gap-4 small fw-bold">
                 <a href="#products" class="text-decoration-none text-dark">Products</a>
                 <a href="#platform" class="text-decoration-none text-dark">Platform</a>
+                <a href="/about" class="text-decoration-none text-dark">About</a>
+                <a href="/contact" class="text-decoration-none text-dark">Contact</a>
                 <a href="https://partner.niyantron.com" class="text-decoration-none text-dark">Partners</a>
             </div>
             <a href="https://opsbridge.niyantron.com/login" class="btn btn-primary btn-sm">Product Login</a>
@@ -116,12 +124,47 @@
             </div>
         </section>
 
+        <section class="section pt-0">
+            <div class="container">
+                <div class="soft-band">
+                    <div class="row g-4 align-items-center">
+                        <div class="col-lg-5">
+                            <span class="pill mb-3"><i class="bi bi-layers text-primary"></i> Mother company architecture</span>
+                            <h2>One Niyantron account layer. Many focused products.</h2>
+                            <p class="lead mb-0">Organizations should feel each product is dedicated to its own job, while Niyantron keeps common product control, partners, billing, subscriptions and onboarding under one platform.</p>
+                        </div>
+                        <div class="col-lg-7">
+                            <div class="row g-3">
+                                <div class="col-md-6"><div class="product-chip"><span class="icon-box bg-primary-subtle text-primary"><i class="bi bi-hdd-network"></i></span><div><strong>OpsBridge</strong><div class="text-muted small">Live IT operations product</div></div></div></div>
+                                <div class="col-md-6"><div class="product-chip"><span class="icon-box bg-success-subtle text-success"><i class="bi bi-person-workspace"></i></span><div><strong>Partner Hub</strong><div class="text-muted small">Partner leads and commissions</div></div></div></div>
+                                <div class="col-md-6"><div class="product-chip"><span class="icon-box bg-warning-subtle text-warning"><i class="bi bi-clipboard-data"></i></span><div><strong>Future Products</strong><div class="text-muted small">Built under same company layer</div></div></div></div>
+                                <div class="col-md-6"><div class="product-chip"><span class="icon-box bg-info-subtle text-info"><i class="bi bi-shield-check"></i></span><div><strong>Platform Control</strong><div class="text-muted small">Subscriptions, tenants and access</div></div></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="platform" class="section pt-0">
             <div class="container">
                 <div class="row g-3">
                     <div class="col-md-4"><div class="panel"><span class="icon-box bg-primary-subtle text-primary"><i class="bi bi-grid-3x3-gap"></i></span><h5 class="fw-bold mt-3">Product family</h5><p class="text-muted mb-0">Host multiple products while each customer sees a focused product experience.</p></div></div>
                     <div class="col-md-4"><div class="panel"><span class="icon-box bg-success-subtle text-success"><i class="bi bi-person-workspace"></i></span><h5 class="fw-bold mt-3">Partner ecosystem</h5><p class="text-muted mb-0">Partners generate leads, track opportunities and earn commission on product sales.</p></div></div>
                     <div class="col-md-4"><div class="panel"><span class="icon-box bg-warning-subtle text-warning"><i class="bi bi-kanban"></i></span><h5 class="fw-bold mt-3">Common control</h5><p class="text-muted mb-0">One platform team manages products, subscriptions, customers and onboarding.</p></div></div>
+                </div>
+                <div class="row g-4 mt-5">
+                    <div class="col-lg-5">
+                        <h2>What Niyantron is building toward</h2>
+                        <p class="lead">A family of deeply practical products for organizations that want fewer spreadsheets, clearer ownership and better operational discipline.</p>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="timeline">
+                            <div class="timeline-item"><strong>OpsBridge live foundation</strong><p class="text-muted mb-0">ITAM, HRMS, SAM, endpoint agent, AMC and disposal modules under one product.</p></div>
+                            <div class="timeline-item"><strong>Partner-led growth</strong><p class="text-muted mb-0">Partner onboarding, lead tracking, customer conversion and commission workflow.</p></div>
+                            <div class="timeline-item"><strong>Product family expansion</strong><p class="text-muted mb-0">New products can join the same Niyantron platform without confusing product users.</p></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="cta-band d-lg-flex align-items-center justify-content-between gap-4 mt-5">
                     <div>
@@ -133,5 +176,15 @@
             </div>
         </section>
     </main>
+    <footer class="border-top bg-white py-4">
+        <div class="container d-flex flex-wrap align-items-center justify-content-between gap-3 small text-muted">
+            <div><strong class="text-dark">Niyantron</strong> builds operational control products.</div>
+            <div class="d-flex gap-3">
+                <a href="/about" class="text-muted text-decoration-none">About</a>
+                <a href="/contact" class="text-muted text-decoration-none">Contact</a>
+                <a href="https://partner.niyantron.com" class="text-muted text-decoration-none">Partners</a>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
