@@ -71,9 +71,24 @@ use App\Http\Controllers\Staff\AttendanceController as StaffAttendanceController
 use App\Http\Controllers\Staff\LeaveController as StaffLeaveController;
 use App\Http\Controllers\Staff\PayrollController as StaffPayrollController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
-Route::get('/', fn() => redirect('/login'));
+Route::get('/', function () {
+    $host = Str::lower(request()->getHost());
+    $mainDomain = Str::lower((string) config('niyantron.main_domain'));
+    $partnerDomain = Str::lower((string) config('niyantron.partner_domain'));
+
+    if (in_array($host, [$mainDomain, 'www.' . $mainDomain], true)) {
+        return view('public.niyantron');
+    }
+
+    if ($host === $partnerDomain) {
+        return view('public.partners');
+    }
+
+    return redirect('/login');
+})->name('public.home');
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');

@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'main_domain' => env('NIYANTRON_DOMAIN', 'niyantron.com'),
+
+    'partner_domain' => env('PARTNER_DOMAIN', 'partner.niyantron.com'),
+
     'platform_domain' => env('PLATFORM_DOMAIN', 'platform.niyantron.com'),
 
     'default_product' => env('DEFAULT_PRODUCT', 'opsbridge'),
