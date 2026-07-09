@@ -19,6 +19,7 @@ class Organization extends Model
         'trial_months', 'trial_started_at', 'trial_ends_at',
         'billing_status', 'billing_cycle', 'monthly_amount',
         'subscription_ends_at', 'last_payment_at',
+        'onboarding_credentials_shared_at', 'onboarding_initial_setup_completed_at',
     ];
 
     protected $casts = [
@@ -27,6 +28,8 @@ class Organization extends Model
         'monthly_amount' => 'decimal:2',
         'subscription_ends_at' => 'date',
         'last_payment_at' => 'datetime',
+        'onboarding_credentials_shared_at' => 'datetime',
+        'onboarding_initial_setup_completed_at' => 'datetime',
     ];
 
     public function users(): HasMany

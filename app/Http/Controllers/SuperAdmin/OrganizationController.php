@@ -109,13 +109,14 @@ class OrganizationController extends Controller
     {
         $organization->load(['users', 'assets', 'suppliers', 'modules', 'payments.recorder', 'productSubscriptions.product', 'productSubscriptions.partner']);
         $modules = ModuleRegistry::all();
+        $onboardingChecklist = $this->onboardingChecklist($organization);
 
-        return view('super-admin.organizations.show', compact('organization', 'modules'));
+        return view('super-admin.organizations.show', compact('organization', 'modules', 'onboardingChecklist'));
     }
 
     public function edit(Organization $organization)
     {
-        $organization->load(['modules', 'productSubscriptions.product', 'productSubscriptions.partner']);
+        $organization->load(['users', 'modules', 'productSubscriptions.product', 'productSubscriptions.partner']);
 
         return view('super-admin.organizations.edit', [
             'organization' => $organization,
@@ -126,6 +127,7 @@ class OrganizationController extends Controller
             'defaultMonthlyAmount' => $this->registeredOpsBridgeAmount(),
             'opsBridgeSubscription' => $organization->productSubscriptions
                 ->first(fn ($subscription) => $subscription->product?->slug === 'opsbridge'),
+            'onboardingChecklist' => $this->onboardingChecklist($organization),
         ]);
     }
 
@@ -196,6 +198,25 @@ class OrganizationController extends Controller
         $this->syncOpsBridgeSubscription($organization);
 
         return back()->with('success', 'Organization module access and pricing updated.');
+    }
+
+    public function updateOnboarding(Request $request, Organization $organization)
+    {
+        $validated = $request->validate([
+            'credentials_shared' => ['nullable', 'boolean'],
+            'initial_setup_completed' => ['nullable', 'boolean'],
+        ]);
+
+        $organization->forceFill([
+            'onboarding_credentials_shared_at' => ($validated['credentials_shared'] ?? false)
+                ? ($organization->onboarding_credentials_shared_at ?: now())
+                : null,
+            'onboarding_initial_setup_completed_at' => ($validated['initial_setup_completed'] ?? false)
+                ? ($organization->onboarding_initial_setup_completed_at ?: now())
+                : null,
+        ])->save();
+
+        return back()->with('success', 'Organization onboarding status updated.');
     }
 
     public function recordPayment(Request $request, Organization $organization)
@@ -398,5 +419,88 @@ class OrganizationController extends Controller
                 'status' => 'pending',
             ]
         );
+    }
+
+    private function onboardingChecklist(Organization $organization): array
+    {
+        $organization->loadMissing(['users', 'modules', 'productSubscriptions.product', 'productSubscriptions.partner']);
+
+        $admin = $organization->users->firstWhere('role', 'admin');
+        $opsBridgeSubscription = $organization->productSubscriptions
+            ->first(fn ($subscription) => $subscription->product?->slug === 'opsbridge');
+        $enabledModules = $organization->modules->where('is_enabled', true);
+        $mailReady = ! in_array(config('mail.default'), ['log', 'array'], true)
+            && filled(config('mail.from.address'));
+        $firstLoginComplete = $admin && ($admin->last_login_at || ! $admin->must_change_password);
+
+        $items = [
+            [
+                'label' => 'Organization created',
+                'done' => $organization->exists,
+                'note' => $organization->created_at?->format('d-m-Y') ?? 'Record is not saved yet.',
+                'icon' => 'bi-building-check',
+            ],
+            [
+                'label' => 'OpsBridge subscription',
+                'done' => $opsBridgeSubscription && in_array($opsBridgeSubscription->status, ['trial', 'active'], true),
+                'note' => $opsBridgeSubscription
+                    ? ucfirst($opsBridgeSubscription->status) . ' - ' . ($opsBridgeSubscription->plan_name ?: 'OpsBridge')
+                    : 'No OpsBridge subscription mapped.',
+                'icon' => 'bi-ui-checks-grid',
+            ],
+            [
+                'label' => 'First admin account',
+                'done' => (bool) $admin,
+                'note' => $admin ? $admin->email : 'Create or convert a lead to generate admin login.',
+                'icon' => 'bi-person-check',
+            ],
+            [
+                'label' => 'Modules enabled',
+                'done' => $enabledModules->isNotEmpty(),
+                'note' => $enabledModules->count() . ' module' . ($enabledModules->count() === 1 ? '' : 's') . ' enabled.',
+                'icon' => 'bi-grid-1x2',
+            ],
+            [
+                'label' => 'Partner linked',
+                'done' => ! $opsBridgeSubscription || ! $opsBridgeSubscription->partner_id || (bool) $opsBridgeSubscription->partner,
+                'note' => $opsBridgeSubscription?->partner
+                    ? $opsBridgeSubscription->partner->display_name
+                    : 'Direct sale or no partner selected.',
+                'icon' => 'bi-person-workspace',
+            ],
+            [
+                'label' => 'Login credentials shared',
+                'done' => (bool) $organization->onboarding_credentials_shared_at,
+                'note' => $organization->onboarding_credentials_shared_at?->format('d-m-Y h:i A') ?? 'Mark this after sharing temporary login.',
+                'icon' => 'bi-key',
+            ],
+            [
+                'label' => 'SMTP email configured',
+                'done' => $mailReady,
+                'note' => $mailReady ? config('mail.from.address') : 'Email setup is pending.',
+                'icon' => 'bi-envelope-check',
+            ],
+            [
+                'label' => 'Customer first login',
+                'done' => (bool) $firstLoginComplete,
+                'note' => $admin?->last_login_at?->format('d-m-Y h:i A') ?? ($admin ? 'Waiting for first login/password change.' : 'Admin account is pending.'),
+                'icon' => 'bi-box-arrow-in-right',
+            ],
+            [
+                'label' => 'Initial setup completed',
+                'done' => (bool) $organization->onboarding_initial_setup_completed_at,
+                'note' => $organization->onboarding_initial_setup_completed_at?->format('d-m-Y h:i A') ?? 'Mark after customer setup handover is complete.',
+                'icon' => 'bi-flag',
+            ],
+        ];
+
+        $completed = collect($items)->where('done', true)->count();
+
+        return [
+            'items' => $items,
+            'completed' => $completed,
+            'total' => count($items),
+            'percent' => count($items) ? (int) round(($completed / count($items)) * 100) : 0,
+        ];
     }
 }

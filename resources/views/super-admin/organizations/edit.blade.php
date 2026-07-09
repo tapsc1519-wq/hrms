@@ -145,6 +145,8 @@
             </div>
         </div>
 
+        @include('super-admin.organizations._onboarding-status', ['onboardingChecklist' => $onboardingChecklist, 'canUpdateOnboarding' => false])
+
         {{-- Logo --}}
         <div class="form-card">
             <div class="form-card-header">

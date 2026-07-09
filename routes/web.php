@@ -91,6 +91,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['portal.domain:p
     Route::get('/dashboard', [SADashboard::class, 'index'])->name('dashboard');
 
     Route::patch('organizations/{organization}/modules', [OrganizationController::class, 'updateModules'])->name('organizations.modules.update');
+    Route::patch('organizations/{organization}/onboarding', [OrganizationController::class, 'updateOnboarding'])->name('organizations.onboarding.update');
     Route::post('organizations/{organization}/payments', [OrganizationController::class, 'recordPayment'])->name('organizations.payments.store');
     Route::resource('organizations', OrganizationController::class);
     Route::resource('products', SAProductController::class)->only(['index', 'edit', 'update']);

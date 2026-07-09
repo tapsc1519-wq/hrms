@@ -313,6 +313,8 @@
                 </div>
             </div>
 
+            @include('super-admin.organizations._onboarding-status', ['onboardingChecklist' => $onboardingChecklist])
+
             <div class="card org-detail-card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Subscribed Products</span>
