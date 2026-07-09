@@ -1985,6 +1985,44 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         @endif
+        @if(session('onboarding_credentials'))
+            @php($credentials = session('onboarding_credentials'))
+            <div class="alert alert-info rounded-3 border-0 shadow-sm">
+                <div class="d-flex align-items-start justify-content-between gap-3">
+                    <div>
+                        <div class="fw-bold mb-1">
+                            <i class="bi bi-person-check-fill me-2"></i>Organization admin login created
+                        </div>
+                        <div class="small text-muted mb-3">
+                            Share these temporary credentials with the customer. The admin must change password after first login.
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <div class="small text-muted fw-semibold text-uppercase">Organization</div>
+                                <div class="fw-semibold">{{ $credentials['organization'] ?? '-' }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted fw-semibold text-uppercase">Product</div>
+                                <div class="fw-semibold">{{ $credentials['product'] ?? '-' }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted fw-semibold text-uppercase">Login URL</div>
+                                <div class="fw-semibold text-break">{{ $credentials['login_url'] ?? '-' }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="small text-muted fw-semibold text-uppercase">Email</div>
+                                <div class="fw-semibold text-break">{{ $credentials['email'] ?? '-' }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="small text-muted fw-semibold text-uppercase">Temporary Password</div>
+                                <div class="fw-semibold">{{ $credentials['password'] ?? '-' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        @endif
         @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show rounded-3 border-0 shadow-sm">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}

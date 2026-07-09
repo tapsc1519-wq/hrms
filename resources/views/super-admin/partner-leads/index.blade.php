@@ -87,7 +87,7 @@
                             <div class="d-flex flex-wrap gap-2">
                                 <a href="{{ route('super-admin.partner-leads.edit', $lead) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil me-1"></i>Edit</a>
                                 @if(!$lead->converted_organization_id && !in_array($lead->stage, ['won', 'lost'], true))
-                                    <form action="{{ route('super-admin.partner-leads.convert', $lead) }}" method="POST" onsubmit="return confirm('Convert this lead into an organization and product subscription?')">
+                                    <form action="{{ route('super-admin.partner-leads.convert', $lead) }}" method="POST" onsubmit="return confirm('Convert this lead into an organization, product subscription, and first admin login?')">
                                         @csrf
                                         @method('PATCH')
                                         <button class="btn btn-sm btn-success"><i class="bi bi-arrow-right-circle me-1"></i>Convert</button>

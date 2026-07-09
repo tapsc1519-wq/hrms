@@ -8,8 +8,11 @@ use App\Models\OrganizationProductSubscription;
 use App\Models\Partner;
 use App\Models\PartnerLead;
 use App\Models\Product;
+use App\Models\User;
 use App\Support\ModuleRegistry;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -105,21 +108,48 @@ class PartnerLeadController extends Controller
             return back()->with('error', 'No product is available for conversion.');
         }
 
-        $organization = Organization::create([
-            'name' => $partnerLead->company_name,
-            'slug' => $this->uniqueOrganizationSlug($partnerLead->company_name),
-            'email' => $partnerLead->email,
-            'phone' => $partnerLead->phone,
-            'status' => 'active',
-            'trial_months' => 1,
-            'trial_started_at' => now(),
-            'trial_ends_at' => now()->addMonth()->toDateString(),
-            'billing_status' => 'trial',
-            'billing_cycle' => 'monthly',
-            'monthly_amount' => $partnerLead->expected_monthly_value,
-        ]);
+        if (! filled($partnerLead->email)) {
+            return back()->with('error', 'Add a contact email before converting this lead. It will be used for the organization admin login.');
+        }
 
-        $organization->syncModules(ModuleRegistry::keys(), auth()->id());
+        if (User::where('email', $partnerLead->email)->exists()) {
+            return back()->with('error', 'A portal account already exists with ' . $partnerLead->email . '. Use a different lead email before conversion.');
+        }
+
+        $temporaryPassword = Str::random(10) . '#9Aa';
+
+        $organization = DB::transaction(function () use ($partnerLead, $temporaryPassword) {
+            $organization = Organization::create([
+                'name' => $partnerLead->company_name,
+                'slug' => $this->uniqueOrganizationSlug($partnerLead->company_name),
+                'email' => $partnerLead->email,
+                'phone' => $partnerLead->phone,
+                'status' => 'active',
+                'trial_months' => 1,
+                'trial_started_at' => now(),
+                'trial_ends_at' => now()->addMonth()->toDateString(),
+                'billing_status' => 'trial',
+                'billing_cycle' => 'monthly',
+                'monthly_amount' => $partnerLead->expected_monthly_value,
+            ]);
+
+            $organization->syncModules(ModuleRegistry::keys(), auth()->id());
+
+            User::create([
+                'organization_id' => $organization->id,
+                'name' => $partnerLead->contact_person ?: $partnerLead->company_name . ' Admin',
+                'email' => $partnerLead->email,
+                'password' => Hash::make($temporaryPassword),
+                'must_change_password' => true,
+                'role' => 'admin',
+                'phone' => $partnerLead->phone,
+                'status' => 'active',
+            ]);
+
+            return $organization;
+        });
+
+        $productDomain = $product->domain ?: config('niyantron.products.opsbridge.domain');
 
         OrganizationProductSubscription::updateOrCreate(
             [
@@ -136,7 +166,7 @@ class PartnerLeadController extends Controller
                 'trial_started_at' => $organization->trial_started_at,
                 'trial_ends_at' => $organization->trial_ends_at,
                 'product_database' => config('database.connections.' . config('database.product_connection', 'opsbridge') . '.database'),
-                'product_domain' => $product->domain ?: config('niyantron.products.opsbridge.domain'),
+                'product_domain' => $productDomain,
                 'notes' => 'Converted from partner lead #' . $partnerLead->id,
             ]
         );
@@ -149,7 +179,14 @@ class PartnerLeadController extends Controller
 
         return redirect()
             ->route('super-admin.organizations.edit', $organization)
-            ->with('success', 'Lead converted to organization and product subscription.');
+            ->with('success', 'Lead converted to organization, product subscription, and first admin account.')
+            ->with('onboarding_credentials', [
+                'organization' => $organization->name,
+                'product' => $product->short_name ?: $product->name,
+                'login_url' => 'https://' . rtrim((string) $productDomain, '/') . '/login',
+                'email' => $partnerLead->email,
+                'password' => $temporaryPassword,
+            ]);
     }
 
     private function validated(Request $request): array
