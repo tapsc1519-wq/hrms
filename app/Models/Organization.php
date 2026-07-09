@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Organization extends Model
 {
+    public function getConnectionName()
+    {
+        return config('database.product_connection', 'opsbridge');
+    }
+
     protected $fillable = [
         'name', 'slug', 'email', 'phone', 'address', 'city', 'country',
         'logo', 'website', 'tax_number', 'status',
