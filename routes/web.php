@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\TaskController as AdminTaskController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\SoftwareController as AdminSoftwareController;
 use App\Http\Controllers\Admin\SoftwareComplianceController;
@@ -62,6 +63,7 @@ use App\Http\Controllers\Partner\CommissionController as PartnerCommissionPortal
 use App\Http\Controllers\Staff\DashboardController as StaffDashboard;
 use App\Http\Controllers\Staff\AssetController as StaffAssetController;
 use App\Http\Controllers\Staff\RequestController as StaffRequestController;
+use App\Http\Controllers\Staff\TaskController as StaffTaskController;
 use App\Http\Controllers\Staff\TicketController as StaffTicketController;
 use App\Http\Controllers\Staff\SoftwareController as StaffSoftwareController;
 use App\Http\Controllers\Staff\DeviceController as StaffDeviceController;
@@ -411,6 +413,17 @@ Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', '
     Route::delete('catalog/models/{assetModel}',             [CatalogController::class, 'destroyModel'])->middleware('permission:assets.catalog')->name('catalog.models.destroy');
     });
 
+    // Work Management
+    Route::get('tasks', [AdminTaskController::class, 'index'])->middleware('permission:tasks.view')->name('tasks.index');
+    Route::get('tasks/create', [AdminTaskController::class, 'create'])->middleware('permission:tasks.create')->name('tasks.create');
+    Route::post('tasks', [AdminTaskController::class, 'store'])->middleware('permission:tasks.create')->name('tasks.store');
+    Route::get('tasks/{task}', [AdminTaskController::class, 'show'])->middleware('permission:tasks.view')->name('tasks.show');
+    Route::get('tasks/{task}/edit', [AdminTaskController::class, 'edit'])->middleware('permission:tasks.edit')->name('tasks.edit');
+    Route::put('tasks/{task}', [AdminTaskController::class, 'update'])->middleware('permission:tasks.edit')->name('tasks.update');
+    Route::patch('tasks/{task}/status', [AdminTaskController::class, 'updateStatus'])->middleware('permission:tasks.edit')->name('tasks.status');
+    Route::post('tasks/{task}/comments', [AdminTaskController::class, 'comment'])->middleware('permission:tasks.view')->name('tasks.comments.store');
+    Route::delete('tasks/{task}', [AdminTaskController::class, 'destroy'])->middleware('permission:tasks.delete')->name('tasks.destroy');
+
     // Support Tickets
     Route::middleware('module:support')->group(function () {
     Route::get('tickets', [AdminTicketController::class, 'index'])->middleware('permission:tickets.manage')->name('tickets.index');
@@ -481,6 +494,12 @@ Route::prefix('staff')->name('staff.')->middleware(['portal.domain:opsbridge', '
     Route::get('requests/{assetRequest}', [StaffRequestController::class, 'show'])->name('requests.show');
     Route::patch('requests/{assetRequest}/cancel', [StaffRequestController::class, 'cancel'])->name('requests.cancel');
     });
+
+    // My Work
+    Route::get('tasks', [StaffTaskController::class, 'index'])->name('tasks.index');
+    Route::get('tasks/{task}', [StaffTaskController::class, 'show'])->name('tasks.show');
+    Route::patch('tasks/{task}/status', [StaffTaskController::class, 'updateStatus'])->name('tasks.status');
+    Route::post('tasks/{task}/comments', [StaffTaskController::class, 'comment'])->name('tasks.comments.store');
 
     // Support Tickets
     Route::middleware('module:support')->group(function () {

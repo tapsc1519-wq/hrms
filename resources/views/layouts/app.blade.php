@@ -1442,6 +1442,14 @@
             @endif
             @endif
 
+            @if($user->hasPermission('tasks.view'))
+            <div class="sidebar-section-title">Work Management</div>
+            <a href="{{ route('admin.tasks.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.tasks.*') ? 'active' : '' }}">
+                <i class="bi bi-list-task"></i> Tasks
+            </a>
+            @endif
+
             @if($hasSupport)
             <div class="sidebar-section-title">Support</div>
             <a href="{{ route('admin.tickets.index') }}"
@@ -1535,6 +1543,12 @@
                 <i class="bi bi-grid-1x2-fill"></i> Dashboard
             </a>
             @if($hasHrms || $hasPayroll || $hasItam || $hasSam || $hasSupport)
+            <div class="sidebar-section-title">My Work</div>
+            <a href="{{ route('staff.tasks.index') }}"
+               class="sidebar-link {{ request()->routeIs('staff.tasks.*') ? 'active' : '' }}">
+                <i class="bi bi-list-task"></i> My Tasks
+            </a>
+
             <div class="sidebar-section-title">Employee Self Service</div>
             @if($hasHrms)
             <a href="{{ route('staff.profile.show') }}"

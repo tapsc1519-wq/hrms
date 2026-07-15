@@ -53,6 +53,12 @@ class PermissionRegistry
             'Support' => [
                 'tickets.manage' => 'Manage support tickets',
             ],
+            'Work Management' => [
+                'tasks.view' => 'View organization tasks',
+                'tasks.create' => 'Create and assign tasks',
+                'tasks.edit' => 'Edit tasks and update status',
+                'tasks.delete' => 'Delete tasks',
+            ],
             'Software' => [
                 'software.manage' => 'Manage software assets and licenses',
                 'software.policies.manage' => 'Review software policy and create remediation tasks',
