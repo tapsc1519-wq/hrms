@@ -1203,6 +1203,10 @@
                class="sidebar-link {{ request()->routeIs('super-admin.settings') ? 'active' : '' }}">
                 <i class="bi bi-gear-fill"></i> Settings
             </a>
+            <a href="{{ route('super-admin.production-readiness.index') }}"
+               class="sidebar-link {{ request()->routeIs('super-admin.production-readiness.*') ? 'active' : '' }}">
+                <i class="bi bi-shield-check"></i> Launch Readiness
+            </a>
             <a href="{{ route('super-admin.mail-settings.index') }}"
                class="sidebar-link {{ request()->routeIs('super-admin.mail-settings.*') ? 'active' : '' }}">
                 <i class="bi bi-envelope-check-fill"></i> Mail Settings
@@ -1482,6 +1486,12 @@
                class="sidebar-link {{ request()->routeIs('admin.sso-settings.*') ? 'active' : '' }}">
                 <i class="bi bi-key-fill"></i> Organization SSO
             </a>
+            @if($user->hasPermission('production.view'))
+            <a href="{{ route('admin.production-readiness.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.production-readiness.*') ? 'active' : '' }}">
+                <i class="bi bi-shield-check"></i> Production Readiness
+            </a>
+            @endif
 
             @if($hasItam)
             <div class="sidebar-section-title">Reports</div>

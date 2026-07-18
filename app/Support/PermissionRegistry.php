@@ -94,6 +94,7 @@ class PermissionRegistry
                 'payroll.manage' => 'Full payroll access',
             ],
             'Administration' => [
+                'production.view' => 'View production readiness checklist',
                 'roles.manage' => 'Manage roles and permissions',
                 'reports.view' => 'View reports',
             ],

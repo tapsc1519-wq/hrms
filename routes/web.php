@@ -9,6 +9,7 @@ use App\Http\Controllers\SuperAdmin\PartnerController as SAPartnerController;
 use App\Http\Controllers\SuperAdmin\PartnerCommissionController as SAPartnerCommissionController;
 use App\Http\Controllers\SuperAdmin\PartnerLeadController as SAPartnerLeadController;
 use App\Http\Controllers\SuperAdmin\PricingController;
+use App\Http\Controllers\SuperAdmin\ProductionReadinessController as SAProductionReadinessController;
 use App\Http\Controllers\SuperAdmin\ProductController as SAProductController;
 use App\Http\Controllers\SuperAdmin\ProductSubscriptionController as SAProductSubscriptionController;
 use App\Http\Controllers\SuperAdmin\SettingController as SASettingController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\AssignmentController;
 use App\Http\Controllers\Admin\MaintenanceController;
+use App\Http\Controllers\Admin\ProductionReadinessController;
 use App\Http\Controllers\Admin\RequestController as AdminRequestController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\FacilityController;
@@ -126,6 +128,7 @@ Route::middleware('auth')->group(function () {
 // ─── Super Admin ──────────────────────────────────────────────────────────────
 Route::prefix('super-admin')->name('super-admin.')->middleware(['portal.domain:platform', 'auth', 'role:super_admin'])->group(function () {
     Route::get('/dashboard', [SADashboard::class, 'index'])->name('dashboard');
+    Route::get('production-readiness', [SAProductionReadinessController::class, 'index'])->name('production-readiness.index');
 
     Route::patch('organizations/{organization}/modules', [OrganizationController::class, 'updateModules'])->name('organizations.modules.update');
     Route::patch('organizations/{organization}/onboarding', [OrganizationController::class, 'updateOnboarding'])->name('organizations.onboarding.update');
@@ -160,6 +163,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['portal.domain:p
 // ─── Admin ────────────────────────────────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', 'auth', 'role:admin,super_admin', 'product.access:opsbridge'])->group(function () {
     Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
+    Route::get('production-readiness', [ProductionReadinessController::class, 'index'])->middleware('permission:production.view')->name('production-readiness.index');
     Route::get('sso-settings', [SsoSettingController::class, 'edit'])->name('sso-settings.edit');
     Route::put('sso-settings', [SsoSettingController::class, 'update'])->name('sso-settings.update');
 
