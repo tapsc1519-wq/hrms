@@ -15,7 +15,7 @@
             : [['item_type' => 'asset', 'item_name' => '', 'quantity' => 1, 'unit_price' => 0]];
     }
     $poCategoryOptions = $categories->map(function ($item) {
-        return ['id' => $item->id, 'name' => $item->name];
+        return ['id' => $item->id, 'name' => $item->name, 'spec_template' => $item->spec_template ?? []];
     })->values();
     $poBrandOptions = $brands->map(function ($item) {
         return ['id' => $item->id, 'name' => $item->name];
@@ -26,6 +26,7 @@
             'name' => $item->name,
             'brand_id' => $item->brand_id,
             'category_id' => $item->category_id,
+            'default_specs' => $item->default_specs ?? [],
         ];
     })->values();
     $poSoftwareOptions = $softwareList->map(function ($item) {
@@ -100,6 +101,9 @@
                         $type = $item['item_type'] ?? 'asset';
                         $requestIds = $item['software_request_ids'] ?? [];
                         $employeeNames = $item['employee_names'] ?? [];
+                        $selectedCategory = $categories->firstWhere('id', (int) ($item['category_id'] ?? 0));
+                        $specFields = $selectedCategory?->spec_template ?? [];
+                        $orderedSpecs = $item['specs'] ?? $item['ordered_specs'] ?? [];
                     @endphp
                     <div class="item-row po-line-item mb-3" id="item-{{ $index }}" data-index="{{ $index }}">
                         @foreach($requestIds as $requestId)<input type="hidden" name="items[{{ $index }}][software_request_ids][]" value="{{ $requestId }}">@endforeach
@@ -113,10 +117,10 @@
                         </div>
                         <div class="row g-3 align-items-end">
                             <div class="col-md-2"><label class="form-label">Type</label><select name="items[{{ $index }}][item_type]" class="form-select item-type" onchange="updateItemType(this)"><option value="asset" @selected($type === 'asset')>Asset</option><option value="software" @selected($type === 'software')>Software</option></select></div>
-                            <div class="col-md-4 asset-field {{ $type === 'software' ? 'd-none' : '' }}"><label class="form-label">Category</label><select name="items[{{ $index }}][category_id]" class="form-select asset-category-select" onchange="filterPoModels(this)"><option value="">Select category</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected(($item['category_id'] ?? null) == $category->id)>{{ $category->name }}</option>@endforeach</select></div>
+                            <div class="col-md-4 asset-field {{ $type === 'software' ? 'd-none' : '' }}"><label class="form-label">Category</label><select name="items[{{ $index }}][category_id]" class="form-select asset-category-select" onchange="handlePoCategoryChange(this)"><option value="">Select category</option>@foreach($categories as $category)<option value="{{ $category->id }}" data-fields='@json($category->spec_template ?? [])' @selected(($item['category_id'] ?? null) == $category->id)>{{ $category->name }}</option>@endforeach</select></div>
                             <div class="col-md-4 software-field {{ $type === 'asset' ? 'd-none' : '' }}"><label class="form-label">Software <span class="req">*</span></label><select name="items[{{ $index }}][software_id]" class="form-select software-select" onchange="syncPoItemName(this)"><option value="">Select software</option>@foreach($softwareList as $software)<option value="{{ $software->id }}" data-name="{{ $software->name }}" data-vendor="{{ $software->vendor }}" @selected(($item['software_id'] ?? null) == $software->id)>{{ $software->name }}</option>@endforeach</select></div>
                             <div class="col-md-3 asset-field {{ $type === 'software' ? 'd-none' : '' }}"><label class="form-label">Brand</label><select name="items[{{ $index }}][asset_brand_id]" class="form-select asset-brand-select" onchange="filterPoModels(this)"><option value="">Select brand</option>@foreach($brands as $brand)<option value="{{ $brand->id }}" @selected(($item['asset_brand_id'] ?? null) == $brand->id)>{{ $brand->name }}</option>@endforeach</select></div>
-                            <div class="col-md-3 asset-field {{ $type === 'software' ? 'd-none' : '' }}"><label class="form-label">Model</label><select name="items[{{ $index }}][asset_model_id]" class="form-select asset-model-select" onchange="syncPoItemName(this)"><option value="">Select model</option>@foreach($models as $model)<option value="{{ $model->id }}" data-brand="{{ $model->brand_id }}" data-category="{{ $model->category_id }}" @selected(($item['asset_model_id'] ?? null) == $model->id)>{{ $model->name }}</option>@endforeach</select></div>
+                            <div class="col-md-3 asset-field {{ $type === 'software' ? 'd-none' : '' }}"><label class="form-label">Model</label><select name="items[{{ $index }}][asset_model_id]" class="form-select asset-model-select" onchange="handlePoModelChange(this)"><option value="">Select model</option>@foreach($models as $model)<option value="{{ $model->id }}" data-brand="{{ $model->brand_id }}" data-category="{{ $model->category_id }}" data-specs='@json($model->default_specs ?? [])' @selected(($item['asset_model_id'] ?? null) == $model->id)>{{ $model->name }}</option>@endforeach</select></div>
                             <div class="col-md-2"><label class="form-label">Qty</label><input type="number" name="items[{{ $index }}][quantity]" class="form-control" value="{{ $item['quantity'] ?? 1 }}" min="{{ max(1, count($requestIds)) }}" required oninput="recalculate()"></div>
                             <div class="col-md-3"><label class="form-label">Unit Price</label><input type="number" name="items[{{ $index }}][unit_price]" class="form-control" value="{{ $item['unit_price'] ?? 0 }}" step="0.01" min="0" required oninput="recalculate()"></div>
                         </div>
@@ -126,6 +130,18 @@
                             <div class="col-md-3 software-field {{ $type === 'asset' ? 'd-none' : '' }}"><label class="form-label">License Type</label><select name="items[{{ $index }}][license_type]" class="form-select">@foreach(['subscription' => 'Subscription', 'per_seat' => 'Per Seat', 'perpetual' => 'Perpetual', 'concurrent' => 'Concurrent', 'per_device' => 'Per Device', 'volume' => 'Volume'] as $value => $label)<option value="{{ $value }}" @selected(($item['license_type'] ?? 'subscription') === $value)>{{ $label }}</option>@endforeach</select></div>
                             <div class="col-md-3 software-field {{ $type === 'asset' ? 'd-none' : '' }}"><label class="form-label">Term</label><select name="items[{{ $index }}][subscription_period]" class="form-select">@foreach(['monthly' => 'Monthly', 'quarterly' => 'Quarterly', 'annual' => 'Annual', 'multi_year' => 'Multi-year', 'perpetual' => 'Perpetual'] as $value => $label)<option value="{{ $value }}" @selected(($item['subscription_period'] ?? 'annual') === $value)>{{ $label }}</option>@endforeach</select></div>
                             <div class="col"><label class="form-label">Description</label><input type="text" name="items[{{ $index }}][description]" class="form-control" value="{{ $item['description'] ?? '' }}" placeholder="Optional specifications, warranty coverage or internal note"></div>
+                        </div>
+                        <div class="asset-field po-spec-section {{ $type === 'software' || empty($specFields) ? 'd-none' : '' }}">
+                            <div class="po-spec-title"><i class="bi bi-cpu me-1"></i>Ordered Specifications</div>
+                            <div class="row g-3 po-spec-fields">
+                                @foreach($specFields as $label)
+                                    @php $specKey = 'spec_' . preg_replace('/[^a-z0-9]+/', '_', strtolower($label)); @endphp
+                                    <div class="col-md-4">
+                                        <label class="form-label">{{ $label }}</label>
+                                        <input type="text" name="items[{{ $index }}][specs][{{ $specKey }}]" class="form-control form-control-sm" value="{{ $orderedSpecs[$specKey] ?? '' }}" placeholder="{{ $label }}">
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
                         @if($employeeNames)<div class="small text-primary mt-2"><i class="bi bi-people me-1"></i>Approved demand for {{ implode(', ', $employeeNames) }}</div>@endif
                     </div>
@@ -217,6 +233,23 @@
         text-transform: uppercase;
     }
 
+    .po-spec-section {
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 10px;
+        margin-top: 1rem;
+        padding: .9rem;
+    }
+
+    .po-spec-title {
+        color: #475569;
+        font-size: .72rem;
+        font-weight: 800;
+        letter-spacing: .04em;
+        margin-bottom: .75rem;
+        text-transform: uppercase;
+    }
+
     .po-total-box {
         margin-left: auto;
         max-width: 340px;
@@ -253,7 +286,9 @@ const poModels = @json($poModelOptions);
 const poSoftware = @json($poSoftwareOptions);
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
 const optionsFor = items => items.map(item => `<option value="${item.id}">${escapeHtml(item.name)}</option>`).join('');
-const modelOptionsFor = items => items.map(item => `<option value="${item.id}" data-brand="${item.brand_id || ''}" data-category="${item.category_id || ''}">${escapeHtml(item.name)}</option>`).join('');
+const categoryOptionsFor = items => items.map(item => `<option value="${item.id}" data-fields="${escapeHtml(JSON.stringify(item.spec_template || []))}">${escapeHtml(item.name)}</option>`).join('');
+const modelOptionsFor = items => items.map(item => `<option value="${item.id}" data-brand="${item.brand_id || ''}" data-category="${item.category_id || ''}" data-specs="${escapeHtml(JSON.stringify(item.default_specs || {}))}">${escapeHtml(item.name)}</option>`).join('');
+const specKeyFor = label => 'spec_' + String(label).toLowerCase().replace(/[^a-z0-9]+/g, '_');
 
 function addItem() {
     const i = itemCount++;
@@ -272,10 +307,10 @@ function addItem() {
         </div>
         <div class="row g-3 align-items-end">
             <div class="col-md-2"><label class="form-label">Type</label><select name="items[${i}][item_type]" class="form-select item-type" onchange="updateItemType(this)"><option value="asset">Asset</option><option value="software">Software</option></select></div>
-            <div class="col-md-4 asset-field"><label class="form-label">Category</label><select name="items[${i}][category_id]" class="form-select asset-category-select" onchange="filterPoModels(this)"><option value="">Select category</option>${optionsFor(poCategories)}</select></div>
+            <div class="col-md-4 asset-field"><label class="form-label">Category</label><select name="items[${i}][category_id]" class="form-select asset-category-select" onchange="handlePoCategoryChange(this)"><option value="">Select category</option>${categoryOptionsFor(poCategories)}</select></div>
             <div class="col-md-4 software-field d-none"><label class="form-label">Software *</label><select name="items[${i}][software_id]" class="form-select software-select" onchange="syncPoItemName(this)"><option value="">Select software</option>${optionsFor(poSoftware)}</select></div>
             <div class="col-md-3 asset-field"><label class="form-label">Brand</label><select name="items[${i}][asset_brand_id]" class="form-select asset-brand-select" onchange="filterPoModels(this)"><option value="">Select brand</option>${optionsFor(poBrands)}</select></div>
-            <div class="col-md-3 asset-field"><label class="form-label">Model</label><select name="items[${i}][asset_model_id]" class="form-select asset-model-select" onchange="syncPoItemName(this)"><option value="">Select model</option>${modelOptionsFor(poModels)}</select></div>
+            <div class="col-md-3 asset-field"><label class="form-label">Model</label><select name="items[${i}][asset_model_id]" class="form-select asset-model-select" onchange="handlePoModelChange(this)"><option value="">Select model</option>${modelOptionsFor(poModels)}</select></div>
             <div class="col-md-2"><label class="form-label">Qty</label><input type="number" name="items[${i}][quantity]" class="form-control" value="1" min="1" required oninput="recalculate()"></div>
             <div class="col-md-3"><label class="form-label">Unit Price</label><input type="number" name="items[${i}][unit_price]" class="form-control" value="0" min="0" step="0.01" required oninput="recalculate()"></div>
         </div>
@@ -285,9 +320,13 @@ function addItem() {
             <div class="col-md-3 software-field d-none"><label class="form-label">License Type</label><select name="items[${i}][license_type]" class="form-select"><option value="subscription">Subscription</option><option value="per_seat">Per Seat</option><option value="perpetual">Perpetual</option><option value="concurrent">Concurrent</option><option value="per_device">Per Device</option><option value="volume">Volume</option></select></div>
             <div class="col-md-3 software-field d-none"><label class="form-label">Term</label><select name="items[${i}][subscription_period]" class="form-select"><option value="annual">Annual</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="multi_year">Multi-year</option><option value="perpetual">Perpetual</option></select></div>
             <div class="col"><label class="form-label">Description</label><input name="items[${i}][description]" class="form-control" placeholder="Optional specifications, warranty coverage or internal note"></div>
+        </div>
+        <div class="asset-field po-spec-section d-none">
+            <div class="po-spec-title"><i class="bi bi-cpu me-1"></i>Ordered Specifications</div>
+            <div class="row g-3 po-spec-fields"></div>
         </div>`;
     document.getElementById('itemsContainer').appendChild(row);
-    filterPoModels(row.querySelector('.asset-brand-select'));
+    handlePoCategoryChange(row.querySelector('.asset-category-select'));
     syncPoItemName(row);
 }
 
@@ -317,6 +356,65 @@ function filterPoModels(element) {
     }
 
     syncPoItemName(row);
+}
+
+function currentSpecValues(row) {
+    const values = {};
+    row.querySelectorAll('.po-spec-fields input').forEach(input => {
+        if (input.name) {
+            const match = input.name.match(/\[specs\]\[([^\]]+)\]/);
+            if (match) values[match[1]] = input.value;
+        }
+    });
+    return values;
+}
+
+function renderPoSpecs(row, values = null) {
+    const categorySelect = row.querySelector('.asset-category-select');
+    const section = row.querySelector('.po-spec-section');
+    const container = row.querySelector('.po-spec-fields');
+    if (!categorySelect || !section || !container || !categorySelect.value) {
+        if (section) section.classList.add('d-none');
+        if (container) container.innerHTML = '';
+        return;
+    }
+
+    const option = categorySelect.selectedOptions[0];
+    let fields = [];
+    try { fields = JSON.parse(option?.dataset.fields || '[]'); } catch (e) {}
+    if (!fields.length) {
+        section.classList.add('d-none');
+        container.innerHTML = '';
+        return;
+    }
+
+    const index = row.dataset.index;
+    const fieldValues = values || currentSpecValues(row);
+    section.classList.remove('d-none');
+    container.innerHTML = fields.map(label => {
+        const key = specKeyFor(label);
+        return `<div class="col-md-4">
+            <label class="form-label">${escapeHtml(label)}</label>
+            <input type="text" name="items[${index}][specs][${key}]" class="form-control form-control-sm" value="${escapeHtml(fieldValues[key] || '')}" placeholder="${escapeHtml(label)}">
+        </div>`;
+    }).join('');
+}
+
+function handlePoCategoryChange(select) {
+    const row = select.closest('.item-row');
+    filterPoModels(select);
+    renderPoSpecs(row);
+}
+
+function handlePoModelChange(select) {
+    const row = select.closest('.item-row');
+    syncPoItemName(row);
+    const option = select.selectedOptions[0];
+    let defaults = {};
+    try { defaults = JSON.parse(option?.dataset.specs || '{}'); } catch (e) {}
+    if (Object.keys(defaults).length) {
+        renderPoSpecs(row, {...currentSpecValues(row), ...defaults});
+    }
 }
 
 function syncPoItemName(element) {
@@ -353,6 +451,11 @@ function updateItemType(select) {
     const software = select.value === 'software';
     row.querySelectorAll('.software-field').forEach(field => field.classList.toggle('d-none', !software));
     row.querySelectorAll('.asset-field').forEach(field => field.classList.toggle('d-none', software));
+    if (software) {
+        row.querySelector('.po-spec-section')?.classList.add('d-none');
+    } else {
+        renderPoSpecs(row);
+    }
     const softwareSelect = row.querySelector('.software-select');
     if (softwareSelect) softwareSelect.required = software;
     syncPoItemName(row);
@@ -374,6 +477,7 @@ function recalculate() {
 
 document.querySelectorAll('.item-row').forEach(row => {
     filterPoModels(row.querySelector('.asset-brand-select') || row);
+    renderPoSpecs(row);
     syncPoItemName(row);
 });
 document.querySelectorAll('.item-type').forEach(updateItemType);

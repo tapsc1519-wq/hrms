@@ -130,6 +130,8 @@ class PurchaseOrderController extends Controller
             'items.*.brand'          => 'nullable|string|max:255',
             'items.*.model'          => 'nullable|string|max:255',
             'items.*.description'    => 'nullable|string|max:2000',
+            'items.*.specs'          => 'nullable|array',
+            'items.*.specs.*'        => 'nullable|string|max:255',
             'items.*.software_request_ids' => 'nullable|array',
             'items.*.software_request_ids.*' => 'integer|exists:software_requests,id',
         ]);
@@ -195,6 +197,7 @@ class PurchaseOrderController extends Controller
                     'brand'             => $resolvedItem['brand'],
                     'model'             => $resolvedItem['model'],
                     'description'       => $item['description'] ?? null,
+                    'ordered_specs'     => $item['item_type'] === 'asset' ? $this->cleanSpecs($item['specs'] ?? []) : null,
                     'quantity'          => $item['quantity'],
                     'unit_price'        => $item['unit_price'],
                     'tax_rate'          => $item['tax_rate'] ?? 0,
@@ -473,6 +476,7 @@ class PurchaseOrderController extends Controller
                             'model' => $item->model,
                             'brand' => $item->brand,
                             'specifications' => $item->specifications,
+                            'specs' => $item->ordered_specs ?: null,
                             'description' => $item->description,
                             'purchase_date' => $validated['invoice_date'] ?? $validated['received_date'],
                             'purchase_price' => $item->unit_price,
@@ -566,6 +570,14 @@ class PurchaseOrderController extends Controller
             'software license',
             'software licenses',
         ], true);
+    }
+
+    private function cleanSpecs(array $specs): array
+    {
+        return collect($specs)
+            ->map(fn ($value) => is_string($value) ? trim($value) : $value)
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->all();
     }
 
     private function resolvePurchaseOrderItem(array $item, int $index): array

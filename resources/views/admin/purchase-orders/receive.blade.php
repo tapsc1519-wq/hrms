@@ -42,6 +42,13 @@
                                     <div class="text-muted small">
                                         {{ trim($item->brand . ' ' . $item->model) ?: ($item->category?->name ?? 'Uncategorized') }}
                                     </div>
+                                    @if($item->ordered_specs)
+                                    <div class="d-flex gap-1 flex-wrap mt-2">
+                                        @foreach($item->ordered_specs as $label => $value)
+                                            <span class="badge bg-light text-dark border">{{ ucwords(str_replace('_', ' ', preg_replace('/^spec_/', '', $label))) }}: {{ $value }}</span>
+                                        @endforeach
+                                    </div>
+                                    @endif
                                 </div>
                                 <div class="text-end small">
                                     <div><span class="text-muted">Ordered:</span> {{ $item->quantity }}</div>

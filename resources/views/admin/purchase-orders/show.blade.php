@@ -106,6 +106,13 @@
                                 @if($item->softwareRequests->isNotEmpty())
                                 <br><small class="text-primary">{{ $item->softwareRequests->count() }} employee request(s) linked</small>
                                 @endif
+                                @if($item->ordered_specs)
+                                <div class="d-flex gap-1 flex-wrap mt-2">
+                                    @foreach($item->ordered_specs as $label => $value)
+                                        <span class="badge bg-light text-dark border">{{ ucwords(str_replace('_', ' ', preg_replace('/^spec_/', '', $label))) }}: {{ $value }}</span>
+                                    @endforeach
+                                </div>
+                                @endif
                             </td>
                             <td><small>{{ $item->item_type === 'software' ? ($item->software?->name ?? 'Software not linked') : ($item->category?->name ?? 'Uncategorized') }}</small></td>
                             <td>{{ $item->quantity }}</td>
