@@ -130,10 +130,15 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="text-center py-5 text-muted">
-                        <i class="bi bi-clipboard-check fs-1 d-block mb-2 opacity-25"></i>
-                        <div class="fw-500 mb-1">No requests found</div>
-                        <small>Requests from staff members will appear here</small>
+                    <td colspan="8">
+                        @include('partials._empty_state', [
+                            'icon' => 'bi-clipboard-check',
+                            'title' => request()->hasAny(['search', 'status', 'priority']) ? 'No asset requests match these filters' : 'No asset requests yet',
+                            'message' => request()->hasAny(['search', 'status', 'priority'])
+                                ? 'Clear filters or search by request number, requester or category.'
+                                : 'When employees request assets from their portal, review and fulfilment actions will appear here.',
+                            'secondaryRoute' => request()->hasAny(['search', 'status', 'priority']) ? route('admin.requests.index') : null,
+                        ])
                     </td>
                 </tr>
                 @endforelse

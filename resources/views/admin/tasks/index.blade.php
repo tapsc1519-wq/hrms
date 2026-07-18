@@ -107,11 +107,17 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center py-5">
-                        <i class="bi bi-list-task fs-1 d-block mb-2 opacity-25"></i>
-                        <div class="fw-semibold mb-1" style="color:#334155">No tasks found</div>
-                        <div class="text-muted mb-3">Create your first task and assign it to a team member.</div>
-                        <a href="{{ route('admin.tasks.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Create Task</a>
+                    <td colspan="7">
+                        @include('partials._empty_state', [
+                            'icon' => 'bi-list-task',
+                            'title' => request()->hasAny(['search', 'status', 'priority', 'assigned_to', 'due']) ? 'No tasks match these filters' : 'Create your first task',
+                            'message' => request()->hasAny(['search', 'status', 'priority', 'assigned_to', 'due'])
+                                ? 'Try widening the filters or clear them to see all organization tasks.'
+                                : 'Use tasks for setup work, internal follow-ups, approval tracking and daily operations.',
+                            'actionRoute' => route('admin.tasks.create'),
+                            'actionLabel' => 'Create Task',
+                            'secondaryRoute' => request()->hasAny(['search', 'status', 'priority', 'assigned_to', 'due']) ? route('admin.tasks.index') : null,
+                        ])
                     </td>
                 </tr>
                 @endforelse

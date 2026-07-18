@@ -69,7 +69,18 @@
                     <td class="text-end pe-4"><a href="{{ route('staff.tasks.show', $task) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye me-1"></i>View</a></td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="text-center py-5"><i class="bi bi-list-task fs-1 d-block mb-2 opacity-25"></i><div class="text-muted">No tasks assigned to you.</div></td></tr>
+                <tr>
+                    <td colspan="6">
+                        @include('partials._empty_state', [
+                            'icon' => 'bi-list-task',
+                            'title' => request()->hasAny(['status', 'priority', 'due']) ? 'No assigned tasks match these filters' : 'No tasks assigned to you',
+                            'message' => request()->hasAny(['status', 'priority', 'due'])
+                                ? 'Clear filters to see all tasks assigned to you.'
+                                : 'When your admin assigns work, it will appear here with due date, status and update options.',
+                            'secondaryRoute' => request()->hasAny(['status', 'priority', 'due']) ? route('staff.tasks.index') : null,
+                        ])
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>

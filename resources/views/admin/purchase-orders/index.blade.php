@@ -107,9 +107,17 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="text-center py-5 text-muted">
-                        <i class="bi bi-file-earmark-text fs-1 d-block mb-2"></i>
-                        No purchase orders yet. <a href="{{ route('admin.purchase-orders.create') }}">Create one</a>
+                    <td colspan="8">
+                        @include('partials._empty_state', [
+                            'icon' => 'bi-file-earmark-text',
+                            'title' => request()->hasAny(['search', 'status', 'vendor_id']) ? 'No purchase orders match these filters' : 'Create your first purchase order',
+                            'message' => request()->hasAny(['search', 'status', 'vendor_id'])
+                                ? 'Clear filters or search by PO number, supplier, or creator.'
+                                : 'Use purchase orders to track procurement, goods receipt, assets and software licenses.',
+                            'actionRoute' => route('admin.purchase-orders.create'),
+                            'actionLabel' => 'Create Purchase Order',
+                            'secondaryRoute' => request()->hasAny(['search', 'status', 'vendor_id']) ? route('admin.purchase-orders.index') : null,
+                        ])
                     </td>
                 </tr>
                 @endforelse

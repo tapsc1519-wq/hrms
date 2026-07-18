@@ -105,13 +105,17 @@
 
 {{-- Software Grid --}}
 @if($software->isEmpty())
-    <div class="table-card text-center py-5">
-        <i class="bi bi-display" style="font-size:2.5rem;color:#cbd5e1"></i>
-        <div class="mt-3 fw-700" style="color:#94a3b8">No software found</div>
-        <p class="text-muted small">Add your first software title to the catalog.</p>
-        <a href="{{ route('admin.software.create') }}" class="btn btn-primary btn-sm mt-1">
-            <i class="bi bi-plus-lg me-1"></i>Add Software
-        </a>
+    <div class="table-card">
+        @include('partials._empty_state', [
+            'icon' => 'bi-display',
+            'title' => request()->hasAny(['search', 'category', 'status']) ? 'No software titles match these filters' : 'Build your software catalog',
+            'message' => request()->hasAny(['search', 'category', 'status'])
+                ? 'Clear filters or search by software name, vendor, version or category.'
+                : 'Add software titles first, then record licenses, assignments, policies and compliance evidence.',
+            'actionRoute' => route('admin.software.create'),
+            'actionLabel' => 'Add Software',
+            'secondaryRoute' => request()->hasAny(['search', 'category', 'status']) ? route('admin.software.index') : null,
+        ])
     </div>
 @else
     <div class="row g-3">

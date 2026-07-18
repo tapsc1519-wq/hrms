@@ -231,10 +231,17 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="text-center py-5 text-muted">
-                        <i class="bi bi-box-seam fs-1 d-block mb-2 opacity-25"></i>
-                        <div class="fw-500 mb-1">No assets found</div>
-                        <small>Try adjusting your filters or <a href="{{ route('admin.assets.create') }}">add your first asset</a></small>
+                    <td colspan="9">
+                        @include('partials._empty_state', [
+                            'icon' => 'bi-box-seam',
+                            'title' => request()->hasAny(['search', 'status', 'category_id', 'supplier_id']) ? 'No assets match these filters' : 'Start your asset register',
+                            'message' => request()->hasAny(['search', 'status', 'category_id', 'supplier_id'])
+                                ? 'Try clearing filters or search with asset tag, serial number, user name, or asset name.'
+                                : 'Add laptops, desktops, phones, servers and other IT assets before assignments, repairs, disposal and reports can work well.',
+                            'actionRoute' => route('admin.assets.create'),
+                            'actionLabel' => 'Add Asset',
+                            'secondaryRoute' => request()->hasAny(['search', 'status', 'category_id', 'supplier_id']) ? route('admin.assets.index') : null,
+                        ])
                     </td>
                 </tr>
                 @endforelse

@@ -59,7 +59,27 @@
         $accessBadge = $device->credential?->is_active ? 'success' : ($device->credential ? 'danger' : 'warning');
     @endphp
     <tr><td class="ps-4"><input class="form-check-input device-selector" form="bulkRefreshForm" type="checkbox" name="device_ids[]" value="{{ $device->id }}" aria-label="Select {{ $device->hostname }}"></td><td><a href="{{ route('admin.agent-sources.show', $device) }}" class="fw-bold text-decoration-none">{{ $device->hostname }}</a><div class="text-muted small">{{ $device->serial_number ?: $device->device_uuid }}</div></td><td><div class="{{ $device->asset ? '' : 'text-warning' }}">{{ $device->asset?->asset_tag ?? 'Asset not matched' }}</div><div class="small {{ $device->user ? 'text-muted' : 'text-warning' }}">{{ $device->user?->name ?? 'Employee not matched' }}</div></td><td><div>{{ $device->os_name ?: 'Unknown OS' }}</div><div class="text-muted small">{{ trim(($device->os_version ?? '').' '.($device->architecture ?? '')) ?: 'No version details' }}</div></td><td><span class="{{ $device->agent_version === $currentVersion ? '' : 'text-warning fw-semibold' }}">v{{ $device->agent_version ?: 'Unknown' }}</span></td><td><span class="badge bg-light text-dark">{{ $device->discoveries_count }}</span></td><td><div>{{ $device->last_seen_at?->diffForHumans() ?? 'Never' }}</div><div class="text-muted small">{{ $device->last_inventory_at?->format('d M Y, H:i') ?? 'No inventory' }}</div></td><td><span class="badge bg-{{ $healthBadge }}">{{ ucfirst($device->health_status) }}</span></td><td><span class="badge bg-{{ $accessBadge }}">{{ $accessLabel }}</span></td><td class="text-end pe-4">@if($canManageAgents)<button class="btn btn-sm {{ $device->asset && $device->user ? 'btn-outline-secondary' : 'btn-warning' }}" data-bs-toggle="modal" data-bs-target="#linkDevice{{ $device->id }}"><i class="bi bi-link-45deg me-1"></i>Link</button>@else<span class="text-muted small">View only</span>@endif</td></tr>
-    @empty<tr><td colspan="10" class="text-center text-muted py-5"><i class="bi bi-router fs-1 d-block mb-2 opacity-25"></i>{{ request()->hasAny(['search','health','linking','access','version']) ? 'No devices match these filters.' : 'No device agents have checked in yet.' }}</td></tr>@endforelse
+    @empty
+    <tr>
+        <td colspan="10">
+            @include('partials._empty_state', [
+                'icon' => 'bi-router',
+                'title' => request()->hasAny(['search','health','linking','access','version']) ? 'No endpoints match these filters' : 'No endpoint agents enrolled yet',
+                'message' => request()->hasAny(['search','health','linking','access','version'])
+                    ? 'Clear filters or search by hostname, serial number, asset tag or employee name.'
+                    : 'Download the agent, create an enrollment token, and install it on employee devices to start receiving inventory.',
+                'secondaryRoute' => request()->hasAny(['search','health','linking','access','version']) ? route('admin.agent-sources.index') : null,
+            ])
+            @if($canManageAgents)
+                <div class="text-center" style="margin-top:-1.2rem">
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#downloadAgentModal">
+                        <i class="bi bi-download me-1"></i>Download Agent
+                    </button>
+                </div>
+            @endif
+        </td>
+    </tr>
+    @endforelse
     </tbody></table></div>
     @if($canManageAgents)
         @foreach($devices as $device)

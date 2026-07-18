@@ -139,11 +139,17 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center py-5">
-                            <div class="icon-wrap icon-blue mx-auto mb-3" style="width:46px;height:46px"><i class="bi bi-person-vcard"></i></div>
-                            <h6 class="fw-bold">No employee profiles yet</h6>
-                            <p class="text-muted mb-3">Create profiles for staff and admins to start the HRMS module.</p>
-                            <a href="{{ route('admin.employees.create') }}" class="btn btn-primary btn-sm">Add Employee Profile</a>
+                        <td colspan="7">
+                            @include('partials._empty_state', [
+                                'icon' => 'bi-person-vcard',
+                                'title' => request()->hasAny(['search', 'status', 'department_id']) ? 'No employees match these filters' : 'Create your employee directory',
+                                'message' => request()->hasAny(['search', 'status', 'department_id'])
+                                    ? 'Clear filters or search with employee name, email, or employee code.'
+                                    : 'Employee profiles connect attendance, assets, software, payroll, leaves and tasks to the right person.',
+                                'actionRoute' => route('admin.employees.create'),
+                                'actionLabel' => 'Add Employee',
+                                'secondaryRoute' => request()->hasAny(['search', 'status', 'department_id']) ? route('admin.employees.index') : null,
+                            ])
                         </td>
                     </tr>
                 @endforelse

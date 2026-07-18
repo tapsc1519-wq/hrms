@@ -166,13 +166,17 @@
     </div>
     @empty
     <div class="col-12">
-        <div class="table-card text-center py-5 text-muted">
-            <i class="bi bi-shop fs-1 d-block mb-2 opacity-25"></i>
-            <div class="fw-500 mb-1">No suppliers found</div>
-            <small class="d-block mb-3">Add suppliers to link them to assets, purchase orders, and invoices.</small>
-            <a href="{{ route('admin.suppliers.create') }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-circle me-1"></i>Add First Supplier
-            </a>
+        <div class="table-card">
+            @include('partials._empty_state', [
+                'icon' => 'bi-shop',
+                'title' => request()->hasAny(['search', 'status', 'type']) ? 'No suppliers match these filters' : 'Add your supplier network',
+                'message' => request()->hasAny(['search', 'status', 'type'])
+                    ? 'Clear filters or search by supplier name, contact, email, phone or city.'
+                    : 'Suppliers connect purchase orders, asset purchases, invoices and procurement reports.',
+                'actionRoute' => route('admin.suppliers.create'),
+                'actionLabel' => 'Add Supplier',
+                'secondaryRoute' => request()->hasAny(['search', 'status', 'type']) ? route('admin.suppliers.index') : null,
+            ])
         </div>
     </div>
     @endforelse
