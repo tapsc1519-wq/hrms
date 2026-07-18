@@ -59,7 +59,7 @@ class NotificationService
         return [
             'unread_count' => (clone $query)->unread()->count(),
             'items' => (clone $query)
-                ->orderByRaw('read_at is null desc')
+                ->unread()
                 ->latest()
                 ->limit($limit)
                 ->get(),
