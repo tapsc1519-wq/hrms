@@ -37,7 +37,10 @@ class UserController extends Controller
     public function create()
     {
         $organizations = Organization::where('status', 'active')->orderBy('name')->get();
-        return view('super-admin.users.create', compact('organizations'));
+        $selectedOrganizationId = request('organization_id');
+        $selectedRole = request('role');
+
+        return view('super-admin.users.create', compact('organizations', 'selectedOrganizationId', 'selectedRole'));
     }
 
     public function store(Request $request)
@@ -52,10 +55,19 @@ class UserController extends Controller
             'employee_id'     => 'nullable|string|max:50',
             'job_title'       => 'nullable|string|max:100',
             'status'          => 'required|in:active,inactive',
+            'onboarding_redirect' => 'nullable|boolean',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-        User::create($validated);
+        $redirectToOnboarding = (bool) ($validated['onboarding_redirect'] ?? false);
+        unset($validated['onboarding_redirect']);
+
+        $user = User::create($validated);
+
+        if ($redirectToOnboarding && $user->organization_id && $user->role === 'admin') {
+            return redirect()->route('super-admin.organizations.edit', $user->organization_id)
+                ->with('success', 'First admin account created. Continue handover and share credentials.');
+        }
 
         return redirect()->route('super-admin.users.index')
             ->with('success', 'User created successfully.');

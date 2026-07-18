@@ -10,11 +10,11 @@
     $productDatabase = old('product_database', $subscription?->product_database ?? config('database.connections.' . config('database.product_connection', 'opsbridge') . '.database'));
 @endphp
 
-<div class="form-card">
+<div class="form-card" data-tour="organization-product-step">
     <div class="form-card-header d-flex align-items-center justify-content-between">
         <div>
             <span class="icon-wrap icon-purple"><i class="bi bi-box-seam"></i></span>
-            Product Provisioning
+            Step 2 - Product Provisioning
         </div>
         <span class="badge bg-light text-dark">{{ $opsBridgeProduct?->name ?? 'OpsBridge' }}</span>
     </div>
@@ -26,11 +26,15 @@
                 <label class="form-check-label fw-semibold" for="provisionOpsBridge">Provision OpsBridge for this organization</label>
             </div>
             <div class="text-muted mt-2" style="font-size:.78rem">
-                This creates the platform subscription record and maps the organization to the OpsBridge product database and domain.
+                This creates the platform subscription record and maps the organization to the OpsBridge product domain and database.
             </div>
         </div>
 
         <div id="opsBridgeProvisioningFields" class="{{ $isProvisioned ? '' : 'd-none' }}">
+            <div class="alert alert-info small mb-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Step 3 is billing: choose trial/active status, plan amount, partner referral and commission before saving.
+            </div>
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Subscription Status</label>

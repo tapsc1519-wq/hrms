@@ -125,6 +125,77 @@ class PageHelpRegistry
                 ],
                 'next' => 'Use the first incomplete action button, then return here to continue the next step.',
             ],
+            'super-admin.organizations.create' => [
+                'title' => 'Organization Onboarding Help',
+                'what' => 'This page starts a customer onboarding flow for Niyantron products. It captures the organization, provisions OpsBridge, and prepares billing details.',
+                'how' => [
+                    'Complete company information first so the tenant record is clear.',
+                    'Keep OpsBridge provisioning enabled when this customer has purchased or started a trial for OpsBridge.',
+                    'Set trial, billing, partner and commission details before saving and continuing to first admin creation.',
+                ],
+                'sections' => [
+                    'Organization Onboarding Wizard' => 'Shows the full customer onboarding path from organization creation to handover.',
+                    'Company Information' => 'Stores the customer identity, contacts, website, tax number and address.',
+                    'Product Provisioning' => 'Maps the organization to OpsBridge product domain and database.',
+                ],
+                'actions' => [
+                    'Save & Continue' => 'Creates the organization and opens the next onboarding step.',
+                ],
+                'tour' => [
+                    [
+                        'target' => 'organization-onboarding-wizard',
+                        'title' => 'Onboarding Path',
+                        'body' => 'Use this strip to understand the full setup sequence for every new customer.',
+                    ],
+                    [
+                        'target' => 'organization-details-step',
+                        'title' => 'Organization Details',
+                        'body' => 'Start by capturing the customer identity and contact details.',
+                    ],
+                    [
+                        'target' => 'organization-product-step',
+                        'title' => 'Product and Billing',
+                        'body' => 'Provision OpsBridge, set trial or active status, and capture partner or commission details.',
+                    ],
+                ],
+                'next' => 'After saving, create the first customer admin account from the next onboarding screen.',
+            ],
+            'super-admin.organizations.edit' => [
+                'title' => 'Organization Handover Help',
+                'what' => 'This page continues organization onboarding after the customer record exists.',
+                'how' => [
+                    'Review organization and product billing details.',
+                    'Create the first customer admin if it is still missing.',
+                    'Track credentials shared and initial setup completion from the onboarding checklist.',
+                ],
+                'sections' => [
+                    'Organization Onboarding Wizard' => 'Shows which platform onboarding steps are complete.',
+                    'First Admin Account' => 'Shows the first customer admin or provides the action to create one.',
+                    'Onboarding Status' => 'Tracks handover items such as credentials and initial setup completion.',
+                ],
+                'actions' => [
+                    'Create First Admin' => 'Opens user creation with the organization and Admin role preselected.',
+                    'Save & Continue' => 'Updates organization, product and billing details.',
+                ],
+                'tour' => [
+                    [
+                        'target' => 'organization-onboarding-wizard',
+                        'title' => 'Onboarding Progress',
+                        'body' => 'Check where this customer stands in the onboarding journey.',
+                    ],
+                    [
+                        'target' => 'organization-product-step',
+                        'title' => 'Product Setup',
+                        'body' => 'Confirm product, billing, partner and database/domain mapping.',
+                    ],
+                    [
+                        'target' => 'organization-admin-step',
+                        'title' => 'First Admin',
+                        'body' => 'Create or verify the customer admin account before handover.',
+                    ],
+                ],
+                'next' => 'Create the first admin, share credentials, then the customer admin can continue in the Admin Setup Wizard.',
+            ],
             'staff.dashboard' => [
                 'title' => 'My Dashboard Help',
                 'what' => 'My Dashboard gives employees a quick view of attendance, actions needing attention, assigned items, requests, and shortcuts.',

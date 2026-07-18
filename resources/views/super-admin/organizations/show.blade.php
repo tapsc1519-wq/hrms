@@ -185,6 +185,8 @@
         </div>
     </div>
 
+    @include('super-admin.organizations._wizard-progress', ['currentStep' => $organization->users->firstWhere('role', 'admin') ? 5 : 4])
+
     @php
         $enabledModules = $organization->modules->where('is_enabled', true)->pluck('module_key')->all();
         $monthlyAmount = (float) ($organization->monthly_amount ?? $organization->modules->where('is_enabled', true)->sum('monthly_price'));

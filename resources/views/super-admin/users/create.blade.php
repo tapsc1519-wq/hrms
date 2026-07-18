@@ -10,6 +10,9 @@
 
 <form action="{{ route('super-admin.users.store') }}" method="POST">
 @csrf
+@if(($selectedOrganizationId ?? null) && ($selectedRole ?? null) === 'admin')
+    <input type="hidden" name="onboarding_redirect" value="1">
+@endif
 <div class="row g-4">
 
     {{-- LEFT --}}
@@ -39,10 +42,10 @@
                         <label class="form-label">Role <span class="req">*</span></label>
                         <select name="role" class="form-select @error('role') is-invalid @enderror" required>
                             <option value="">— Select —</option>
-                            <option value="super_admin" {{ old('role') == 'super_admin' ? 'selected':'' }}>Super Admin</option>
-                            <option value="admin"       {{ old('role') == 'admin'       ? 'selected':'' }}>Admin</option>
-                            <option value="staff"       {{ old('role') == 'staff'       ? 'selected':'' }}>Staff</option>
-                            <option value="supplier"      {{ old('role') == 'supplier'      ? 'selected':'' }}>Supplier</option>
+                            <option value="super_admin" {{ old('role', $selectedRole ?? '') == 'super_admin' ? 'selected':'' }}>Super Admin</option>
+                            <option value="admin"       {{ old('role', $selectedRole ?? '') == 'admin'       ? 'selected':'' }}>Admin</option>
+                            <option value="staff"       {{ old('role', $selectedRole ?? '') == 'staff'       ? 'selected':'' }}>Staff</option>
+                            <option value="supplier"      {{ old('role', $selectedRole ?? '') == 'supplier'      ? 'selected':'' }}>Supplier</option>
                         </select>
                         @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
@@ -59,7 +62,7 @@
                         <select name="organization_id" class="form-select @error('organization_id') is-invalid @enderror">
                             <option value="">— None (Platform-level account) —</option>
                             @foreach($organizations as $org)
-                            <option value="{{ $org->id }}" {{ old('organization_id') == $org->id ? 'selected':'' }}>
+                            <option value="{{ $org->id }}" {{ old('organization_id', $selectedOrganizationId ?? '') == $org->id ? 'selected':'' }}>
                                 {{ $org->name }}
                             </option>
                             @endforeach

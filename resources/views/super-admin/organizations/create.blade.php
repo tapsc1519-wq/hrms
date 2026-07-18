@@ -4,9 +4,11 @@
 @section('content')
 <div class="page-header">
     <a href="{{ route('super-admin.organizations.index') }}" class="back-link"><i class="bi bi-arrow-left"></i> Organizations</a>
-    <h4>Add New Organization</h4>
-    <p>Register a new tenant organisation on the platform.</p>
+    <h4>Onboard Organization</h4>
+    <p>Register the customer, provision OpsBridge, and prepare the handover path.</p>
 </div>
+
+@include('super-admin.organizations._wizard-progress', ['currentStep' => 1, 'opsBridgeSubscription' => null])
 
 <form action="{{ route('super-admin.organizations.store') }}" method="POST" enctype="multipart/form-data">
 @csrf
@@ -16,10 +18,10 @@
     <div class="col-lg-8">
 
         {{-- Company Info --}}
-        <div class="form-card">
+        <div class="form-card" data-tour="organization-details-step">
             <div class="form-card-header">
                 <span class="icon-wrap icon-blue"><i class="bi bi-building"></i></span>
-                Company Information
+                Step 1 - Company Information
             </div>
             <div class="form-card-body">
                 <div class="row g-3">
@@ -133,7 +135,7 @@
 <div class="form-actions" style="border-radius:14px;border:1px solid #e2e8f0;margin-top:.5rem">
     <a href="{{ route('super-admin.organizations.index') }}" class="btn-cancel">Cancel</a>
     <button type="submit" class="btn btn-primary btn-save">
-        <i class="bi bi-building-add"></i> Create Organization
+        <i class="bi bi-arrow-right-circle"></i> Save & Continue
     </button>
 </div>
 </form>

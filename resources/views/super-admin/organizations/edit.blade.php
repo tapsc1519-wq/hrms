@@ -4,14 +4,16 @@
 @section('content')
 <div class="page-header">
     <a href="{{ route('super-admin.organizations.index') }}" class="back-link"><i class="bi bi-arrow-left"></i> Organizations</a>
-    <h4>Edit Organization</h4>
-    <p>Update details for <strong>{{ $organization->name }}</strong>.</p>
+    <h4>Organization Onboarding</h4>
+    <p>Update <strong>{{ $organization->name }}</strong>, then complete admin account and handover steps.</p>
 </div>
 
 @php
     $enabledModuleCount = $organization->modules->where('is_enabled', true)->count();
     $monthlyAmount = (float) ($organization->monthly_amount ?? $organization->modules->where('is_enabled', true)->sum('monthly_price'));
 @endphp
+
+@include('super-admin.organizations._wizard-progress', ['currentStep' => $organization->users->firstWhere('role', 'admin') ? 5 : 4])
 
 <form action="{{ route('super-admin.organizations.update', $organization) }}" method="POST" enctype="multipart/form-data">
 @csrf @method('PUT')
@@ -21,10 +23,10 @@
     <div class="col-lg-8">
 
         {{-- Company Info --}}
-        <div class="form-card">
+        <div class="form-card" data-tour="organization-details-step">
             <div class="form-card-header">
                 <span class="icon-wrap icon-blue"><i class="bi bi-building"></i></span>
-                Company Information
+                Step 1 - Company Information
             </div>
             <div class="form-card-body">
                 <div class="row g-3">
@@ -147,6 +149,32 @@
 
         @include('super-admin.organizations._onboarding-status', ['onboardingChecklist' => $onboardingChecklist, 'canUpdateOnboarding' => false])
 
+        @php($firstAdmin = $organization->users->firstWhere('role', 'admin'))
+        <div class="form-card" data-tour="organization-admin-step">
+            <div class="form-card-header">
+                <span class="icon-wrap icon-blue"><i class="bi bi-person-check"></i></span>
+                First Admin Account
+            </div>
+            <div class="form-card-body">
+                @if($firstAdmin)
+                    <div class="d-flex align-items-start gap-2">
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success flex-shrink-0" style="width:32px;height:32px">
+                            <i class="bi bi-check2"></i>
+                        </span>
+                        <div>
+                            <div class="fw-bold">{{ $firstAdmin->name }}</div>
+                            <div class="text-muted small">{{ $firstAdmin->email }}</div>
+                        </div>
+                    </div>
+                @else
+                    <p class="text-muted small mb-3">Create the first customer admin. This person will log in to OpsBridge and continue organization setup from the Admin Setup Wizard.</p>
+                    <a href="{{ route('super-admin.users.create', ['organization_id' => $organization->id, 'role' => 'admin']) }}" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-person-plus me-1"></i>Create First Admin
+                    </a>
+                @endif
+            </div>
+        </div>
+
         {{-- Logo --}}
         <div class="form-card">
             <div class="form-card-header">
@@ -207,7 +235,7 @@
 <div class="form-actions" style="border-radius:14px;border:1px solid #e2e8f0;margin-top:.5rem">
     <a href="{{ route('super-admin.organizations.index') }}" class="btn-cancel">Cancel</a>
     <button type="submit" class="btn btn-primary btn-save">
-        <i class="bi bi-check-lg"></i> Save Changes
+        <i class="bi bi-check-lg"></i> Save & Continue
     </button>
 </div>
 </form>

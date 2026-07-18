@@ -101,8 +101,8 @@ class OrganizationController extends Controller
             $this->syncOpsBridgeSubscription($organization, $validated);
         }
 
-        return redirect()->route('super-admin.organizations.index')
-            ->with('success', 'Organization created successfully.');
+        return redirect()->route('super-admin.organizations.edit', $organization)
+            ->with('success', 'Organization created. Continue by creating the first customer admin and completing handover.');
     }
 
     public function show(Organization $organization)
@@ -171,8 +171,8 @@ class OrganizationController extends Controller
             $organization->syncModules([], auth()->id());
         }
 
-        return redirect()->route('super-admin.organizations.index')
-            ->with('success', 'Organization updated successfully.');
+        return redirect()->route('super-admin.organizations.edit', $organization)
+            ->with('success', 'Organization onboarding details updated.');
     }
 
     public function updateModules(Request $request, Organization $organization)
