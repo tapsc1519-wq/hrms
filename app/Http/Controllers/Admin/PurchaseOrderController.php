@@ -19,6 +19,7 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class PurchaseOrderController extends Controller
@@ -51,7 +52,16 @@ class PurchaseOrderController extends Controller
     public function create(Request $request)
     {
         $suppliers  = Supplier::where('organization_id', $this->orgId())->where('status', 'active')->orderBy('name')->get();
-        $categories = AssetCategory::where('organization_id', $this->orgId())->orderBy('name')->get();
+        $categories = AssetCategory::where('organization_id', $this->orgId())
+            ->orderBy('name')
+            ->get()
+            ->reject(fn (AssetCategory $category) => str($category->name)->lower()->trim()->is([
+                'software',
+                'softwares',
+                'software license',
+                'software licenses',
+            ]))
+            ->values();
         $softwareList = Software::where('organization_id', $this->orgId())->orderBy('name')->get(['id', 'name', 'vendor']);
         $poNumber   = 'PO-' . date('Y') . '-' . str_pad(PurchaseOrder::where('organization_id', $this->orgId())->count() + 1, 4, '0', STR_PAD_LEFT);
 
@@ -112,8 +122,8 @@ class PurchaseOrderController extends Controller
             'items.*.quantity'       => 'required|integer|min:1',
             'items.*.unit_price'     => 'required|numeric|min:0',
             'items.*.tax_rate'       => 'nullable|numeric|min:0|max:100',
-            'items.*.category_id'    => 'nullable|exists:asset_categories,id',
-            'items.*.software_id'    => 'nullable|exists:software,id',
+            'items.*.category_id'    => ['nullable', Rule::exists('asset_categories', 'id')->where('organization_id', $this->orgId())],
+            'items.*.software_id'    => ['nullable', Rule::exists('software', 'id')->where('organization_id', $this->orgId())],
             'items.*.license_type'   => 'nullable|in:perpetual,subscription,concurrent,per_seat,per_device,oem,volume,open_source,freeware',
             'items.*.subscription_period' => 'nullable|in:monthly,quarterly,annual,multi_year,perpetual',
             'items.*.brand'          => 'nullable|string|max:255',
@@ -161,6 +171,12 @@ class PurchaseOrderController extends Controller
                         Software::where('organization_id', $this->orgId())->whereKey($item['software_id'])->exists(),
                         403
                     );
+                } elseif (!empty($item['category_id'])) {
+                    $category = AssetCategory::where('organization_id', $this->orgId())->whereKey($item['category_id'])->first();
+
+                    if ($category && str($category->name)->lower()->trim()->is(['software', 'softwares', 'software license', 'software licenses'])) {
+                        throw ValidationException::withMessages(["items.{$index}.category_id" => 'Software should be purchased using Item Type = Software, not as a physical asset category.']);
+                    }
                 }
 
                 $poItem = PurchaseOrderItem::create([
