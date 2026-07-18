@@ -57,12 +57,7 @@ class PurchaseOrderController extends Controller
         $categories = AssetCategory::where('organization_id', $this->orgId())
             ->orderBy('name')
             ->get()
-            ->reject(fn (AssetCategory $category) => str($category->name)->lower()->trim()->is([
-                'software',
-                'softwares',
-                'software license',
-                'software licenses',
-            ]))
+            ->reject(fn (AssetCategory $category) => $this->isSoftwareAssetCategory($category))
             ->values();
         $brands = AssetBrand::where('organization_id', $this->orgId())->where('is_active', true)->orderBy('name')->get();
         $models = AssetModel::where('organization_id', $this->orgId())->where('is_active', true)->with('brand')->orderBy('name')->get();
@@ -182,7 +177,7 @@ class PurchaseOrderController extends Controller
                 } elseif (!empty($item['category_id'])) {
                     $category = AssetCategory::where('organization_id', $this->orgId())->whereKey($item['category_id'])->first();
 
-                    if ($category && str($category->name)->lower()->trim()->is(['software', 'softwares', 'software license', 'software licenses'])) {
+                    if ($category && $this->isSoftwareAssetCategory($category)) {
                         throw ValidationException::withMessages(["items.{$index}.category_id" => 'Software should be purchased using Item Type = Software, not as a physical asset category.']);
                     }
                 }
@@ -561,6 +556,16 @@ class PurchaseOrderController extends Controller
             ->filter()
             ->values()
             ->all();
+    }
+
+    private function isSoftwareAssetCategory(AssetCategory $category): bool
+    {
+        return in_array(strtolower(trim((string) $category->name)), [
+            'software',
+            'softwares',
+            'software license',
+            'software licenses',
+        ], true);
     }
 
     private function resolvePurchaseOrderItem(array $item, int $index): array
