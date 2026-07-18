@@ -30,7 +30,7 @@
                 </div>
                 <div class="form-card-body">
                     <div class="alert alert-info py-2 small">
-                        Asset lines create one asset per unit. Software lines create license seats and automatically allocate them to linked approved requests.
+                        This is the inventory creation step. For asset lines, enter the received quantity and serial numbers; the system will create one asset record per received unit. For software lines, the system will create license seats and allocate them to linked approved requests.
                     </div>
 
                     @foreach($purchaseOrder->items as $item)

@@ -8,6 +8,14 @@
     <p>Add a new IT asset to your organisation's inventory.</p>
 </div>
 
+<div class="alert alert-primary d-flex gap-2 align-items-start">
+    <i class="bi bi-info-circle-fill mt-1"></i>
+    <div>
+        <strong>Use Add Asset for direct or existing inventory only.</strong>
+        If the asset is being purchased through a purchase order, create the PO first and use <strong>Receive Items</strong> after delivery so the asset is linked with supplier, invoice, receipt and PO history.
+    </div>
+</div>
+
 <form action="{{ route('admin.assets.store') }}" method="POST" enctype="multipart/form-data">
 @csrf
 <div class="row g-4">

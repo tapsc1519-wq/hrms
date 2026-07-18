@@ -39,6 +39,14 @@
     <p>Purchase physical assets or software license seats with a traceable receiving record.</p>
 </div>
 
+<div class="alert alert-primary d-flex gap-2 align-items-start">
+    <i class="bi bi-info-circle-fill mt-1"></i>
+    <div>
+        <strong>PO does not create assets immediately.</strong>
+        Use this page to place the order. Physical assets are added to the asset register only when the delivered items are recorded from <strong>Receive Items</strong>.
+    </div>
+</div>
+
 @if($softwareDemand->isNotEmpty())
 <div class="alert alert-info d-flex gap-2 align-items-start">
     <i class="bi bi-person-check-fill mt-1"></i>
