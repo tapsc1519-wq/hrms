@@ -7,9 +7,14 @@
         <h4>Departments</h4>
         <p>Manage organisational departments for permission scoping and reporting.</p>
     </div>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
-        <i class="bi bi-plus-lg me-1"></i>Add Department
-    </button>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#suggestedDepartmentsModal">
+            <i class="bi bi-magic me-1"></i>Add Suggested Departments
+        </button>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+            <i class="bi bi-plus-lg me-1"></i>Add Department
+        </button>
+    </div>
 </div>
 
 <div class="form-card" style="padding:0;overflow:hidden">
@@ -120,7 +125,7 @@
                     <td colspan="6" class="text-center py-5 text-muted">
                         <i class="bi bi-building fs-1 d-block mb-2 opacity-25"></i>
                         No departments yet.
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#addModal">Add the first one</a>
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#suggestedDepartmentsModal">Add suggested departments</a>
                     </td>
                 </tr>
                 @endforelse
@@ -130,6 +135,53 @@
     @if($departments->hasPages())
     <div class="px-4 py-3 border-top">{{ $departments->links() }}</div>
     @endif
+</div>
+
+{{-- Suggested Departments Modal --}}
+<div class="modal fade" id="suggestedDepartmentsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <form action="{{ route('admin.departments.suggested.store') }}" method="POST">
+            @csrf
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="icon-wrap icon-blue"><i class="bi bi-magic"></i></span>
+                        <div>
+                            <h5 class="modal-title mb-0">Add Suggested Departments</h5>
+                            <div class="text-muted small">Select common departments to speed up organization setup. Existing departments will be skipped.</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        These are only starter departments. You can edit, deactivate, or delete them later according to the organization structure.
+                    </div>
+                    <div class="row g-2">
+                        @foreach($suggestedDepartments as $department)
+                            <div class="col-md-6">
+                                <label class="border rounded-3 p-3 d-flex gap-3 h-100" style="cursor:pointer;background:#f8fafc">
+                                    <input class="form-check-input mt-1" type="checkbox" name="departments[]" value="{{ $department['name'] }}" checked>
+                                    <span>
+                                        <span class="fw-bold d-block">{{ $department['name'] }}</span>
+                                        <span class="badge bg-light text-dark border mb-1">{{ $department['code'] }}</span>
+                                        <span class="text-muted small d-block">{{ $department['description'] }}</span>
+                                    </span>
+                                </label>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Create Selected Departments
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
 {{-- Add Modal --}}
@@ -182,3 +234,15 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (new URLSearchParams(window.location.search).get('suggested') !== '1') return;
+    var modalElement = document.getElementById('suggestedDepartmentsModal');
+    if (modalElement && window.bootstrap) {
+        new bootstrap.Modal(modalElement).show();
+    }
+});
+</script>
+@endpush

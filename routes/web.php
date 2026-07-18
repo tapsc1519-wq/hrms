@@ -252,6 +252,7 @@ Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', '
 
     Route::get('departments', [DepartmentController::class, 'index'])->middleware('permission:departments.manage')->name('departments.index');
     Route::post('departments', [DepartmentController::class, 'store'])->middleware('permission:departments.manage')->name('departments.store');
+    Route::post('departments/suggested', [DepartmentController::class, 'storeSuggested'])->middleware('permission:departments.manage')->name('departments.suggested.store');
     Route::patch('departments/{department}', [DepartmentController::class, 'update'])->middleware('permission:departments.manage')->name('departments.update');
     Route::delete('departments/{department}', [DepartmentController::class, 'destroy'])->middleware('permission:departments.manage')->name('departments.destroy');
 

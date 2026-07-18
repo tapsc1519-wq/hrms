@@ -168,6 +168,25 @@ class PageHelpRegistry
                 ],
                 'next' => 'Use the first incomplete action button, then return here to continue the next step.',
             ],
+            'admin.departments.*' => [
+                'title' => 'Departments Help',
+                'what' => 'Departments organize employees, approvals, asset assignments, access roles and reports inside an organization.',
+                'how' => [
+                    'Use Add Suggested Departments to create common departments quickly.',
+                    'Edit department names, codes or descriptions to match the organization structure.',
+                    'Keep unused departments inactive if they may be needed later.',
+                ],
+                'sections' => [
+                    'Departments' => 'Lists department records, member counts, status and actions.',
+                    'Add Suggested Departments' => 'Opens a checklist of common departments such as IT, HR, Finance, Procurement and Operations.',
+                ],
+                'actions' => [
+                    'Add Suggested Departments' => 'Creates selected starter departments and skips duplicates.',
+                    'Add Department' => 'Creates one custom department manually.',
+                    'Edit' => 'Updates department name, code, description or status.',
+                ],
+                'next' => 'After departments are ready, add employees and map them to the correct department.',
+            ],
             'super-admin.organizations.create' => [
                 'title' => 'Organization Onboarding Help',
                 'what' => 'This page starts a customer onboarding flow for Niyantron products. It captures the organization, provisions OpsBridge, and prepares billing details.',
