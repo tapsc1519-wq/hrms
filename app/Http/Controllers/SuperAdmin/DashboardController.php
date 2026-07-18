@@ -70,13 +70,71 @@ class DashboardController extends Controller
             ->take(6)
             ->get();
 
+        $organizationHealth = [
+            'trial' => Organization::where('billing_status', 'trial')->count(),
+            'active' => Organization::where('billing_status', 'active')->count(),
+            'attention' => Organization::whereIn('billing_status', ['overdue', 'suspended'])->count(),
+            'cancelled' => Organization::where('billing_status', 'cancelled')->count(),
+        ];
+
+        $platformChecklist = collect([
+            [
+                'title' => 'Create product catalog',
+                'description' => 'Each Niyantron product should have its own name, domain and subscription plan.',
+                'complete' => $stats['products'] > 0,
+                'route' => route('super-admin.products.index'),
+                'action' => 'Products',
+                'icon' => 'bi-grid-3x3-gap-fill',
+            ],
+            [
+                'title' => 'Onboard organizations',
+                'description' => 'Organizations must be mapped to the products they purchased.',
+                'complete' => $stats['organizations'] > 0,
+                'route' => route('super-admin.organizations.index'),
+                'action' => 'Organizations',
+                'icon' => 'bi-building',
+            ],
+            [
+                'title' => 'Activate subscriptions',
+                'description' => 'Keep trial, active, overdue and suspended product access clear.',
+                'complete' => $stats['active_subscriptions'] > 0,
+                'route' => route('super-admin.product-subscriptions.index'),
+                'action' => 'Subscriptions',
+                'icon' => 'bi-ui-checks-grid',
+            ],
+            [
+                'title' => 'Build partner channel',
+                'description' => 'Partners and commissions will be common for OpsBridge and future ERP.',
+                'complete' => $stats['partners'] > 0,
+                'route' => route('super-admin.partners.index'),
+                'action' => 'Partners',
+                'icon' => 'bi-person-workspace',
+            ],
+            [
+                'title' => 'Clear attention items',
+                'description' => 'Resolve overdue, suspended subscriptions and pending commission payouts.',
+                'complete' => ($stats['attention_subscriptions'] + $stats['pending_commissions']) === 0,
+                'route' => route('super-admin.dashboard'),
+                'action' => 'Review',
+                'icon' => 'bi-lightning-charge-fill',
+            ],
+        ]);
+
+        $platformProgress = [
+            'total' => $platformChecklist->count(),
+            'complete' => $platformChecklist->where('complete', true)->count(),
+        ];
+
         return view('super-admin.dashboard', compact(
             'stats',
             'trialsEndingSoon',
             'recentSubscriptions',
             'products',
             'subscriptionBreakdown',
-            'recentCommissions'
+            'recentCommissions',
+            'organizationHealth',
+            'platformChecklist',
+            'platformProgress'
         ));
     }
 

@@ -70,6 +70,27 @@
     .soft-slate { background: #f8fafc; color: #475569; }
     .chart-box { height: 210px; position: relative; }
     .empty-box { color: #94a3b8; font-size: .78rem; padding: 1.35rem 0; text-align: center; }
+    .setup-step {
+        align-items: flex-start;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        gap: .75rem;
+        padding: .78rem 0;
+    }
+    .setup-step:last-child { border-bottom: 0; }
+    .setup-icon {
+        align-items: center;
+        border-radius: 10px;
+        display: inline-flex;
+        flex-shrink: 0;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+    }
+    .setup-title { color: #0f172a; font-size: .8rem; font-weight: 850; line-height: 1.2; }
+    .setup-desc { color: #64748b; font-size: .7rem; line-height: 1.35; margin-top: .16rem; }
+    .progress-slim { background: rgba(255,255,255,.2); border-radius: 999px; height: 8px; overflow: hidden; width: 170px; }
+    .progress-slim span { background: #fff; display: block; height: 100%; }
 </style>
 @endpush
 
@@ -98,6 +119,8 @@
     if ($hasSupportDashboard) {
         $activeActions += $supportStats['open'] + $supportStats['in_progress'];
     }
+    $activeActions += $taskStats['open'];
+    $setupPercent = $setupProgress['total'] > 0 ? round(($setupProgress['complete'] / $setupProgress['total']) * 100) : 100;
     $moduleColors = [
         'blue' => ['#2563eb', '#eff6ff'],
         'green' => ['#16a34a', '#f0fdf4'],
@@ -117,6 +140,10 @@
             <div class="d-flex flex-wrap gap-2 justify-content-end">
                 <span class="suite-chip"><i class="bi bi-grid-fill"></i>{{ $enabledModules }} modules enabled</span>
                 <span class="suite-chip"><i class="bi bi-lightning-charge-fill"></i>{{ $activeActions }} pending actions</span>
+                <span class="suite-chip">
+                    <i class="bi bi-clipboard-check-fill"></i>{{ $setupPercent }}% setup
+                    <span class="progress-slim"><span style="width:{{ $setupPercent }}%"></span></span>
+                </span>
                 <span class="suite-chip"><i class="bi bi-calendar3"></i>{{ now()->format('d-m-Y') }}</span>
             </div>
         </div>
@@ -160,6 +187,79 @@
     </div>
 
     @if($enabledModules > 0)
+    <div class="row g-3 mb-3">
+        <div class="col-xl-5">
+            <div class="suite-card h-100">
+                <div class="panel-header">
+                    <div>
+                        <h5 class="panel-title">Setup Progress</h5>
+                        <div class="suite-muted">{{ $setupProgress['complete'] }} of {{ $setupProgress['total'] }} steps completed</div>
+                    </div>
+                    <span class="soft-badge {{ $setupPercent >= 80 ? 'soft-green' : 'soft-amber' }}">{{ $setupPercent }}%</span>
+                </div>
+                <div class="panel-body">
+                    @foreach($setupSteps as $step)
+                        <div class="setup-step">
+                            <span class="setup-icon {{ $step['complete'] ? 'soft-green' : 'soft-blue' }}">
+                                <i class="bi {{ $step['complete'] ? 'bi-check-lg' : $step['icon'] }}"></i>
+                            </span>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <div>
+                                        <div class="setup-title">{{ $step['title'] }}</div>
+                                        <div class="setup-desc">{{ $step['description'] }}</div>
+                                    </div>
+                                    @if(! $step['complete'])
+                                        <a href="{{ $step['route'] }}" class="btn btn-sm btn-outline-primary">{{ $step['action'] }}</a>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-7">
+            <div class="suite-card h-100">
+                <div class="panel-header">
+                    <div>
+                        <h5 class="panel-title">Priority Work Queue</h5>
+                        <div class="suite-muted">Open tasks sorted by due date, overdue items first.</div>
+                    </div>
+                    <a href="{{ route('admin.tasks.index') }}" class="btn btn-sm btn-outline-primary">Open Tasks</a>
+                </div>
+                <div class="panel-body">
+                    <div class="row g-2 mb-2">
+                        <div class="col-6 col-md-3"><div class="mini-stat"><div class="mini-stat-value">{{ $taskStats['open'] }}</div><div class="mini-stat-label">Open Tasks</div></div></div>
+                        <div class="col-6 col-md-3"><div class="mini-stat"><div class="mini-stat-value">{{ $taskStats['overdue'] }}</div><div class="mini-stat-label">Overdue</div></div></div>
+                        <div class="col-6 col-md-3"><div class="mini-stat"><div class="mini-stat-value">{{ $taskStats['blocked'] }}</div><div class="mini-stat-label">Blocked</div></div></div>
+                        <div class="col-6 col-md-3"><div class="mini-stat"><div class="mini-stat-value">{{ $taskStats['review'] }}</div><div class="mini-stat-label">In Review</div></div></div>
+                    </div>
+                    @forelse($recentTasks as $task)
+                        <div class="list-row">
+                            <span class="list-icon"><i class="bi bi-list-task"></i></span>
+                            <div class="flex-grow-1 min-w-0">
+                                <a href="{{ route('admin.tasks.show', $task) }}" class="list-title text-decoration-none d-block">{{ \Illuminate\Support\Str::limit($task->title, 44) }}</a>
+                                <div class="list-sub">
+                                    {{ $task->assignee?->name ?? 'Unassigned' }}
+                                    @if($task->due_at) &middot; Due {{ $task->due_at->format('d-m-Y H:i') }} @endif
+                                </div>
+                            </div>
+                            <span class="soft-badge {{ $task->is_overdue ? 'soft-red' : 'soft-blue' }}">{{ $task->status_label }}</span>
+                        </div>
+                    @empty
+                        <div class="empty-box">
+                            <i class="bi bi-check-circle d-block mb-1 fs-5"></i>
+                            No open tasks. Create tasks for setup, testing, or daily operations.
+                            <div class="mt-2"><a href="{{ route('admin.tasks.create') }}" class="btn btn-sm btn-primary">Create Task</a></div>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-3 mb-3">
         <div class="{{ $hasItamDashboard ? 'col-lg-8' : 'col-lg-12' }}">
             <div class="suite-card h-100">

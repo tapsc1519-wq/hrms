@@ -316,6 +316,13 @@
             'route' => route('staff.tickets.index'),
         ];
     }
+    $attentionItems[] = [
+        'label' => 'Open Tasks',
+        'value' => $stats['open_tasks'],
+        'icon' => 'bi-list-task',
+        'color' => $stats['overdue_tasks'] > 0 ? 'red' : 'blue',
+        'route' => route('staff.tasks.index'),
+    ];
 
     $quickLinks = [];
     if ($hasHrms) {
@@ -336,6 +343,7 @@
     if ($hasSupport) {
         $quickLinks[] = ['title' => 'Support Tickets', 'subtitle' => 'Raise and track tickets', 'icon' => 'bi-headset', 'color' => 'red', 'route' => route('staff.tickets.index')];
     }
+    $quickLinks[] = ['title' => 'My Tasks', 'subtitle' => 'Assigned work and updates', 'icon' => 'bi-list-task', 'color' => 'blue', 'route' => route('staff.tasks.index')];
 @endphp
 
 <div class="employee-dashboard">
@@ -485,6 +493,38 @@
     @endif
 
     <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="dash-card h-100">
+                <div class="dash-card-header">
+                    <div>
+                        <h5 class="section-title">My Tasks</h5>
+                        <div class="section-sub">{{ $stats['overdue_tasks'] }} overdue</div>
+                    </div>
+                    <a href="{{ route('staff.tasks.index') }}" class="btn btn-sm btn-outline-primary">View</a>
+                </div>
+                <div class="work-card-body">
+                    @forelse($myTasks as $task)
+                        <div class="list-row">
+                            <span class="list-icon {{ $task->is_overdue ? 'soft-red' : 'soft-blue' }}"><i class="bi bi-list-task"></i></span>
+                            <div class="flex-grow-1 min-w-0">
+                                <a href="{{ route('staff.tasks.show', $task) }}" class="list-title text-decoration-none d-block">{{ \Illuminate\Support\Str::limit($task->title, 34) }}</a>
+                                <div class="list-sub">
+                                    {{ $task->status_label }}
+                                    @if($task->due_at) &middot; Due {{ $task->due_at->format('d-m-Y H:i') }} @endif
+                                </div>
+                            </div>
+                            <span class="badge bg-{{ $task->priority_badge }}">{{ ucfirst($task->priority) }}</span>
+                        </div>
+                    @empty
+                        <div class="empty-box">
+                            <i class="bi bi-check-circle d-block mb-1 fs-5"></i>
+                            No tasks assigned to you.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
         @if($hasHrms)
             <div class="col-lg-4">
                 <div class="dash-card h-100">

@@ -134,6 +134,30 @@
         padding: .7rem 0;
     }
     .platform-dashboard .status-row:last-child { border-bottom: 0; }
+    .platform-dashboard .check-row {
+        align-items: flex-start;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        gap: .75rem;
+        padding: .75rem 0;
+    }
+    .platform-dashboard .check-row:last-child { border-bottom: 0; }
+    .platform-dashboard .check-icon {
+        align-items: center;
+        border-radius: 10px;
+        display: inline-flex;
+        flex-shrink: 0;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+    }
+    .platform-dashboard .health-strip {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, .06);
+        padding: .85rem 1rem;
+    }
     .platform-dashboard .table { font-size: .82rem; }
     .platform-dashboard .table thead th {
         color: #64748b;
@@ -150,6 +174,9 @@
 @endpush
 
 @section('content')
+@php
+    $platformPercent = $platformProgress['total'] > 0 ? round(($platformProgress['complete'] / $platformProgress['total']) * 100) : 100;
+@endphp
 <div class="platform-dashboard">
     <div class="platform-header">
         <div>
@@ -213,6 +240,28 @@
                         <div class="metric-note mt-2">{{ $stats['pending_commissions'] }} entries waiting</div>
                     </div>
                     <span class="metric-icon bg-warning-subtle text-warning"><i class="bi bi-cash-coin"></i></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="health-strip mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg-4">
+                <div class="platform-kicker">Platform Readiness</div>
+                <div class="fw-bold" style="color:#0f172a">{{ $platformProgress['complete'] }} of {{ $platformProgress['total'] }} foundation steps complete</div>
+            </div>
+            <div class="col-lg-4">
+                <div class="progress" style="height:9px">
+                    <div class="progress-bar" style="width:{{ $platformPercent }}%"></div>
+                </div>
+                <div class="muted-note mt-1">{{ $platformPercent }}% ready for multi-product operations</div>
+            </div>
+            <div class="col-lg-4">
+                <div class="d-flex justify-content-lg-end flex-wrap gap-2">
+                    <span class="badge bg-primary-subtle text-primary">{{ $organizationHealth['trial'] }} trial orgs</span>
+                    <span class="badge bg-success-subtle text-success">{{ $organizationHealth['active'] }} active orgs</span>
+                    <span class="badge bg-warning-subtle text-warning">{{ $organizationHealth['attention'] }} need attention</span>
                 </div>
             </div>
         </div>
@@ -318,6 +367,24 @@
                                 <div class="muted-note mt-1">Approve and mark payouts paid.</div>
                             </a>
                         </div>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-top">
+                        <div class="fw-bold mb-2" style="color:#0f172a;font-size:.84rem">Launch Checklist</div>
+                        @foreach($platformChecklist as $item)
+                            <div class="check-row">
+                                <span class="check-icon {{ $item['complete'] ? 'bg-success-subtle text-success' : 'bg-primary-subtle text-primary' }}">
+                                    <i class="bi {{ $item['complete'] ? 'bi-check-lg' : $item['icon'] }}"></i>
+                                </span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-semibold" style="color:#0f172a;font-size:.8rem">{{ $item['title'] }}</div>
+                                    <div class="muted-note">{{ $item['description'] }}</div>
+                                </div>
+                                @if(! $item['complete'])
+                                    <a href="{{ $item['route'] }}" class="btn btn-sm btn-outline-primary">{{ $item['action'] }}</a>
+                                @endif
+                            </div>
+                        @endforeach
                     </div>
 
                     <div class="mt-3 pt-3 border-top">

@@ -18,8 +18,9 @@ use App\Models\PurchaseOrder;
 use App\Models\Software;
 use App\Models\SoftwareAssignment;
 use App\Models\SoftwareLicense;
-use App\Models\Ticket;
 use App\Models\Supplier;
+use App\Models\Task;
+use App\Models\Ticket;
 
 class DashboardController extends Controller
 {
@@ -29,6 +30,9 @@ class DashboardController extends Controller
         $orgId = $user->organization_id;
         $organization = $user->organization?->load('modules');
         $moduleEnabled = fn (string $module): bool => !$organization || $organization->hasModule($module);
+        $hasHrmsModule = $moduleEnabled('hrms');
+        $hasItamModule = $moduleEnabled('itam');
+        $hasSamModule = $moduleEnabled('sam');
 
         $stats = [
             'total_assets'       => Asset::where('organization_id', $orgId)->count(),
@@ -48,6 +52,8 @@ class DashboardController extends Controller
             'open_tickets'        => Ticket::where('organization_id', $orgId)->where('status', 'open')->count(),
             'in_progress_tickets' => Ticket::where('organization_id', $orgId)->where('status', 'in_progress')->count(),
             'urgent_tickets'      => Ticket::where('organization_id', $orgId)->whereIn('status', ['open','in_progress'])->where('priority', 'urgent')->count(),
+            'open_tasks'           => Task::where('organization_id', $orgId)->open()->count(),
+            'overdue_tasks'        => Task::where('organization_id', $orgId)->open()->whereNotNull('due_at')->where('due_at', '<', now())->count(),
             // SAM
             'software_titles'     => Software::where('organization_id', $orgId)->count(),
             'active_licenses'     => SoftwareLicense::where('organization_id', $orgId)->where('status','active')->count(),
@@ -115,6 +121,13 @@ class DashboardController extends Controller
                 ->whereMonth('updated_at', now()->month)
                 ->whereYear('updated_at', now()->year)
                 ->count(),
+        ];
+
+        $taskStats = [
+            'open' => $stats['open_tasks'],
+            'overdue' => $stats['overdue_tasks'],
+            'blocked' => Task::where('organization_id', $orgId)->where('status', 'blocked')->count(),
+            'review' => Task::where('organization_id', $orgId)->where('status', 'review')->count(),
         ];
 
         $moduleCards = [
@@ -213,6 +226,15 @@ class DashboardController extends Controller
             ->whereIn('status', ['open', 'in_progress'])
             ->latest()->take(6)->get();
 
+        $recentTasks = Task::where('organization_id', $orgId)
+            ->with(['assignee', 'creator'])
+            ->open()
+            ->orderByRaw('CASE WHEN due_at IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('due_at')
+            ->latest()
+            ->take(6)
+            ->get();
+
         $pendingLeaves = LeaveRequest::where('organization_id', $orgId)
             ->with('employee.user')
             ->where('status', 'pending')
@@ -225,12 +247,96 @@ class DashboardController extends Controller
             ->take(4)
             ->get();
 
+        $setupSteps = collect([
+            [
+                'title' => 'Add employees',
+                'description' => 'Create employee records so assets, attendance, software and tasks can be assigned.',
+                'complete' => $hrmsStats['employees'] > 0,
+                'route' => route('admin.employees.index'),
+                'action' => 'Open Employees',
+                'icon' => 'bi-person-vcard-fill',
+            ],
+            [
+                'title' => 'Create roles and permissions',
+                'description' => 'Define who can manage HRMS, ITAM, SAM, AMC, disposal and reports.',
+                'complete' => $user->hasPermission('roles.manage') ? true : false,
+                'route' => route('admin.roles.index'),
+                'action' => 'Open Roles',
+                'icon' => 'bi-shield-lock-fill',
+            ],
+            [
+                'title' => 'Add assets',
+                'description' => 'Build the asset register before assigning devices or starting repairs.',
+                'complete' => $itamStats['assets'] > 0,
+                'route' => route('admin.assets.index'),
+                'action' => 'Open Assets',
+                'icon' => 'bi-box-seam-fill',
+            ],
+            [
+                'title' => 'Add software catalog',
+                'description' => 'Create software titles and licenses for SAM compliance tracking.',
+                'complete' => $samStats['titles'] > 0,
+                'route' => route('admin.software.index'),
+                'action' => 'Open Software',
+                'icon' => 'bi-display-fill',
+            ],
+            [
+                'title' => 'Create first task',
+                'description' => 'Assign setup or operational work to a team member from Work Management.',
+                'complete' => Task::where('organization_id', $orgId)->exists(),
+                'route' => route('admin.tasks.index'),
+                'action' => 'Open Tasks',
+                'icon' => 'bi-list-task',
+            ],
+            [
+                'title' => 'Handle pending actions',
+                'description' => 'Clear pending requests, tickets, leave reviews, renewals and blocked tasks.',
+                'complete' => false,
+                'route' => route('admin.dashboard'),
+                'action' => 'Review Dashboard',
+                'icon' => 'bi-lightning-charge-fill',
+            ],
+        ]);
+
+        $setupSteps = $setupSteps->map(function (array $step) use ($hasHrmsModule, $hasItamModule, $hasSamModule, $taskStats, $hrmsStats, $itamStats, $samStats, $payrollStats, $supportStats) {
+            if ($step['title'] === 'Add employees' && ! $hasHrmsModule) {
+                $step['complete'] = true;
+            }
+            if ($step['title'] === 'Add assets' && ! $hasItamModule) {
+                $step['complete'] = true;
+            }
+            if ($step['title'] === 'Add software catalog' && ! $hasSamModule) {
+                $step['complete'] = true;
+            }
+            if ($step['title'] === 'Handle pending actions') {
+                $pending = $taskStats['overdue']
+                    + $taskStats['blocked']
+                    + $hrmsStats['pending_leaves']
+                    + $hrmsStats['pending_regularizations']
+                    + $itamStats['pending_requests']
+                    + $samStats['expiring']
+                    + $payrollStats['draft_runs']
+                    + $payrollStats['approved_runs']
+                    + $supportStats['urgent'];
+
+                $step['complete'] = $pending === 0;
+            }
+
+            return $step;
+        })->values();
+
+        $setupProgress = [
+            'total' => $setupSteps->count(),
+            'complete' => $setupSteps->where('complete', true)->count(),
+        ];
+
         return view('admin.dashboard', compact(
             'stats', 'recentAssets', 'recentRequests',
             'upcomingMaintenance', 'assetsByStatus', 'purchaseChartData',
             'recentTickets', 'organization', 'moduleCards', 'hrmsStats',
             'payrollStats', 'samStats', 'itamStats', 'supportStats',
-            'pendingLeaves', 'recentPayrollRuns'
+            'pendingLeaves', 'recentPayrollRuns', 'recentTasks', 'taskStats',
+            'setupSteps', 'setupProgress'
         ));
     }
 }

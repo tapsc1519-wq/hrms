@@ -13,6 +13,7 @@ use App\Models\EmployeeProfile;
 use App\Models\LeaveRequest;
 use App\Models\PayrollRunItem;
 use App\Models\SoftwareAssignment;
+use App\Models\Task;
 use App\Models\Ticket;
 
 class DashboardController extends Controller
@@ -82,6 +83,15 @@ class DashboardController extends Controller
             ? Ticket::where('requester_id', $user->id)->latest()->take(5)->get()
             : collect();
 
+        $myTasks = Task::where('organization_id', $user->organization_id)
+            ->where('assigned_to', $user->id)
+            ->open()
+            ->orderByRaw('CASE WHEN due_at IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('due_at')
+            ->latest()
+            ->take(5)
+            ->get();
+
         $softwareAssignments = $hasSam
             ? SoftwareAssignment::where('user_id', $user->id)
                 ->where('status', 'active')
@@ -109,6 +119,8 @@ class DashboardController extends Controller
             'software_assigned' => $hasSam ? SoftwareAssignment::where('user_id', $user->id)->where('status', 'active')->count() : 0,
             'attendance_regularizations' => $attendanceRegularizations,
             'incoming_handovers' => $incomingHandovers,
+            'open_tasks' => Task::where('organization_id', $user->organization_id)->where('assigned_to', $user->id)->open()->count(),
+            'overdue_tasks' => Task::where('organization_id', $user->organization_id)->where('assigned_to', $user->id)->open()->whereNotNull('due_at')->where('due_at', '<', now())->count(),
         ];
 
         $managementCards = $this->managementCards($user, [
@@ -126,6 +138,7 @@ class DashboardController extends Controller
             'myAssets',
             'myRequests',
             'myTickets',
+            'myTasks',
             'softwareAssignments',
             'latestPayslip',
             'stats',
