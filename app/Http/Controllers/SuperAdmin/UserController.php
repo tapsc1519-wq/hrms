@@ -59,11 +59,26 @@ class UserController extends Controller
             'onboarding_redirect' => 'nullable|boolean',
         ]);
 
+        if (($validated['role'] ?? null) === 'super_admin' && !empty($validated['organization_id'])) {
+            return back()
+                ->withInput()
+                ->with('error', 'Super Admin is only for Niyantron platform accounts. Do not assign an organization to Super Admin.');
+        }
+
+        if (($validated['role'] ?? null) !== 'super_admin' && empty($validated['organization_id'])) {
+            return back()
+                ->withInput()
+                ->with('error', 'Customer Admin, Staff, and Supplier accounts must be assigned to an organization.');
+        }
+
         $validated['password'] = Hash::make($validated['password']);
         $redirectToOnboarding = (bool) ($validated['onboarding_redirect'] ?? false);
         unset($validated['onboarding_redirect']);
         if ($redirectToOnboarding && ($validated['role'] ?? null) === 'admin') {
             $validated['must_change_password'] = true;
+        }
+        if (($validated['role'] ?? null) === 'super_admin') {
+            $validated['organization_id'] = null;
         }
 
         $user = User::create($validated);
@@ -96,6 +111,22 @@ class UserController extends Controller
             'job_title'       => 'nullable|string|max:100',
             'status'          => 'required|in:active,inactive',
         ]);
+
+        if (($validated['role'] ?? null) === 'super_admin' && !empty($validated['organization_id'])) {
+            return back()
+                ->withInput()
+                ->with('error', 'Super Admin is only for Niyantron platform accounts. Do not assign an organization to Super Admin.');
+        }
+
+        if (($validated['role'] ?? null) !== 'super_admin' && empty($validated['organization_id'])) {
+            return back()
+                ->withInput()
+                ->with('error', 'Customer Admin, Staff, and Supplier accounts must be assigned to an organization.');
+        }
+
+        if (($validated['role'] ?? null) === 'super_admin') {
+            $validated['organization_id'] = null;
+        }
 
         if (isset($validated['password']) && $validated['password']) {
             $validated['password'] = Hash::make($validated['password']);

@@ -13,6 +13,7 @@
 @if(($selectedOrganizationId ?? null) && ($selectedRole ?? null) === 'admin')
     <input type="hidden" name="onboarding_redirect" value="1">
 @endif
+@php($isFirstAdminOnboarding = ($selectedOrganizationId ?? null) && ($selectedRole ?? null) === 'admin')
 <div class="row g-4">
 
     {{-- LEFT --}}
@@ -40,6 +41,11 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Role <span class="req">*</span></label>
+                        @if($isFirstAdminOnboarding)
+                        <input type="hidden" name="role" value="admin">
+                        <div class="form-control bg-light text-muted">Admin</div>
+                        <div class="form-text">First customer account must be Organization Admin. Super Admin is only for Niyantron platform users.</div>
+                        @else
                         <select name="role" class="form-select @error('role') is-invalid @enderror" required>
                             <option value="">— Select —</option>
                             <option value="super_admin" {{ old('role', $selectedRole ?? '') == 'super_admin' ? 'selected':'' }}>Super Admin</option>
@@ -47,6 +53,8 @@
                             <option value="staff"       {{ old('role', $selectedRole ?? '') == 'staff'       ? 'selected':'' }}>Staff</option>
                             <option value="supplier"      {{ old('role', $selectedRole ?? '') == 'supplier'      ? 'selected':'' }}>Supplier</option>
                         </select>
+                        <div class="form-text">Use Super Admin only for Niyantron platform team accounts.</div>
+                        @endif
                         @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-3">
@@ -59,6 +67,13 @@
                     </div>
                     <div class="col-12">
                         <label class="form-label">Organisation</label>
+                        @if($isFirstAdminOnboarding)
+                        <input type="hidden" name="organization_id" value="{{ $selectedOrganizationId }}">
+                        <div class="form-control bg-light text-muted">
+                            {{ $organizations->firstWhere('id', (int) $selectedOrganizationId)?->name ?? 'Selected organization' }}
+                        </div>
+                        <div class="form-text">This admin will belong to the customer organization.</div>
+                        @else
                         <select name="organization_id" class="form-select @error('organization_id') is-invalid @enderror">
                             <option value="">— None (Platform-level account) —</option>
                             @foreach($organizations as $org)
@@ -68,6 +83,7 @@
                             @endforeach
                         </select>
                         <div class="form-text">Leave blank for Super Admin accounts.</div>
+                        @endif
                         @error('organization_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
