@@ -1486,6 +1486,12 @@
                class="sidebar-link {{ request()->routeIs('admin.sso-settings.*') ? 'active' : '' }}">
                 <i class="bi bi-key-fill"></i> Organization SSO
             </a>
+            @if($user->hasPermission('onboarding.view'))
+            <a href="{{ route('admin.onboarding-wizard.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.onboarding-wizard.*') ? 'active' : '' }}">
+                <i class="bi bi-signpost-split"></i> Setup Wizard
+            </a>
+            @endif
             @if($user->hasPermission('production.view'))
             <a href="{{ route('admin.production-readiness.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.production-readiness.*') ? 'active' : '' }}">

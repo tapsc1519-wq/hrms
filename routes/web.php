@@ -27,6 +27,7 @@ use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\AssignmentController;
 use App\Http\Controllers\Admin\MaintenanceController;
+use App\Http\Controllers\Admin\OnboardingWizardController;
 use App\Http\Controllers\Admin\ProductionReadinessController;
 use App\Http\Controllers\Admin\RequestController as AdminRequestController;
 use App\Http\Controllers\Admin\DepartmentController;
@@ -163,6 +164,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['portal.domain:p
 // ─── Admin ────────────────────────────────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', 'auth', 'role:admin,super_admin', 'product.access:opsbridge'])->group(function () {
     Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
+    Route::get('onboarding-wizard', [OnboardingWizardController::class, 'index'])->middleware('permission:onboarding.view')->name('onboarding-wizard.index');
     Route::get('production-readiness', [ProductionReadinessController::class, 'index'])->middleware('permission:production.view')->name('production-readiness.index');
     Route::get('sso-settings', [SsoSettingController::class, 'edit'])->name('sso-settings.edit');
     Route::put('sso-settings', [SsoSettingController::class, 'update'])->name('sso-settings.update');

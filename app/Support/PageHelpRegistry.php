@@ -87,6 +87,44 @@ class PageHelpRegistry
                 ],
                 'next' => 'Start with alerts, pending approvals, or items that show a high count.',
             ],
+            'admin.onboarding-wizard.*' => [
+                'title' => 'Setup Wizard Help',
+                'what' => 'The Setup Wizard shows the recommended order for preparing an organization before daily use or production rollout.',
+                'how' => [
+                    'Start from the first incomplete stage and use the action button beside the missing item.',
+                    'Complete foundation and people setup before testing assets, software, support or workflows.',
+                    'Use Production Readiness after the wizard to verify live-server and launch checks.',
+                ],
+                'sections' => [
+                    'Admin onboarding' => 'Shows organization progress, enabled modules, remaining steps and the next recommended action.',
+                    'Company Foundation' => 'Confirms facilities, departments and permission roles are ready.',
+                    'People Setup' => 'Checks whether employee profiles are ready for assignments and workflow testing.',
+                    'Workflow & Go-Live' => 'Highlights tasks, blockers and final readiness checks.',
+                ],
+                'actions' => [
+                    'Continue Setup' => 'Opens the next incomplete setup area.',
+                    'Open Production Readiness' => 'Opens the deeper launch checklist for production validation.',
+                    'Create Setup Task' => 'Creates a task for any owner who needs to complete setup work.',
+                ],
+                'tour' => [
+                    [
+                        'target' => 'onboarding-summary',
+                        'title' => 'Setup Progress',
+                        'body' => 'This area shows the setup percentage, enabled modules and the next recommended action.',
+                    ],
+                    [
+                        'target' => 'onboarding-stages',
+                        'title' => 'Setup Stages',
+                        'body' => 'Each stage groups related setup work and shows which items are complete or still pending.',
+                    ],
+                    [
+                        'target' => 'onboarding-actions',
+                        'title' => 'Final Actions',
+                        'body' => 'Use these actions to review production readiness or create a setup task for another owner.',
+                    ],
+                ],
+                'next' => 'Use the first incomplete action button, then return here to continue the next step.',
+            ],
             'staff.dashboard' => [
                 'title' => 'My Dashboard Help',
                 'what' => 'My Dashboard gives employees a quick view of attendance, actions needing attention, assigned items, requests, and shortcuts.',
