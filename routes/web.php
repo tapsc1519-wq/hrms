@@ -198,6 +198,8 @@ Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', '
     Route::post('assignments', [AssignmentController::class, 'store'])->middleware('permission:assignments.create')->name('assignments.store');
     Route::patch('assignments/{assignment}/return', [AssignmentController::class, 'returnAsset'])->middleware('permission:assignments.return')->name('assignments.return');
     Route::patch('assignments/{assignment}/handover', [AssignmentController::class, 'handover'])->middleware('permission:assignments.return')->name('assignments.handover');
+    Route::patch('assignment-handovers/{handover}/approve', [AssignmentController::class, 'approveHandover'])->middleware('permission:assignments.return')->name('assignment-handovers.approve');
+    Route::patch('assignment-handovers/{handover}/reject', [AssignmentController::class, 'rejectHandover'])->middleware('permission:assignments.return')->name('assignment-handovers.reject');
     Route::get('assignments/bulk', [AssignmentController::class, 'bulk'])->middleware('permission:assignments.create')->name('assignments.bulk');
     Route::get('assignments/bulk/template', [AssignmentController::class, 'bulkTemplate'])->middleware('permission:assignments.create')->name('assignments.bulk.template');
     Route::post('assignments/bulk', [AssignmentController::class, 'storeBulk'])->middleware('permission:assignments.create')->name('assignments.bulk.store');

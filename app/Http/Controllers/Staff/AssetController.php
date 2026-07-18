@@ -30,16 +30,16 @@ class AssetController extends Controller
             ->get();
 
         $incomingHandovers = AssetHandoverRequest::where('to_user_id', auth()->id())
-            ->where('status', 'pending')
+            ->where('status', 'approved')
             ->whereHas('assignment', fn($q) => $q->where('status', 'active'))
-            ->with(['asset.category', 'fromUser.department'])
+            ->with(['asset.category', 'fromUser.department', 'approvedBy'])
             ->latest()
             ->get();
 
         $outgoingHandovers = AssetHandoverRequest::where('from_user_id', auth()->id())
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'pending_admin', 'approved'])
             ->whereHas('assignment', fn($q) => $q->where('status', 'active'))
-            ->with(['asset', 'toUser.department'])
+            ->with(['asset', 'toUser.department', 'approvedBy'])
             ->latest()
             ->get();
 
@@ -99,7 +99,7 @@ class AssetController extends Controller
                 ->findOrFail($validated['new_user_id']);
 
             $pendingExists = AssetHandoverRequest::where('asset_assignment_id', $assignment->id)
-                ->where('status', 'pending')
+                ->whereIn('status', ['pending', 'pending_admin', 'approved'])
                 ->exists();
 
             if ($pendingExists) {
@@ -114,10 +114,10 @@ class AssetController extends Controller
                 'handover_date'       => $validated['handover_date'],
                 'condition_in'        => $validated['condition_in'],
                 'notes'               => $validated['notes'],
-                'status'              => 'pending',
+                'status'              => 'pending_admin',
             ]);
 
-            return back()->with('success', 'Handover request sent to ' . $newUser->name . '. The asset will transfer after they accept it.');
+            return back()->with('success', 'Handover request sent for IT/Admin approval. Recipient can accept it after approval.');
         }
 
         DB::transaction(function () use ($assignment, $validated) {
@@ -131,7 +131,7 @@ class AssetController extends Controller
             $assignment->asset->update(['status' => 'available']);
 
             AssetHandoverRequest::where('asset_assignment_id', $assignment->id)
-                ->where('status', 'pending')
+                ->whereIn('status', ['pending', 'pending_admin', 'approved'])
                 ->update(['status' => 'cancelled', 'responded_at' => now()]);
         });
 
@@ -224,7 +224,7 @@ class AssetController extends Controller
     public function acceptHandover(Request $request, AssetHandoverRequest $handover)
     {
         abort_if($handover->to_user_id !== auth()->id(), 403);
-        abort_if($handover->status !== 'pending', 422, 'This handover request is no longer pending.');
+        abort_if($handover->status !== 'approved', 422, 'This handover request must be approved by IT/Admin before you can accept it.');
         abort_if($handover->assignment->status !== 'active', 422, 'The original assignment is no longer active.');
 
         $validated = $request->validate([
@@ -266,7 +266,7 @@ class AssetController extends Controller
     public function rejectHandover(Request $request, AssetHandoverRequest $handover)
     {
         abort_if($handover->to_user_id !== auth()->id(), 403);
-        abort_if($handover->status !== 'pending', 422, 'This handover request is no longer pending.');
+        abort_if($handover->status !== 'approved', 422, 'This handover request must be approved by IT/Admin before you can reject it.');
 
         $validated = $request->validate([
             'response_notes' => 'nullable|string',

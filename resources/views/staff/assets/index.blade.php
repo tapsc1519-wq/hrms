@@ -18,7 +18,7 @@
     <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="background:#eff6ff">
         <div>
             <div class="fw-700" style="color:#1d4ed8"><i class="bi bi-inbox-fill me-2"></i>Incoming Handover Requests</div>
-            <div class="text-muted small">Review assets another employee wants to hand over to you.</div>
+            <div class="text-muted small">Review IT/Admin approved assets another employee wants to hand over to you.</div>
         </div>
         <span class="badge bg-primary">{{ $incomingHandovers->count() }} pending</span>
     </div>
@@ -27,7 +27,7 @@
         <div class="text-center py-3">
             <i class="bi bi-inbox text-muted d-block mb-2" style="font-size:1.5rem;opacity:.45"></i>
             <div class="fw-600" style="color:#334155;font-size:.9rem">No incoming handover requests</div>
-            <div class="text-muted small">When another employee sends an asset handover to you, it will appear here for accept or reject.</div>
+            <div class="text-muted small">When IT/Admin approves an employee handover to you, it will appear here for accept or reject.</div>
         </div>
         @else
         <div class="row g-3">
@@ -97,7 +97,7 @@
     <div class="fw-700 mb-1"><i class="bi bi-hourglass-split me-1"></i>Pending handover requests sent</div>
     <div class="small">
         @foreach($outgoingHandovers as $handover)
-            <div>{{ $handover->asset->name }} is waiting for {{ $handover->toUser->name }} to accept or reject.</div>
+            <div>{{ $handover->asset->name }} is {{ $handover->status === 'approved' ? 'waiting for '.$handover->toUser->name.' to accept or reject' : 'waiting for IT/Admin approval' }}.</div>
         @endforeach
     </div>
 </div>
@@ -384,7 +384,7 @@
                     </div>
                     <div class="modal-body">
                         <div class="alert alert-light border rounded-3 mb-3" style="font-size:.82rem">
-                            Choose where this asset is going. If you select another employee, they must accept the request before the asset moves to their My Assets list. If you hand it to IT/Admin, it returns to available stock immediately.
+                            Choose where this asset is going. If you select another employee, IT/Admin must approve first, then the receiving employee must accept before custody moves. If you hand it to IT/Admin, it returns to available stock immediately.
                         </div>
 
                         <div class="row g-3 mb-3">
@@ -392,7 +392,7 @@
                                 <label class="d-block border rounded-3 p-3 h-100" style="cursor:pointer">
                                     <input type="radio" name="handover_type" value="staff" class="form-check-input me-2 staff-handover-type" checked>
                                     <span class="fw-700">Handover to another Staff Member</span>
-                                    <div class="text-muted small mt-1">Select the employee who will receive this asset.</div>
+                                    <div class="text-muted small mt-1">IT/Admin will approve first, then the employee can accept.</div>
                                 </label>
                             </div>
                             <div class="col-md-6">
@@ -437,7 +437,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-send me-1"></i>Submit Handover
+                            <i class="bi bi-send me-1"></i>Submit for Approval
                         </button>
                     </div>
                 </div>

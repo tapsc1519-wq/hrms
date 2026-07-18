@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\AssetAssignment;
+use App\Models\AssetHandoverRequest;
 use App\Models\Department;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -30,6 +31,11 @@ class AssignmentController extends Controller
         }
 
         $assignments = $query->latest()->paginate(20)->withQueryString();
+        $pendingHandovers = AssetHandoverRequest::whereHas('asset', fn($q) => $q->where('organization_id', $this->orgId()))
+            ->whereIn('status', ['pending', 'pending_admin'])
+            ->with(['asset.category', 'assignment.user', 'fromUser.department', 'toUser.department'])
+            ->latest()
+            ->get();
         $staffUsers = User::where('organization_id', $this->orgId())
             ->with('department')
             ->where('role', 'staff')
@@ -37,7 +43,7 @@ class AssignmentController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.assignments.index', compact('assignments', 'staffUsers'));
+        return view('admin.assignments.index', compact('assignments', 'staffUsers', 'pendingHandovers'));
     }
 
     public function create()
@@ -295,35 +301,87 @@ class AssignmentController extends Controller
             }
         }
 
-        DB::transaction(function () use ($assignment, $validated, $newUser) {
+        if ($newUser) {
+            $pendingExists = AssetHandoverRequest::where('asset_assignment_id', $assignment->id)
+                ->whereIn('status', ['pending', 'pending_admin', 'approved'])
+                ->exists();
+
+            if ($pendingExists) {
+                return back()->withErrors(['new_user_id' => 'A pending handover request already exists for this asset.']);
+            }
+
+            AssetHandoverRequest::create([
+                'asset_assignment_id' => $assignment->id,
+                'asset_id'            => $assignment->asset_id,
+                'from_user_id'        => $assignment->user_id,
+                'to_user_id'          => $newUser->id,
+                'handover_date'       => $validated['handover_date'],
+                'condition_in'        => $validated['condition_in'],
+                'notes'               => $validated['notes'],
+                'approved_by'         => auth()->id(),
+                'approved_at'         => now(),
+                'approval_notes'      => 'Created and approved by Admin/IT.',
+                'status'              => 'approved',
+            ]);
+
+            return back()->with('success', 'Handover request sent to ' . $newUser->name . '. The asset will transfer after recipient acceptance.');
+        }
+
+        DB::transaction(function () use ($assignment, $validated) {
             $assignment->update([
-                'status'             => $validated['handover_type'] === 'staff' ? 'transferred' : 'returned',
+                'status'             => 'returned',
                 'actual_return_date' => $validated['handover_date'],
                 'condition_in'       => $validated['condition_in'],
                 'notes'              => $validated['notes'],
             ]);
 
-            if ($newUser) {
-                AssetAssignment::create([
-                    'asset_id'        => $assignment->asset_id,
-                    'user_id'         => $newUser->id,
-                    'department_id'   => $newUser->department_id,
-                    'assigned_by'     => auth()->id(),
-                    'assigned_date'   => $validated['handover_date'],
-                    'condition_out'   => $validated['condition_in'],
-                    'purpose'         => 'Handover from ' . ($assignment->user?->name ?? 'previous assignee'),
-                    'notes'           => $validated['notes'],
-                    'status'          => 'active',
-                ]);
+            $assignment->asset->update(['status' => 'available']);
 
-                $assignment->asset->update(['status' => 'assigned']);
-            } else {
-                $assignment->asset->update(['status' => 'available']);
-            }
+            AssetHandoverRequest::where('asset_assignment_id', $assignment->id)
+                ->whereIn('status', ['pending', 'pending_admin', 'approved'])
+                ->update(['status' => 'cancelled', 'responded_at' => now()]);
         });
 
-        return back()->with('success', $newUser
-            ? 'Asset handed over to ' . $newUser->name . ' successfully.'
-            : 'Asset handed over to IT/Admin successfully.');
+        return back()->with('success', 'Asset handed over to IT/Admin successfully.');
+    }
+
+    public function approveHandover(Request $request, AssetHandoverRequest $handover)
+    {
+        abort_if($handover->asset->organization_id !== $this->orgId(), 403);
+        abort_unless(in_array($handover->status, ['pending', 'pending_admin'], true), 422, 'This handover request is not pending IT approval.');
+        abort_if($handover->assignment->status !== 'active', 422, 'The original assignment is no longer active.');
+
+        $validated = $request->validate([
+            'approval_notes' => 'nullable|string|max:2000',
+        ]);
+
+        $handover->update([
+            'status' => 'approved',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+            'approval_notes' => $validated['approval_notes'] ?? null,
+        ]);
+
+        return back()->with('success', 'Handover approved. Recipient can now accept or reject it.');
+    }
+
+    public function rejectHandover(Request $request, AssetHandoverRequest $handover)
+    {
+        abort_if($handover->asset->organization_id !== $this->orgId(), 403);
+        abort_unless(in_array($handover->status, ['pending', 'pending_admin'], true), 422, 'This handover request is not pending IT approval.');
+
+        $validated = $request->validate([
+            'approval_notes' => 'nullable|string|max:2000',
+        ]);
+
+        $handover->update([
+            'status' => 'admin_rejected',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+            'approval_notes' => $validated['approval_notes'] ?? null,
+            'responded_at' => now(),
+        ]);
+
+        return back()->with('success', 'Handover request rejected. The asset remains with the current employee.');
     }
 }
