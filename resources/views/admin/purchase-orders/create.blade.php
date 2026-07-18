@@ -14,6 +14,23 @@
             ]))->all()
             : [['item_type' => 'asset', 'item_name' => '', 'quantity' => 1, 'unit_price' => 0]];
     }
+    $poCategoryOptions = $categories->map(function ($item) {
+        return ['id' => $item->id, 'name' => $item->name];
+    })->values();
+    $poBrandOptions = $brands->map(function ($item) {
+        return ['id' => $item->id, 'name' => $item->name];
+    })->values();
+    $poModelOptions = $models->map(function ($item) {
+        return [
+            'id' => $item->id,
+            'name' => $item->name,
+            'brand_id' => $item->brand_id,
+            'category_id' => $item->category_id,
+        ];
+    })->values();
+    $poSoftwareOptions = $softwareList->map(function ($item) {
+        return ['id' => $item->id, 'name' => $item->name];
+    })->values();
 @endphp
 
 <div class="page-header">
@@ -120,10 +137,10 @@
 @push('scripts')
 <script>
 let itemCount = {{ $initialItems ? max(array_map('intval', array_keys($initialItems))) + 1 : 0 }};
-const poCategories = @json($categories->map(fn ($item) => ['id' => $item->id, 'name' => $item->name])->values());
-const poBrands = @json($brands->map(fn ($item) => ['id' => $item->id, 'name' => $item->name])->values());
-const poModels = @json($models->map(fn ($item) => ['id' => $item->id, 'name' => $item->name, 'brand_id' => $item->brand_id, 'category_id' => $item->category_id])->values());
-const poSoftware = @json($softwareList->map(fn ($item) => ['id' => $item->id, 'name' => $item->name])->values());
+const poCategories = @json($poCategoryOptions);
+const poBrands = @json($poBrandOptions);
+const poModels = @json($poModelOptions);
+const poSoftware = @json($poSoftwareOptions);
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
 const optionsFor = items => items.map(item => `<option value="${item.id}">${escapeHtml(item.name)}</option>`).join('');
 const modelOptionsFor = items => items.map(item => `<option value="${item.id}" data-brand="${item.brand_id || ''}" data-category="${item.category_id || ''}">${escapeHtml(item.name)}</option>`).join('');
