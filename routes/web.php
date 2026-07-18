@@ -419,6 +419,7 @@ Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', '
     Route::patch('payroll/components/{component}', [PayrollController::class, 'updateComponent'])->middleware('permission:payroll.setup')->name('payroll.components.update');
     Route::delete('payroll/components/{component}', [PayrollController::class, 'destroyComponent'])->middleware('permission:payroll.setup')->name('payroll.components.destroy');
     Route::post('payroll/structures', [PayrollController::class, 'storeStructure'])->middleware('permission:payroll.setup')->name('payroll.structures.store');
+    Route::patch('payroll/structures/{structure}', [PayrollController::class, 'updateStructure'])->middleware('permission:payroll.setup')->name('payroll.structures.update');
     Route::delete('payroll/structures/{structure}', [PayrollController::class, 'destroyStructure'])->middleware('permission:payroll.setup')->name('payroll.structures.destroy');
     });
 

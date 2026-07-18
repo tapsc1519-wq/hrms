@@ -134,7 +134,10 @@
                                 <td class="text-end fw-bold">&#8377;{{ number_format((float) $structure->net_salary, 2) }}</td>
                                 <td><span class="badge bg-{{ $structure->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($structure->status) }}</span></td>
                                 <td class="text-end pe-4">
-                                    <form method="POST" action="{{ route('admin.payroll.structures.destroy', $structure) }}" onsubmit="return confirm('Delete this salary structure?')">
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editSalary{{ $structure->id }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form method="POST" action="{{ route('admin.payroll.structures.destroy', $structure) }}" class="d-inline" onsubmit="return confirm('Delete this salary structure?')">
                                         @csrf
                                         @method('DELETE')
                                         <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
@@ -244,8 +247,8 @@
                     <div class="col-12">
                         <div class="alert alert-light border d-flex flex-wrap justify-content-between gap-3 mb-0">
                             <strong>Gross: &#8377;<span id="salaryGross">0.00</span></strong>
-                            <strong>Deductions: &#8377;<span id="salaryDeductions">0.00</span></strong>
-                            <strong>Net Salary: &#8377;<span id="salaryNet">0.00</span></strong>
+                            <strong>Deductions: &#8377;<span class="salary-deductions">0.00</span></strong>
+                            <strong>Net Salary: &#8377;<span class="salary-net">0.00</span></strong>
                         </div>
                     </div>
                     <div class="col-12">
@@ -261,21 +264,126 @@
         </form>
     </div>
 </div>
+
+@foreach($structures as $structure)
+    @php
+        $structureAmounts = $structure->components->pluck('amount', 'payroll_component_id');
+    @endphp
+    <div class="modal fade" id="editSalary{{ $structure->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <form method="POST" action="{{ route('admin.payroll.structures.update', $structure) }}" class="modal-content border-0" style="border-radius:16px">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="employee_profile_id" value="{{ $structure->employee_profile_id }}">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h5 class="modal-title fw-bold">Edit Salary Structure</h5>
+                        <div class="text-muted small">{{ $structure->employee?->user?->name }} &middot; {{ $structure->employee?->employee_code ?? 'No code' }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info border-0">
+                        Payroll readiness counts this employee only when this structure is Active and Effective From is on or before the selected payroll month end date.
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-5">
+                            <label class="form-label">Employee</label>
+                            <input type="text" class="form-control" value="{{ $structure->employee?->user?->name }} &middot; {{ $structure->employee?->employee_code ?? 'No code' }}" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Effective From <span class="req">*</span></label>
+                            <input type="date" name="effective_from" class="form-control" value="{{ $structure->effective_from->format('Y-m-d') }}" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="active" @selected($structure->status === 'active')>Active</option>
+                                <option value="inactive" @selected($structure->status === 'inactive')>Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Currency</label>
+                            <input type="text" class="form-control" value="INR &#8377;" disabled>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <div class="form-card mb-0">
+                                <div class="form-card-header"><span class="icon-wrap icon-green"><i class="bi bi-plus-circle-fill"></i></span> Earnings</div>
+                                <div class="form-card-body">
+                                    @foreach($earnings as $component)
+                                        <div class="mb-3">
+                                            <label class="form-label">{{ $component->name }}</label>
+                                            <input type="number" min="0" step="0.01" name="components[{{ $component->id }}]" class="form-control payroll-amount earning-amount" value="{{ $structureAmounts[$component->id] ?? '' }}" placeholder="0.00">
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-card mb-0">
+                                <div class="form-card-header"><span class="icon-wrap icon-red"><i class="bi bi-dash-circle-fill"></i></span> Deductions</div>
+                                <div class="form-card-body">
+                                    @foreach($deductions as $component)
+                                        <div class="mb-3">
+                                            <label class="form-label">{{ $component->name }}</label>
+                                            <input type="number" min="0" step="0.01" name="components[{{ $component->id }}]" class="form-control payroll-amount deduction-amount" value="{{ $structureAmounts[$component->id] ?? '' }}" placeholder="0.00">
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="alert alert-light border d-flex flex-wrap justify-content-between gap-3 mb-0">
+                                <strong>Gross: &#8377;<span class="salary-gross">0.00</span></strong>
+                                <strong>Deductions: &#8377;<span class="salary-deductions">0.00</span></strong>
+                                <strong>Net Salary: &#8377;<span class="salary-net">0.00</span></strong>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="Optional salary notes">{{ $structure->notes }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary"><i class="bi bi-check2 me-1"></i> Update Salary Structure</button>
+                </div>
+            </form>
+        </div>
+    </div>
+@endforeach
 @endsection
 
 @push('scripts')
 <script>
-document.addEventListener('input', function (event) {
-    if (!event.target.classList.contains('payroll-amount')) return;
-
-    const sum = selector => Array.from(document.querySelectorAll(selector))
+function refreshSalaryTotals(scope) {
+    const sum = selector => Array.from(scope.querySelectorAll(selector))
         .reduce((total, input) => total + (parseFloat(input.value) || 0), 0);
 
     const gross = sum('.earning-amount');
     const deductions = sum('.deduction-amount');
-    document.getElementById('salaryGross').textContent = gross.toFixed(2);
-    document.getElementById('salaryDeductions').textContent = deductions.toFixed(2);
-    document.getElementById('salaryNet').textContent = (gross - deductions).toFixed(2);
+    const grossNode = scope.querySelector('.salary-gross, #salaryGross');
+    const deductionsNode = scope.querySelector('.salary-deductions');
+    const netNode = scope.querySelector('.salary-net');
+
+    if (grossNode) grossNode.textContent = gross.toFixed(2);
+    if (deductionsNode) deductionsNode.textContent = deductions.toFixed(2);
+    if (netNode) netNode.textContent = (gross - deductions).toFixed(2);
+}
+
+document.addEventListener('input', function (event) {
+    if (!event.target.classList.contains('payroll-amount')) return;
+    refreshSalaryTotals(event.target.closest('form') || document);
+});
+
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('shown.bs.modal', function () {
+        refreshSalaryTotals(modal);
+    });
 });
 </script>
 @endpush

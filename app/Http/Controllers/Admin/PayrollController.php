@@ -340,6 +340,65 @@ class PayrollController extends Controller
         return back()->with('success', 'Salary structure deleted.');
     }
 
+    public function updateStructure(Request $request, EmployeeSalaryStructure $structure)
+    {
+        abort_if($structure->organization_id !== $this->orgId(), 403);
+
+        $components = PayrollComponent::where('organization_id', $this->orgId())
+            ->get()
+            ->keyBy('id');
+
+        $data = $request->validate([
+            'employee_profile_id' => ['required', 'exists:employee_profiles,id'],
+            'effective_from' => ['required', 'date'],
+            'status' => ['required', Rule::in(['active', 'inactive'])],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'components' => ['nullable', 'array'],
+            'components.*' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
+        ]);
+
+        $employee = EmployeeProfile::where('organization_id', $this->orgId())
+            ->whereKey($data['employee_profile_id'])
+            ->firstOrFail();
+
+        $amounts = collect($data['components'] ?? [])
+            ->mapWithKeys(fn($amount, $id) => [(int) $id => (float) ($amount ?: 0)])
+            ->filter(fn($amount, $id) => $amount > 0 && $components->has($id));
+
+        $gross = $amounts->filter(fn($amount, $id) => $components[$id]->type === 'earning')->sum();
+        $deductions = $amounts->filter(fn($amount, $id) => $components[$id]->type === 'deduction')->sum();
+
+        DB::transaction(function () use ($structure, $employee, $data, $amounts, $gross, $deductions) {
+            if ($data['status'] === 'active') {
+                EmployeeSalaryStructure::where('organization_id', $this->orgId())
+                    ->where('employee_profile_id', $employee->id)
+                    ->whereKeyNot($structure->id)
+                    ->update(['status' => 'inactive']);
+            }
+
+            $structure->update([
+                'employee_profile_id' => $employee->id,
+                'effective_from' => $data['effective_from'],
+                'gross_earnings' => $gross,
+                'total_deductions' => $deductions,
+                'net_salary' => $gross - $deductions,
+                'status' => $data['status'],
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            $structure->components()->delete();
+
+            foreach ($amounts as $componentId => $amount) {
+                $structure->components()->create([
+                    'payroll_component_id' => $componentId,
+                    'amount' => $amount,
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Salary structure updated.');
+    }
+
     private function componentData(Request $request, ?PayrollComponent $component = null): array
     {
         $data = $request->validate([
