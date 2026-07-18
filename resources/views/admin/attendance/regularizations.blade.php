@@ -61,6 +61,10 @@
             </thead>
             <tbody>
                 @forelse($requests as $request)
+                    @php
+                        $requestMonth = $request->attendance_date->format('Y-m');
+                        $isMonthLocked = $lockedMonths->has($requestMonth);
+                    @endphp
                     <tr>
                         <td class="ps-4">
                             <div class="fw-bold">{{ $request->user?->name }}</div>
@@ -75,22 +79,29 @@
                         <td style="max-width:260px">{{ $request->reason }}</td>
                         <td>
                             <span class="badge bg-{{ $request->status_badge }}">{{ ucfirst($request->status) }}</span>
+                            @if($isMonthLocked)
+                                <div class="badge bg-dark mt-1">Month Locked</div>
+                            @endif
                             @if($request->reviewed_at)
                                 <div class="text-muted small mt-1">{{ $request->reviewed_at->format('d-m-Y h:i A') }}</div>
                             @endif
                         </td>
                         <td class="text-end pe-4">
                             @if($request->status === 'pending')
-                                <div class="d-flex justify-content-end gap-2">
-                                    <form method="POST" action="{{ route('admin.attendance.regularizations.approve', $request) }}">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button class="btn btn-sm btn-success"><i class="bi bi-check2 me-1"></i> Approve</button>
-                                    </form>
-                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectRegularization{{ $request->id }}">
-                                        <i class="bi bi-x-lg me-1"></i> Reject
-                                    </button>
-                                </div>
+                                @if($isMonthLocked)
+                                    <div class="small text-muted">Unlock {{ $request->attendance_date->format('M Y') }} to review.</div>
+                                @else
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <form method="POST" action="{{ route('admin.attendance.regularizations.approve', $request) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button class="btn btn-sm btn-success"><i class="bi bi-check2 me-1"></i> Approve</button>
+                                        </form>
+                                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectRegularization{{ $request->id }}">
+                                            <i class="bi bi-x-lg me-1"></i> Reject
+                                        </button>
+                                    </div>
+                                @endif
                             @else
                                 <div class="small text-muted">{{ $request->review_notes ?: 'Reviewed' }}</div>
                             @endif

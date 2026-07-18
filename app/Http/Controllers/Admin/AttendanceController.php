@@ -154,13 +154,25 @@ class AttendanceController extends Controller
 
         $requests = $query->latest('attendance_date')->paginate(30)->withQueryString();
         $departments = Department::where('organization_id', $this->orgId())->orderBy('name')->get();
+        $requestMonths = $requests->getCollection()
+            ->pluck('attendance_date')
+            ->filter()
+            ->map(fn($date) => $date->format('Y-m'))
+            ->unique()
+            ->values();
+        $lockedMonths = AttendanceLock::where('organization_id', $this->orgId())
+            ->whereIn('month', $requestMonths)
+            ->pluck('month')
+            ->flip();
 
-        return view('admin.attendance.regularizations', compact('requests', 'departments'));
+        return view('admin.attendance.regularizations', compact('requests', 'departments', 'lockedMonths'));
     }
 
     public function approveRegularization(Request $request, AttendanceRegularizationRequest $regularization)
     {
-        $this->authorizeRegularization($regularization);
+        if ($message = $this->regularizationReviewBlocker($regularization)) {
+            return back()->with('error', $message);
+        }
 
         $data = $request->validate([
             'review_notes' => ['nullable', 'string', 'max:1000'],
@@ -212,7 +224,9 @@ class AttendanceController extends Controller
 
     public function rejectRegularization(Request $request, AttendanceRegularizationRequest $regularization)
     {
-        $this->authorizeRegularization($regularization);
+        if ($message = $this->regularizationReviewBlocker($regularization)) {
+            return back()->with('error', $message);
+        }
 
         $data = $request->validate([
             'review_notes' => ['required', 'string', 'max:1000'],
@@ -228,11 +242,19 @@ class AttendanceController extends Controller
         return back()->with('success', 'Attendance regularization rejected.');
     }
 
-    private function authorizeRegularization(AttendanceRegularizationRequest $regularization): void
+    private function regularizationReviewBlocker(AttendanceRegularizationRequest $regularization): ?string
     {
         abort_if($regularization->organization_id !== $this->orgId(), 403);
-        abort_if($regularization->status !== 'pending', 422, 'Only pending regularization requests can be reviewed.');
-        abort_if(AttendanceLock::isLocked($regularization->organization_id, $regularization->attendance_date->format('Y-m')), 422, 'This attendance month is locked.');
+
+        if ($regularization->status !== 'pending') {
+            return 'Only pending regularization requests can be reviewed. This request is already ' . $regularization->status . '.';
+        }
+
+        if (AttendanceLock::isLocked($regularization->organization_id, $regularization->attendance_date->format('Y-m'))) {
+            return 'This attendance month is locked. Please unlock the month before approving or rejecting regularization requests.';
+        }
+
+        return null;
     }
 
     private function summaryPayload(Request $request): array
