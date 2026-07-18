@@ -12,6 +12,7 @@ use App\Models\Facility;
 use App\Models\Location;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class AssetController extends Controller
@@ -69,12 +70,14 @@ class AssetController extends Controller
 
     public function store(Request $request)
     {
+        $this->normalizeCustomCatalogSelections($request);
+
         $validated = $request->validate([
             'acquisition_source'     => 'required|in:opening_balance,donation,transfer,lease,other',
             'category_id'          => 'nullable|exists:asset_categories,id',
             'vendor_id'            => 'nullable|exists:suppliers,id',
             'location_id'          => 'nullable|exists:locations,id',
-            'name'                 => 'required|string|max:255',
+            'name'                 => 'nullable|string|max:255',
             'asset_tag'            => 'nullable|string|max:100|unique:assets,asset_tag',
             'serial_number'        => 'nullable|string|max:255',
             'model'                => 'nullable|string|max:255',
@@ -89,8 +92,8 @@ class AssetController extends Controller
             'condition'            => 'required|in:excellent,good,fair,poor',
             'notes'                => 'nullable|string',
             'image'                => 'nullable|image|max:2048',
-            'asset_brand_id'       => 'nullable|exists:asset_brands,id',
-            'asset_model_id'       => 'nullable|exists:asset_models,id',
+            'asset_brand_id'       => ['nullable', Rule::exists('asset_brands', 'id')->where('organization_id', $this->orgId())],
+            'asset_model_id'       => ['nullable', Rule::exists('asset_models', 'id')->where('organization_id', $this->orgId())],
             'specs'                => 'nullable|array',
             // Depreciation
             'dep_method'           => 'nullable|in:straight_line,declining_balance,sum_of_years',
@@ -103,6 +106,8 @@ class AssetController extends Controller
         if (!$validated['asset_tag']) {
             $validated['asset_tag'] = 'ASSET-' . strtoupper(Str::random(8));
         }
+
+        $validated['name'] = $this->generatedAssetName($validated);
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('assets', 'public');
@@ -163,12 +168,13 @@ class AssetController extends Controller
     public function update(Request $request, Asset $asset)
     {
         $this->authorizeAsset($asset);
+        $this->normalizeCustomCatalogSelections($request);
 
         $validated = $request->validate([
             'category_id'          => 'nullable|exists:asset_categories,id',
             'vendor_id'            => 'nullable|exists:suppliers,id',
             'location_id'          => 'nullable|exists:locations,id',
-            'name'                 => 'required|string|max:255',
+            'name'                 => 'nullable|string|max:255',
             'asset_tag'            => 'nullable|string|max:100|unique:assets,asset_tag,' . $asset->id,
             'serial_number'        => 'nullable|string|max:255',
             'model'                => 'nullable|string|max:255',
@@ -183,10 +189,16 @@ class AssetController extends Controller
             'condition'            => 'required|in:excellent,good,fair,poor',
             'notes'                => 'nullable|string',
             'image'                => 'nullable|image|max:2048',
-            'asset_brand_id'       => 'nullable|exists:asset_brands,id',
-            'asset_model_id'       => 'nullable|exists:asset_models,id',
+            'asset_brand_id'       => ['nullable', Rule::exists('asset_brands', 'id')->where('organization_id', $this->orgId())],
+            'asset_model_id'       => ['nullable', Rule::exists('asset_models', 'id')->where('organization_id', $this->orgId())],
             'specs'                => 'nullable|array',
         ]);
+
+        if (!$validated['asset_tag']) {
+            $validated['asset_tag'] = $asset->asset_tag ?: 'ASSET-' . strtoupper(Str::random(8));
+        }
+
+        $validated['name'] = $this->generatedAssetName($validated);
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('assets', 'public');
@@ -211,6 +223,43 @@ class AssetController extends Controller
     private function authorizeAsset(Asset $asset): void
     {
         abort_if($asset->organization_id !== $this->orgId(), 403);
+    }
+
+    private function normalizeCustomCatalogSelections(Request $request): void
+    {
+        if ($request->input('asset_brand_id') === '__custom__') {
+            $request->merge(['asset_brand_id' => null]);
+        }
+
+        if ($request->input('asset_model_id') === '__custom__') {
+            $request->merge(['asset_model_id' => null]);
+        }
+    }
+
+    private function generatedAssetName(array $data): string
+    {
+        $brand = $data['brand'] ?? null;
+        $model = $data['model'] ?? null;
+        $category = null;
+
+        if (!empty($data['asset_brand_id'])) {
+            $brand = AssetBrand::where('organization_id', $this->orgId())->find($data['asset_brand_id'])?->name;
+        }
+
+        if (!empty($data['asset_model_id'])) {
+            $model = AssetModel::where('organization_id', $this->orgId())->find($data['asset_model_id'])?->name;
+        }
+
+        if (!empty($data['category_id'])) {
+            $category = AssetCategory::where('organization_id', $this->orgId())->find($data['category_id'])?->name;
+        }
+
+        $base = trim(implode(' ', array_filter([$brand, $model])));
+        if ($base === '') {
+            $base = trim(($category ?: 'Asset') . ' Item');
+        }
+
+        return trim($base . ' - ' . ($data['asset_tag'] ?? ''));
     }
 
     /** Collect all spec_* fields from request into a clean JSON-ready array */

@@ -23,12 +23,14 @@
             </div>
             <div class="form-card-body">
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Asset Display Name <span class="req">*</span></label>
-                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                               value="{{ old('name') }}" required placeholder="e.g. IT Laptop 01, Reception Printer, CFO Laptop">
+                    <input type="hidden" name="name" id="assetNameInput" value="{{ old('name') }}">
+                    <div class="col-12">
+                        <div class="alert alert-info small mb-0">
+                            <div class="fw-bold mb-1">Auto Asset Name</div>
+                            <div id="assetNamePreview">Select brand and model to generate the asset name.</div>
+                            <div class="text-muted mt-1">Asset name is generated automatically from brand, model, category and asset tag. You only need to select the correct details below.</div>
+                        </div>
                         @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        <div class="form-text">Use a simple internal name for search and lists. Brand, model and category are selected separately.</div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Brand</label>
@@ -63,7 +65,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Asset Tag</label>
-                        <input type="text" name="asset_tag" class="form-control"
+                        <input type="text" name="asset_tag" id="assetTagInput" class="form-control"
                                value="{{ old('asset_tag') }}" placeholder="Auto-generated if blank">
                     </div>
                     <div class="col-md-4">
@@ -292,6 +294,34 @@
 
 @push('scripts')
 <script>
+function selectedOptionLabel(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select || !select.value || select.value === '__custom__') return '';
+    return select.options[select.selectedIndex].textContent.trim().replace(/\s+/g, ' ');
+}
+
+function customOrSelected(customId, selectId) {
+    const custom = document.getElementById(customId);
+    return (custom && custom.offsetParent !== null && custom.value.trim())
+        ? custom.value.trim()
+        : selectedOptionLabel(selectId);
+}
+
+function updateGeneratedAssetName() {
+    const brand = customOrSelected('brandCustom', 'assetBrandSelect');
+    const model = customOrSelected('modelCustom', 'assetModelSelect');
+    const category = selectedOptionLabel('assetCategorySelect');
+    const tagInput = document.getElementById('assetTagInput');
+    const nameInput = document.getElementById('assetNameInput');
+    const preview = document.getElementById('assetNamePreview');
+    const base = [brand, model].filter(Boolean).join(' ') || (category ? category + ' Item' : 'Asset Item');
+    const tag = tagInput && tagInput.value.trim() ? tagInput.value.trim() : 'Auto asset tag';
+    const generated = base + ' - ' + tag;
+
+    if (nameInput) nameInput.value = generated;
+    if (preview) preview.textContent = generated;
+}
+
 function previewImage(event) {
     const file = event.target.files[0];
     if (file) {
@@ -313,17 +343,18 @@ function filterModels() {
     });
     const cur = modelSel.options[modelSel.selectedIndex];
     if (cur && cur.hidden) modelSel.value = '';
+    updateGeneratedAssetName();
 }
 
 // Category — render dynamic spec fields
 function onCategoryChange(sel) {
     const section   = document.getElementById('assetSpecSection');
     const container = document.getElementById('assetSpecFields');
-    if (!sel.value) { section.style.display = 'none'; container.innerHTML = ''; return; }
+    if (!sel.value) { section.style.display = 'none'; container.innerHTML = ''; updateGeneratedAssetName(); return; }
     const opt    = sel.options[sel.selectedIndex];
     let fields   = [];
     try { fields = JSON.parse(opt.dataset.fields || '[]'); } catch(e) {}
-    if (!fields.length) { section.style.display = 'none'; container.innerHTML = ''; return; }
+    if (!fields.length) { section.style.display = 'none'; container.innerHTML = ''; updateGeneratedAssetName(); return; }
 
     section.style.display = '';
     container.innerHTML = '';
@@ -335,11 +366,13 @@ function onCategoryChange(sel) {
                 <input type="text" name="${key}" id="${key}" class="form-control form-control-sm" placeholder="${label}…">
              </div>`);
     });
+    updateGeneratedAssetName();
 }
 
 // Model — auto-fill spec fields from model's default_specs
 function onModelSelect(sel) {
     document.getElementById('modelCustom').style.display = sel.value === '__custom__' ? 'block' : 'none';
+    updateGeneratedAssetName();
     if (!sel.value || sel.value === '__custom__') return;
     const opt = sel.options[sel.selectedIndex];
     let specs = {};
@@ -355,6 +388,11 @@ window.addEventListener('DOMContentLoaded', function() {
     // Re-render spec fields for old() category value
     const catSel = document.getElementById('assetCategorySelect');
     if (catSel && catSel.value) onCategoryChange(catSel);
+    ['brandCustom', 'modelCustom', 'assetTagInput'].forEach(function(id) {
+        const input = document.getElementById(id);
+        if (input) input.addEventListener('input', updateGeneratedAssetName);
+    });
+    updateGeneratedAssetName();
 });
 </script>
 @endpush
