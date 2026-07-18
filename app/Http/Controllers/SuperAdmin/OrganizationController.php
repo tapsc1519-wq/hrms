@@ -131,6 +131,54 @@ class OrganizationController extends Controller
         ]);
     }
 
+    public function handover(Organization $organization)
+    {
+        $organization->load(['users', 'modules', 'productSubscriptions.product', 'productSubscriptions.partner']);
+        $admin = $organization->users->firstWhere('role', 'admin');
+        $opsBridgeSubscription = $organization->productSubscriptions
+            ->first(fn ($subscription) => $subscription->product?->slug === 'opsbridge');
+        $onboardingChecklist = $this->onboardingChecklist($organization);
+        $enabledModules = $organization->modules
+            ->where('is_enabled', true)
+            ->map(fn ($module) => ModuleRegistry::get($module->module_key)['short_name'] ?? strtoupper($module->module_key))
+            ->values();
+        $productDomain = $opsBridgeSubscription?->product_domain
+            ?: $opsBridgeSubscription?->product?->domain
+            ?: config('niyantron.products.opsbridge.domain', 'opsbridge.niyantron.com');
+        $loginUrl = 'https://' . trim(str_replace(['https://', 'http://'], '', (string) $productDomain), '/') . '/login';
+
+        $messageLines = [
+            'Hello ' . ($admin?->name ?? 'Admin') . ',',
+            '',
+            'Your OpsBridge account for ' . $organization->name . ' is ready.',
+            '',
+            'Login URL: ' . $loginUrl,
+            'Admin Email: ' . ($admin?->email ?? 'Create the first admin account before sharing.'),
+            'Temporary Password: [enter temporary password here]',
+            '',
+            'First steps after login:',
+            '1. Change your password.',
+            '2. Open Setup Wizard from Operations.',
+            '3. Add facilities, departments and employees.',
+            '4. Download and install the device agent for endpoint inventory.',
+            '5. Review Production Readiness before live rollout.',
+            '',
+            'Please confirm once you are able to sign in.',
+        ];
+
+        $handoverMessage = implode("\n", $messageLines);
+
+        return view('super-admin.organizations.handover', compact(
+            'organization',
+            'admin',
+            'opsBridgeSubscription',
+            'onboardingChecklist',
+            'enabledModules',
+            'loginUrl',
+            'handoverMessage'
+        ));
+    }
+
     public function update(Request $request, Organization $organization)
     {
         $validated = $request->validate([
@@ -207,11 +255,18 @@ class OrganizationController extends Controller
             'initial_setup_completed' => ['nullable', 'boolean'],
         ]);
 
+        $credentialsShared = $request->has('credentials_shared')
+            ? (bool) ($validated['credentials_shared'] ?? false)
+            : (bool) $organization->onboarding_credentials_shared_at;
+        $initialSetupCompleted = $request->has('initial_setup_completed')
+            ? (bool) ($validated['initial_setup_completed'] ?? false)
+            : (bool) $organization->onboarding_initial_setup_completed_at;
+
         $organization->forceFill([
-            'onboarding_credentials_shared_at' => ($validated['credentials_shared'] ?? false)
+            'onboarding_credentials_shared_at' => $credentialsShared
                 ? ($organization->onboarding_credentials_shared_at ?: now())
                 : null,
-            'onboarding_initial_setup_completed_at' => ($validated['initial_setup_completed'] ?? false)
+            'onboarding_initial_setup_completed_at' => $initialSetupCompleted
                 ? ($organization->onboarding_initial_setup_completed_at ?: now())
                 : null,
         ])->save();

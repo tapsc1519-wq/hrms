@@ -166,6 +166,9 @@
                             <div class="text-muted small">{{ $firstAdmin->email }}</div>
                         </div>
                     </div>
+                    <a href="{{ route('super-admin.organizations.handover', $organization) }}" class="btn btn-primary btn-sm w-100 mt-3">
+                        <i class="bi bi-send-check me-1"></i>Open Handover Pack
+                    </a>
                 @else
                     <p class="text-muted small mb-3">Create the first customer admin. This person will log in to OpsBridge and continue organization setup from the Admin Setup Wizard.</p>
                     <a href="{{ route('super-admin.users.create', ['organization_id' => $organization->id, 'role' => 'admin']) }}" class="btn btn-primary btn-sm w-100">

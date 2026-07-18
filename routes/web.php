@@ -133,6 +133,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['portal.domain:p
 
     Route::patch('organizations/{organization}/modules', [OrganizationController::class, 'updateModules'])->name('organizations.modules.update');
     Route::patch('organizations/{organization}/onboarding', [OrganizationController::class, 'updateOnboarding'])->name('organizations.onboarding.update');
+    Route::get('organizations/{organization}/handover', [OrganizationController::class, 'handover'])->name('organizations.handover');
     Route::post('organizations/{organization}/payments', [OrganizationController::class, 'recordPayment'])->name('organizations.payments.store');
     Route::resource('organizations', OrganizationController::class);
     Route::resource('products', SAProductController::class)->only(['index', 'edit', 'update']);

@@ -181,6 +181,9 @@
                 <a href="{{ route('super-admin.organizations.edit', $organization) }}" class="btn btn-primary btn-sm">
                     <i class="bi bi-pencil me-1"></i>Edit
                 </a>
+                <a href="{{ route('super-admin.organizations.handover', $organization) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-send-check me-1"></i>Handover Pack
+                </a>
             </div>
         </div>
     </div>

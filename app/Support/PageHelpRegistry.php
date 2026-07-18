@@ -196,6 +196,49 @@ class PageHelpRegistry
                 ],
                 'next' => 'Create the first admin, share credentials, then the customer admin can continue in the Admin Setup Wizard.',
             ],
+            'super-admin.organizations.handover' => [
+                'title' => 'Customer Handover Pack Help',
+                'what' => 'The handover pack prepares customer-ready login details, product information and first steps after Super Admin creates the organization and first admin.',
+                'how' => [
+                    'Confirm the login URL and first admin email.',
+                    'Enter the temporary password manually before copying the message.',
+                    'Send the copied message to the customer, then mark credentials shared.',
+                ],
+                'sections' => [
+                    'Ready-to-share handover' => 'Summarizes whether credentials are pending or already shared.',
+                    'Login Details' => 'Shows the customer login URL, first admin account and temporary password field.',
+                    'Customer Message' => 'Contains the copyable WhatsApp or email message for the customer.',
+                    'Handover Status' => 'Marks credentials as shared after you send the details.',
+                ],
+                'actions' => [
+                    'Copy Message' => 'Copies the handover text and replaces the password placeholder if you entered a temporary password.',
+                    'Mark Credentials Shared' => 'Updates the organization onboarding checklist after customer credentials have been shared.',
+                    'Create First Admin' => 'Opens user creation if the customer admin account is missing.',
+                ],
+                'tour' => [
+                    [
+                        'target' => 'handover-summary',
+                        'title' => 'Handover Status',
+                        'body' => 'Start here to confirm whether customer credentials are still pending.',
+                    ],
+                    [
+                        'target' => 'handover-login-details',
+                        'title' => 'Login Details',
+                        'body' => 'Review the login URL and admin email, then enter the temporary password only while preparing the message.',
+                    ],
+                    [
+                        'target' => 'handover-message',
+                        'title' => 'Customer Message',
+                        'body' => 'Copy this message for WhatsApp or email. The temporary password placeholder is replaced when copying.',
+                    ],
+                    [
+                        'target' => 'handover-status',
+                        'title' => 'Mark Shared',
+                        'body' => 'After sending the login details, mark credentials shared to update onboarding progress.',
+                    ],
+                ],
+                'next' => 'After credentials are shared, the customer admin should log in and continue from the Admin Setup Wizard.',
+            ],
             'staff.dashboard' => [
                 'title' => 'My Dashboard Help',
                 'what' => 'My Dashboard gives employees a quick view of attendance, actions needing attention, assigned items, requests, and shortcuts.',
