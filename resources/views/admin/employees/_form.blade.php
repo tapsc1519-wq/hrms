@@ -38,13 +38,13 @@
                         @error('employee_code') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Access Level <span class="req">*</span></label>
+                        <label class="form-label">Portal Access <span class="req">*</span></label>
                         <select name="role" id="portalRoleSelect" class="form-select @error('role') is-invalid @enderror" required>
-                            <option value="staff" @selected($selectedRole === 'staff')>Employee Self-Service</option>
-                            <option value="admin" @selected($selectedRole === 'admin')>Organization Admin</option>
+                            <option value="staff" @selected($selectedRole === 'staff')>Employee Portal Only</option>
+                            <option value="admin" @selected($selectedRole === 'admin')>Admin / Manager Portal</option>
                         </select>
                         @error('role') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        <div class="form-text">Choose whether this employee only uses self-service or can also manage organization modules.</div>
+                        <div class="form-text">First choose which portal this person can open.</div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Password {{ $isEdit ? '' : '' }}</label>
@@ -68,16 +68,23 @@
                         @error('department_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Roles & Permissions</label>
+                        <label class="form-label">Permission Role <span class="text-muted">(optional)</span></label>
                         <select name="custom_role_id" id="permissionRoleSelect" class="form-select @error('custom_role_id') is-invalid @enderror">
-                            <option value="">Default role permissions</option>
+                            <option value="" id="defaultPermissionRoleOption">Default access for selected portal</option>
                             @foreach($customRoles as $role)
                                 <option value="{{ $role->id }}" data-portal-role="{{ $role->portal_role }}" @selected((string)$selectedPermissionRole === (string)$role->id)>
-                                    {{ $role->name }} ({{ ucfirst($role->portal_role) }})
+                                    {{ $role->name }} - {{ ucfirst($role->portal_role) }} portal role
                                 </option>
                             @endforeach
                         </select>
                         @error('custom_role_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="form-text" id="permissionRoleHelp">Only roles matching the selected portal access are shown.</div>
+                    </div>
+                    <div class="col-12">
+                        <div class="alert alert-info small mb-0">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Department is only for reporting and grouping. Portal Access decides employee vs admin area. Permission Role decides exact module permissions such as HR, Assets, SAM, Payroll or Support.
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Job Title</label>
@@ -329,6 +336,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const locationSelect = document.getElementById('locationSelect');
     const portalRoleSelect = document.getElementById('portalRoleSelect');
     const permissionRoleSelect = document.getElementById('permissionRoleSelect');
+    const defaultPermissionRoleOption = document.getElementById('defaultPermissionRoleOption');
+    const permissionRoleHelp = document.getElementById('permissionRoleHelp');
 
     function filterLocations() {
         const facilityId = facilitySelect.value;
@@ -346,13 +355,31 @@ document.addEventListener('DOMContentLoaded', function () {
     function filterPermissionRoles() {
         if (!portalRoleSelect || !permissionRoleSelect) return;
         const role = portalRoleSelect.value;
+        let visibleRoles = 0;
         Array.from(permissionRoleSelect.options).forEach(option => {
             if (!option.value) return;
             option.hidden = option.dataset.portalRole !== role;
+            if (!option.hidden) visibleRoles++;
         });
         const selected = permissionRoleSelect.selectedOptions[0];
         if (selected && selected.hidden) {
             permissionRoleSelect.value = '';
+        }
+
+        if (defaultPermissionRoleOption) {
+            defaultPermissionRoleOption.textContent = role === 'admin'
+                ? 'Full admin access - use only for trusted admins'
+                : 'Default employee self-service access';
+        }
+
+        if (permissionRoleHelp) {
+            permissionRoleHelp.textContent = role === 'admin'
+                ? (visibleRoles > 0
+                    ? 'Select a role such as IT Manager, HR Manager or Finance Manager to limit this admin to required modules.'
+                    : 'No admin permission roles are available yet. Create them from Roles & Permissions before giving controlled admin access.')
+                : (visibleRoles > 0
+                    ? 'Normal employees usually use default self-service access. Select a staff role only when extra staff permissions are required.'
+                    : 'No staff permission roles are available yet. Default self-service access will be used.');
         }
     }
 
