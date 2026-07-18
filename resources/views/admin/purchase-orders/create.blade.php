@@ -101,25 +101,31 @@
                         $requestIds = $item['software_request_ids'] ?? [];
                         $employeeNames = $item['employee_names'] ?? [];
                     @endphp
-                    <div class="item-row rounded-3 mb-3 p-3" id="item-{{ $index }}" style="background:#f8fafc;border:1.5px solid #e2e8f0" data-index="{{ $index }}">
+                    <div class="item-row po-line-item mb-3" id="item-{{ $index }}" data-index="{{ $index }}">
                         @foreach($requestIds as $requestId)<input type="hidden" name="items[{{ $index }}][software_request_ids][]" value="{{ $requestId }}">@endforeach
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-2"><label class="form-label">Item Type</label><select name="items[{{ $index }}][item_type]" class="form-select item-type" onchange="updateItemType(this)"><option value="asset" @selected($type === 'asset')>Asset</option><option value="software" @selected($type === 'software')>Software</option></select></div>
-                            <div class="col-md-4"><label class="form-label">Auto Item Name</label><input type="hidden" name="items[{{ $index }}][item_name]" class="item-name-input" value="{{ $item['item_name'] ?? '' }}"><div class="form-control bg-light item-name-preview">{{ $item['item_name'] ?? 'Select brand/model or software' }}</div></div>
-                            <div class="col-md-3 asset-field {{ $type === 'software' ? 'd-none' : '' }}"><label class="form-label">Physical Asset Category</label><select name="items[{{ $index }}][category_id]" class="form-select asset-category-select" onchange="filterPoModels(this)"><option value="">Select category</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected(($item['category_id'] ?? null) == $category->id)>{{ $category->name }}</option>@endforeach</select><div class="form-text">Laptop, Desktop, Printer, Mobile, Network device etc.</div></div>
-                            <div class="col-md-3 software-field {{ $type === 'asset' ? 'd-none' : '' }}"><label class="form-label">Software <span class="req">*</span></label><select name="items[{{ $index }}][software_id]" class="form-select software-select" onchange="syncPoItemName(this)"><option value="">Select software</option>@foreach($softwareList as $software)<option value="{{ $software->id }}" data-name="{{ $software->name }}" data-vendor="{{ $software->vendor }}" @selected(($item['software_id'] ?? null) == $software->id)>{{ $software->name }}</option>@endforeach</select></div>
-                            <div class="col-md-1"><label class="form-label">Qty</label><input type="number" name="items[{{ $index }}][quantity]" class="form-control" value="{{ $item['quantity'] ?? 1 }}" min="{{ max(1, count($requestIds)) }}" required oninput="recalculate()"></div>
-                            <div class="col-md-2"><label class="form-label">Unit Price</label><input type="number" name="items[{{ $index }}][unit_price]" class="form-control" value="{{ $item['unit_price'] ?? 0 }}" step="0.01" min="0" required oninput="recalculate()"></div>
+                        <div class="po-line-head">
+                            <div>
+                                <div class="po-line-label">Line Item</div>
+                                <input type="hidden" name="items[{{ $index }}][item_name]" class="item-name-input" value="{{ $item['item_name'] ?? '' }}">
+                                <div class="item-name-preview">{{ $item['item_name'] ?? 'Select category, brand and model' }}</div>
+                            </div>
+                            <button type="button" class="btn btn-outline-danger btn-sm po-remove-btn" onclick="removeItem({{ $index }})" title="Remove item"><i class="bi bi-trash"></i></button>
                         </div>
-                        <div class="row g-2 align-items-end mt-1">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-2"><label class="form-label">Type</label><select name="items[{{ $index }}][item_type]" class="form-select item-type" onchange="updateItemType(this)"><option value="asset" @selected($type === 'asset')>Asset</option><option value="software" @selected($type === 'software')>Software</option></select></div>
+                            <div class="col-md-4 asset-field {{ $type === 'software' ? 'd-none' : '' }}"><label class="form-label">Category</label><select name="items[{{ $index }}][category_id]" class="form-select asset-category-select" onchange="filterPoModels(this)"><option value="">Select category</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected(($item['category_id'] ?? null) == $category->id)>{{ $category->name }}</option>@endforeach</select></div>
+                            <div class="col-md-4 software-field {{ $type === 'asset' ? 'd-none' : '' }}"><label class="form-label">Software <span class="req">*</span></label><select name="items[{{ $index }}][software_id]" class="form-select software-select" onchange="syncPoItemName(this)"><option value="">Select software</option>@foreach($softwareList as $software)<option value="{{ $software->id }}" data-name="{{ $software->name }}" data-vendor="{{ $software->vendor }}" @selected(($item['software_id'] ?? null) == $software->id)>{{ $software->name }}</option>@endforeach</select></div>
                             <div class="col-md-3 asset-field {{ $type === 'software' ? 'd-none' : '' }}"><label class="form-label">Brand</label><select name="items[{{ $index }}][asset_brand_id]" class="form-select asset-brand-select" onchange="filterPoModels(this)"><option value="">Select brand</option>@foreach($brands as $brand)<option value="{{ $brand->id }}" @selected(($item['asset_brand_id'] ?? null) == $brand->id)>{{ $brand->name }}</option>@endforeach</select></div>
                             <div class="col-md-3 asset-field {{ $type === 'software' ? 'd-none' : '' }}"><label class="form-label">Model</label><select name="items[{{ $index }}][asset_model_id]" class="form-select asset-model-select" onchange="syncPoItemName(this)"><option value="">Select model</option>@foreach($models as $model)<option value="{{ $model->id }}" data-brand="{{ $model->brand_id }}" data-category="{{ $model->category_id }}" @selected(($item['asset_model_id'] ?? null) == $model->id)>{{ $model->name }}</option>@endforeach</select></div>
+                            <div class="col-md-2"><label class="form-label">Qty</label><input type="number" name="items[{{ $index }}][quantity]" class="form-control" value="{{ $item['quantity'] ?? 1 }}" min="{{ max(1, count($requestIds)) }}" required oninput="recalculate()"></div>
+                            <div class="col-md-3"><label class="form-label">Unit Price</label><input type="number" name="items[{{ $index }}][unit_price]" class="form-control" value="{{ $item['unit_price'] ?? 0 }}" step="0.01" min="0" required oninput="recalculate()"></div>
+                        </div>
+                        <div class="row g-3 align-items-end mt-1">
                             <input type="hidden" name="items[{{ $index }}][brand]" class="brand-text-input" value="{{ $item['brand'] ?? '' }}">
                             <input type="hidden" name="items[{{ $index }}][model]" class="model-text-input" value="{{ $item['model'] ?? '' }}">
                             <div class="col-md-3 software-field {{ $type === 'asset' ? 'd-none' : '' }}"><label class="form-label">License Type</label><select name="items[{{ $index }}][license_type]" class="form-select">@foreach(['subscription' => 'Subscription', 'per_seat' => 'Per Seat', 'perpetual' => 'Perpetual', 'concurrent' => 'Concurrent', 'per_device' => 'Per Device', 'volume' => 'Volume'] as $value => $label)<option value="{{ $value }}" @selected(($item['license_type'] ?? 'subscription') === $value)>{{ $label }}</option>@endforeach</select></div>
                             <div class="col-md-3 software-field {{ $type === 'asset' ? 'd-none' : '' }}"><label class="form-label">Term</label><select name="items[{{ $index }}][subscription_period]" class="form-select">@foreach(['monthly' => 'Monthly', 'quarterly' => 'Quarterly', 'annual' => 'Annual', 'multi_year' => 'Multi-year', 'perpetual' => 'Perpetual'] as $value => $label)<option value="{{ $value }}" @selected(($item['subscription_period'] ?? 'annual') === $value)>{{ $label }}</option>@endforeach</select></div>
-                            <div class="col"><label class="form-label">Description</label><input type="text" name="items[{{ $index }}][description]" class="form-control" value="{{ $item['description'] ?? '' }}" placeholder="Specifications or coverage"></div>
-                            <div class="col-auto"><button type="button" class="btn btn-outline-danger" onclick="removeItem({{ $index }})" title="Remove"><i class="bi bi-trash"></i></button></div>
+                            <div class="col"><label class="form-label">Description</label><input type="text" name="items[{{ $index }}][description]" class="form-control" value="{{ $item['description'] ?? '' }}" placeholder="Optional specifications, warranty coverage or internal note"></div>
                         </div>
                         @if($employeeNames)<div class="small text-primary mt-2"><i class="bi bi-people me-1"></i>Approved demand for {{ implode(', ', $employeeNames) }}</div>@endif
                     </div>
@@ -127,7 +133,24 @@
                 </div>
 
                 <div class="mt-3 pt-3 border-top">
-                    <div class="d-flex justify-content-end"><table style="width:320px;font-size:.88rem"><tr><td class="py-1 text-muted">Subtotal</td><td class="text-end fw-semibold" id="subtotalDisplay">Rs 0.00</td></tr><tr><td class="py-1 text-muted">Tax</td><td><input type="number" name="tax_amount" id="tax" class="form-control form-control-sm text-end" value="{{ old('tax_amount', 0) }}" step="0.01" min="0" oninput="recalculate()"></td></tr><tr><td class="py-1 text-muted">Discount</td><td><input type="number" name="discount_amount" id="discount" class="form-control form-control-sm text-end" value="{{ old('discount_amount', 0) }}" step="0.01" min="0" oninput="recalculate()"></td></tr><tr class="border-top"><td class="pt-2 fw-bold">Total</td><td class="pt-2 text-end fw-bold text-primary" id="totalDisplay">Rs 0.00</td></tr></table></div>
+                    <div class="po-total-box">
+                        <div class="po-total-row">
+                            <span class="text-muted">Subtotal</span>
+                            <strong id="subtotalDisplay">Rs 0.00</strong>
+                        </div>
+                        <div class="po-total-row">
+                            <label for="tax" class="text-muted mb-0">Tax</label>
+                            <input type="number" name="tax_amount" id="tax" class="form-control form-control-sm text-end" value="{{ old('tax_amount', 0) }}" step="0.01" min="0" oninput="recalculate()">
+                        </div>
+                        <div class="po-total-row">
+                            <label for="discount" class="text-muted mb-0">Discount</label>
+                            <input type="number" name="discount_amount" id="discount" class="form-control form-control-sm text-end" value="{{ old('discount_amount', 0) }}" step="0.01" min="0" oninput="recalculate()">
+                        </div>
+                        <div class="po-total-row po-total-final">
+                            <span>Total</span>
+                            <span class="text-primary" id="totalDisplay">Rs 0.00</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -141,6 +164,85 @@
 <div class="form-actions" style="border-radius:14px;border:1px solid #e2e8f0;margin-top:.5rem"><a href="{{ route('admin.purchase-orders.index') }}" class="btn-cancel">Cancel</a><button type="submit" class="btn btn-primary btn-save"><i class="bi bi-check-lg"></i>Create Purchase Order</button></div>
 </form>
 @endsection
+
+@push('styles')
+<style>
+    .po-line-item {
+        background: #fff;
+        border: 1px solid #dbe4f0;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+    }
+
+    .po-line-head {
+        align-items: flex-start;
+        border-bottom: 1px solid #edf2f7;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: .75rem;
+    }
+
+    .po-line-label {
+        color: #64748b;
+        font-size: .7rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
+    .item-name-preview {
+        color: #0f172a;
+        font-size: .95rem;
+        font-weight: 700;
+        margin-top: .15rem;
+    }
+
+    .po-remove-btn {
+        align-items: center;
+        display: inline-flex;
+        height: 34px;
+        justify-content: center;
+        padding: 0;
+        width: 38px;
+    }
+
+    .po-line-item .form-label {
+        color: #64748b;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .03em;
+        margin-bottom: .35rem;
+        text-transform: uppercase;
+    }
+
+    .po-total-box {
+        margin-left: auto;
+        max-width: 340px;
+        width: 100%;
+    }
+
+    .po-total-row {
+        align-items: center;
+        display: flex;
+        gap: .75rem;
+        justify-content: space-between;
+        padding: .35rem 0;
+    }
+
+    .po-total-row input {
+        max-width: 160px;
+    }
+
+    .po-total-final {
+        border-top: 1px solid #e2e8f0;
+        font-weight: 800;
+        margin-top: .35rem;
+        padding-top: .7rem;
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -156,28 +258,33 @@ const modelOptionsFor = items => items.map(item => `<option value="${item.id}" d
 function addItem() {
     const i = itemCount++;
     const row = document.createElement('div');
-    row.className = 'item-row rounded-3 mb-3 p-3';
+    row.className = 'item-row po-line-item mb-3';
     row.id = `item-${i}`;
     row.dataset.index = i;
-    row.style.cssText = 'background:#f8fafc;border:1.5px solid #e2e8f0';
     row.innerHTML = `
-        <div class="row g-2 align-items-end">
-            <div class="col-md-2"><label class="form-label">Item Type</label><select name="items[${i}][item_type]" class="form-select item-type" onchange="updateItemType(this)"><option value="asset">Asset</option><option value="software">Software</option></select></div>
-            <div class="col-md-4"><label class="form-label">Auto Item Name</label><input type="hidden" name="items[${i}][item_name]" class="item-name-input"><div class="form-control bg-light item-name-preview">Select brand/model or software</div></div>
-            <div class="col-md-3 asset-field"><label class="form-label">Physical Asset Category</label><select name="items[${i}][category_id]" class="form-select asset-category-select" onchange="filterPoModels(this)"><option value="">Select category</option>${optionsFor(poCategories)}</select><div class="form-text">Laptop, Desktop, Printer, Mobile, Network device etc.</div></div>
-            <div class="col-md-3 software-field d-none"><label class="form-label">Software *</label><select name="items[${i}][software_id]" class="form-select software-select" onchange="syncPoItemName(this)"><option value="">Select software</option>${optionsFor(poSoftware)}</select></div>
-            <div class="col-md-1"><label class="form-label">Qty</label><input type="number" name="items[${i}][quantity]" class="form-control" value="1" min="1" required oninput="recalculate()"></div>
-            <div class="col-md-2"><label class="form-label">Unit Price</label><input type="number" name="items[${i}][unit_price]" class="form-control" value="0" min="0" step="0.01" required oninput="recalculate()"></div>
+        <div class="po-line-head">
+            <div>
+                <div class="po-line-label">Line Item</div>
+                <input type="hidden" name="items[${i}][item_name]" class="item-name-input">
+                <div class="item-name-preview">Select category, brand and model</div>
+            </div>
+            <button type="button" class="btn btn-outline-danger btn-sm po-remove-btn" onclick="removeItem(${i})" title="Remove item"><i class="bi bi-trash"></i></button>
         </div>
-        <div class="row g-2 align-items-end mt-1">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-2"><label class="form-label">Type</label><select name="items[${i}][item_type]" class="form-select item-type" onchange="updateItemType(this)"><option value="asset">Asset</option><option value="software">Software</option></select></div>
+            <div class="col-md-4 asset-field"><label class="form-label">Category</label><select name="items[${i}][category_id]" class="form-select asset-category-select" onchange="filterPoModels(this)"><option value="">Select category</option>${optionsFor(poCategories)}</select></div>
+            <div class="col-md-4 software-field d-none"><label class="form-label">Software *</label><select name="items[${i}][software_id]" class="form-select software-select" onchange="syncPoItemName(this)"><option value="">Select software</option>${optionsFor(poSoftware)}</select></div>
             <div class="col-md-3 asset-field"><label class="form-label">Brand</label><select name="items[${i}][asset_brand_id]" class="form-select asset-brand-select" onchange="filterPoModels(this)"><option value="">Select brand</option>${optionsFor(poBrands)}</select></div>
             <div class="col-md-3 asset-field"><label class="form-label">Model</label><select name="items[${i}][asset_model_id]" class="form-select asset-model-select" onchange="syncPoItemName(this)"><option value="">Select model</option>${modelOptionsFor(poModels)}</select></div>
+            <div class="col-md-2"><label class="form-label">Qty</label><input type="number" name="items[${i}][quantity]" class="form-control" value="1" min="1" required oninput="recalculate()"></div>
+            <div class="col-md-3"><label class="form-label">Unit Price</label><input type="number" name="items[${i}][unit_price]" class="form-control" value="0" min="0" step="0.01" required oninput="recalculate()"></div>
+        </div>
+        <div class="row g-3 align-items-end mt-1">
             <input type="hidden" name="items[${i}][brand]" class="brand-text-input">
             <input type="hidden" name="items[${i}][model]" class="model-text-input">
             <div class="col-md-3 software-field d-none"><label class="form-label">License Type</label><select name="items[${i}][license_type]" class="form-select"><option value="subscription">Subscription</option><option value="per_seat">Per Seat</option><option value="perpetual">Perpetual</option><option value="concurrent">Concurrent</option><option value="per_device">Per Device</option><option value="volume">Volume</option></select></div>
             <div class="col-md-3 software-field d-none"><label class="form-label">Term</label><select name="items[${i}][subscription_period]" class="form-select"><option value="annual">Annual</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="multi_year">Multi-year</option><option value="perpetual">Perpetual</option></select></div>
-            <div class="col"><label class="form-label">Description</label><input name="items[${i}][description]" class="form-control"></div>
-            <div class="col-auto"><button type="button" class="btn btn-outline-danger" onclick="removeItem(${i})"><i class="bi bi-trash"></i></button></div>
+            <div class="col"><label class="form-label">Description</label><input name="items[${i}][description]" class="form-control" placeholder="Optional specifications, warranty coverage or internal note"></div>
         </div>`;
     document.getElementById('itemsContainer').appendChild(row);
     filterPoModels(row.querySelector('.asset-brand-select'));
@@ -234,7 +341,7 @@ function syncPoItemName(element) {
     }
 
     row.querySelector('.item-name-input').value = itemName;
-    row.querySelector('.item-name-preview').textContent = itemName || 'Select brand/model or software';
+    row.querySelector('.item-name-preview').textContent = itemName || (type === 'software' ? 'Select software' : 'Select category, brand and model');
     const brandInput = row.querySelector('.brand-text-input');
     const modelInput = row.querySelector('.model-text-input');
     if (brandInput) brandInput.value = brand;
