@@ -7,9 +7,14 @@
         <h4>Roles & Permissions</h4>
         <p>Create organization roles and decide exactly what each role can access.</p>
     </div>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoleModal">
-        <i class="bi bi-shield-plus me-1"></i>Add Role
-    </button>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#suggestedRolesModal">
+            <i class="bi bi-magic me-1"></i>Add Suggested Roles
+        </button>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+            <i class="bi bi-shield-plus me-1"></i>Add Role
+        </button>
+    </div>
 </div>
 
 @if($errors->any())
@@ -67,11 +72,75 @@
         <div class="table-card text-center py-5">
             <i class="bi bi-shield-lock fs-1 d-block mb-3 opacity-25"></i>
             <h5>No custom roles yet</h5>
-            <p class="text-muted">Create your first role to control access by permission.</p>
+            <p class="text-muted">Create suggested starter roles or add a custom role manually.</p>
+            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#suggestedRolesModal">
+                <i class="bi bi-magic me-1"></i>Add Suggested Roles
+            </button>
         </div>
     </div>
     @endforelse
 </div>
 
+<div class="modal fade" id="suggestedRolesModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <form action="{{ route('admin.roles.suggested.store') }}" method="POST">
+            @csrf
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="icon-wrap icon-blue"><i class="bi bi-magic"></i></span>
+                        <div>
+                            <h5 class="modal-title mb-0">Add Suggested Roles</h5>
+                            <div class="text-muted small">Create starter permission sets. Existing role names will be skipped.</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Suggested roles are conservative starter templates. Review and edit permissions after creation to match the organization policy.
+                    </div>
+                    <div class="row g-2">
+                        @foreach($suggestedRoles as $role)
+                            <div class="col-lg-6">
+                                <label class="border rounded-3 p-3 d-flex gap-3 h-100" style="cursor:pointer;background:#f8fafc">
+                                    <input class="form-check-input mt-1" type="checkbox" name="roles[]" value="{{ $role['name'] }}" checked>
+                                    <span class="flex-grow-1">
+                                        <span class="d-flex align-items-center justify-content-between gap-2">
+                                            <span class="fw-bold">{{ $role['name'] }}</span>
+                                            <span class="badge bg-info">{{ ucfirst($role['portal_role']) }} Portal</span>
+                                        </span>
+                                        <span class="text-muted small d-block mt-1">{{ $role['description'] }}</span>
+                                        <span class="badge bg-light text-dark border mt-2">{{ count($role['permissions']) }} permissions</span>
+                                    </span>
+                                </label>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-shield-plus me-1"></i>Create Selected Roles
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 @include('admin.roles._form_modal', ['role' => null, 'permissionGroups' => $permissionGroups, 'modalId' => 'addRoleModal', 'mode' => 'create'])
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (new URLSearchParams(window.location.search).get('suggested') !== '1') return;
+    var modalElement = document.getElementById('suggestedRolesModal');
+    if (modalElement && window.bootstrap) {
+        new bootstrap.Modal(modalElement).show();
+    }
+});
+</script>
+@endpush

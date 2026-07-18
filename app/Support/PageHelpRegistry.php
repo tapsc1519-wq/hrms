@@ -187,6 +187,25 @@ class PageHelpRegistry
                 ],
                 'next' => 'After departments are ready, add employees and map them to the correct department.',
             ],
+            'admin.roles.*' => [
+                'title' => 'Roles & Permissions Help',
+                'what' => 'Roles define organization-specific access for employees, IT, HR, finance, procurement, support, auditors and managers.',
+                'how' => [
+                    'Use Add Suggested Roles to create starter permission sets quickly.',
+                    'Review and adjust permissions before assigning a role to employees or other portal users.',
+                    'Keep access conservative and expand only when a person actually needs more permissions.',
+                ],
+                'sections' => [
+                    'Roles & Permissions' => 'Lists roles, portal type, user count and assigned permissions.',
+                    'Add Suggested Roles' => 'Opens a checklist of starter permission sets for IT, HR, procurement, finance, support and audit.',
+                ],
+                'actions' => [
+                    'Add Suggested Roles' => 'Creates selected starter roles and skips duplicates.',
+                    'Add Role' => 'Creates one custom permission role manually.',
+                    'Edit' => 'Updates role details, portal type, status and permissions.',
+                ],
+                'next' => 'After roles are ready, assign them while creating employees or editing access.',
+            ],
             'super-admin.organizations.create' => [
                 'title' => 'Organization Onboarding Help',
                 'what' => 'This page starts a customer onboarding flow for Niyantron products. It captures the organization, provisions OpsBridge, and prepares billing details.',

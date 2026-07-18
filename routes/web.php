@@ -258,6 +258,7 @@ Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', '
 
     Route::get('roles', [AdminRoleController::class, 'index'])->middleware('permission:roles.manage')->name('roles.index');
     Route::post('roles', [AdminRoleController::class, 'store'])->middleware('permission:roles.manage')->name('roles.store');
+    Route::post('roles/suggested', [AdminRoleController::class, 'storeSuggested'])->middleware('permission:roles.manage')->name('roles.suggested.store');
     Route::patch('roles/{role}', [AdminRoleController::class, 'update'])->middleware('permission:roles.manage')->name('roles.update');
     Route::delete('roles/{role}', [AdminRoleController::class, 'destroy'])->middleware('permission:roles.manage')->name('roles.destroy');
     Route::get('users', [AdminUserController::class, 'index'])->middleware('permission:roles.manage')->name('users.index');
