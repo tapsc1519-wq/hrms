@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\OrganizationRole;
 use App\Models\User;
+use App\Support\UserInvitationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -67,6 +68,9 @@ class UserController extends Controller
 
         if ($validated['password']) {
             $validated['password'] = Hash::make($validated['password']);
+            $validated['must_change_password'] = true;
+            $validated['invitation_sent_at'] = now();
+            $validated['invitation_accepted_at'] = null;
         } else {
             unset($validated['password']);
         }
@@ -80,6 +84,22 @@ class UserController extends Controller
 
         $user->update($validated);
         return back()->with('success', 'Access updated.');
+    }
+
+    public function invite(Request $request, User $user)
+    {
+        abort_if($user->organization_id !== $this->orgId(), 403);
+        abort_if($user->status !== 'active', 422, 'Only active users can be invited.');
+
+        $validated = $request->validate([
+            'temporary_password' => ['nullable', 'string', 'min:8', 'max:80'],
+        ]);
+
+        $invite = UserInvitationService::prepare($user, $validated['temporary_password'] ?? null);
+
+        return back()
+            ->with('success', 'Invitation prepared. Copy the message and share it with the user.')
+            ->with('invite_pack', $invite);
     }
 
     public function destroy(User $user)

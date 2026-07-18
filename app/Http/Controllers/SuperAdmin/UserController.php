@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
 use App\Models\User;
+use App\Support\UserInvitationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -98,6 +99,9 @@ class UserController extends Controller
 
         if (isset($validated['password']) && $validated['password']) {
             $validated['password'] = Hash::make($validated['password']);
+            $validated['must_change_password'] = true;
+            $validated['invitation_sent_at'] = now();
+            $validated['invitation_accepted_at'] = null;
         } else {
             unset($validated['password']);
         }
@@ -106,6 +110,22 @@ class UserController extends Controller
 
         return redirect()->route('super-admin.users.index')
             ->with('success', 'User updated successfully.');
+    }
+
+    public function invite(Request $request, User $user)
+    {
+        abort_if($user->id === auth()->id(), 422, 'Use change password for your own account.');
+        abort_if($user->status !== 'active', 422, 'Only active users can be invited.');
+
+        $validated = $request->validate([
+            'temporary_password' => ['nullable', 'string', 'min:8', 'max:80'],
+        ]);
+
+        $invite = UserInvitationService::prepare($user, $validated['temporary_password'] ?? null);
+
+        return back()
+            ->with('success', 'Invitation prepared. Copy the message and share it with the user.')
+            ->with('invite_pack', $invite);
     }
 
     public function destroy(User $user)

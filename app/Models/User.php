@@ -15,12 +15,15 @@ class User extends Authenticatable
     protected $fillable = [
         'organization_id', 'department_id', 'name', 'email', 'password',
         'must_change_password', 'role', 'custom_role_id', 'phone', 'employee_id', 'avatar', 'job_title', 'status', 'last_login_at',
+        'invitation_sent_at', 'invitation_accepted_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
         'last_login_at' => 'datetime',
+        'invitation_sent_at' => 'datetime',
+        'invitation_accepted_at' => 'datetime',
         'must_change_password' => 'boolean',
     ];
 

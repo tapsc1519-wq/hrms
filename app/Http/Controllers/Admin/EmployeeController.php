@@ -70,6 +70,7 @@ class EmployeeController extends Controller
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password'] ?: 'Welcome@123'),
+                'must_change_password' => true,
                 'role' => $data['role'] ?? 'staff',
                 'custom_role_id' => $data['custom_role_id'] ?? null,
                 'department_id' => $data['department_id'] ?? null,

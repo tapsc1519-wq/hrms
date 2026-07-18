@@ -34,6 +34,7 @@ use App\Http\Controllers\Admin\RequestController as AdminRequestController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\TaskController as AdminTaskController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
@@ -148,6 +149,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['portal.domain:p
     Route::patch('partner-commissions/{partnerCommission}/paid', [SAPartnerCommissionController::class, 'markPaid'])->name('partner-commissions.paid');
     Route::patch('partner-commissions/{partnerCommission}/cancel', [SAPartnerCommissionController::class, 'cancel'])->name('partner-commissions.cancel');
     Route::resource('users', SAUserController::class)->except(['show']);
+    Route::post('users/{user}/invite', [SAUserController::class, 'invite'])->name('users.invite');
 
     Route::get('pricing', [PricingController::class, 'edit'])->name('pricing.edit');
     Route::put('pricing', [PricingController::class, 'update'])->name('pricing.update');
@@ -257,6 +259,11 @@ Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', '
     Route::post('roles', [AdminRoleController::class, 'store'])->middleware('permission:roles.manage')->name('roles.store');
     Route::patch('roles/{role}', [AdminRoleController::class, 'update'])->middleware('permission:roles.manage')->name('roles.update');
     Route::delete('roles/{role}', [AdminRoleController::class, 'destroy'])->middleware('permission:roles.manage')->name('roles.destroy');
+    Route::get('users', [AdminUserController::class, 'index'])->middleware('permission:roles.manage')->name('users.index');
+    Route::post('users', [AdminUserController::class, 'store'])->middleware('permission:roles.manage')->name('users.store');
+    Route::patch('users/{user}', [AdminUserController::class, 'update'])->middleware('permission:roles.manage')->name('users.update');
+    Route::delete('users/{user}', [AdminUserController::class, 'destroy'])->middleware('permission:roles.manage')->name('users.destroy');
+    Route::post('users/{user}/invite', [AdminUserController::class, 'invite'])->middleware('permission:roles.manage')->name('users.invite');
 
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('assets', [ReportController::class, 'assets'])->middleware('permission:reports.view')->name('assets');

@@ -47,7 +47,7 @@
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" style="font-size:.875rem">
             <thead class="table-light">
-                <tr><th>User</th><th>Role</th><th>Organization</th><th>Status</th><th>Last Login</th><th>Actions</th></tr>
+                <tr><th>User</th><th>Role</th><th>Organization</th><th>Status</th><th>Invite</th><th>Last Login</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 @forelse($users as $u)
@@ -74,10 +74,22 @@
                         </small>
                     </td>
                     <td><span class="badge bg-{{ $u->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($u->status) }}</span></td>
+                    @php($inviteStatus = \App\Support\UserInvitationService::status($u))
+                    <td>
+                        <span class="badge bg-{{ $inviteStatus['badge'] }}">{{ $inviteStatus['label'] }}</span>
+                        @if($u->invitation_sent_at)
+                            <div class="small text-muted mt-1">{{ $u->invitation_sent_at->diffForHumans() }}</div>
+                        @endif
+                    </td>
                     <td><small>{{ $u->last_login_at?->diffForHumans() ?? 'Never' }}</small></td>
                     <td>
                         <div class="d-flex gap-1">
                             <a href="{{ route('super-admin.users.edit', $u) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                            @if($u->id !== auth()->id() && $u->status === 'active')
+                            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#inviteUserModal{{ $u->id }}" title="Prepare invite">
+                                <i class="bi bi-envelope-paper"></i>
+                            </button>
+                            @endif
                             @if($u->id !== auth()->id())
                             <form action="{{ route('super-admin.users.destroy', $u) }}" method="POST" onsubmit="return confirm('Delete user?')">
                                 @csrf @method('DELETE')
@@ -87,8 +99,33 @@
                         </div>
                     </td>
                 </tr>
+                <div class="modal fade" id="inviteUserModal{{ $u->id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <form action="{{ route('super-admin.users.invite', $u) }}" method="POST" class="modal-content">
+                            @csrf
+                            <div class="modal-header">
+                                <div>
+                                    <h5 class="modal-title mb-0">Prepare Invite</h5>
+                                    <small class="text-muted">{{ $u->name }} - {{ $u->email }}</small>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-info small">
+                                    This will reset the temporary password, require password change on next login, and generate a copyable invite message.
+                                </div>
+                                <label class="form-label">Temporary Password</label>
+                                <input type="text" name="temporary_password" class="form-control" minlength="8" placeholder="Leave blank to auto-generate">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                <button class="btn btn-primary btn-sm"><i class="bi bi-envelope-paper me-1"></i>Prepare Invite</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
                 @empty
-                <tr><td colspan="6" class="text-center py-4 text-muted">No users found.</td></tr>
+                <tr><td colspan="7" class="text-center py-4 text-muted">No users found.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -97,4 +134,5 @@
     <div class="card-footer bg-white">{{ $users->links() }}</div>
     @endif
 </div>
+@include('partials._invite_pack_modal')
 @endsection

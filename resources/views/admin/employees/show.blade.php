@@ -14,6 +14,11 @@
             </div>
         </div>
         <div class="d-flex gap-2">
+            @if($employee->user->status === 'active')
+            <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#inviteEmployeeModal">
+                <i class="bi bi-envelope-paper me-1"></i> Prepare Invite
+            </button>
+            @endif
             <a href="{{ route('admin.employees.edit', $employee) }}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i> Edit Profile</a>
         </div>
     </div>
@@ -442,4 +447,33 @@
         </form>
     </div>
 </div>
+@if($employee->user->status === 'active')
+<div class="modal fade" id="inviteEmployeeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ route('admin.users.invite', $employee->user) }}" method="POST" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title mb-0">Prepare Employee Invite</h5>
+                    <small class="text-muted">{{ $employee->user->name }} - {{ $employee->user->email }}</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info small">
+                    This will reset the temporary password, require password change on next login, and generate a copyable invite message.
+                </div>
+                <label class="form-label">Temporary Password</label>
+                <input type="text" name="temporary_password" class="form-control" minlength="8" placeholder="Leave blank to auto-generate">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary btn-sm"><i class="bi bi-envelope-paper me-1"></i>Prepare Invite</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
+@include('partials._invite_pack_modal')
 @endsection

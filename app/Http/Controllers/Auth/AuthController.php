@@ -220,6 +220,7 @@ class AuthController extends Controller
         $request->user()->forceFill([
             'password' => Hash::make($validated['password']),
             'must_change_password' => false,
+            'invitation_accepted_at' => $request->user()->invitation_accepted_at ?: now(),
         ])->save();
 
         if ($request->user()->isPartner()) {
