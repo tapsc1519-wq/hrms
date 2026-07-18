@@ -651,7 +651,7 @@ function openEditBrand(brand) {
 // ══════════════════════════════════════════════
 // MODEL SPEC FIELDS (dynamic by category)
 // ══════════════════════════════════════════════
-function loadModelSpecFields(sel, prefillValues) {
+function loadModelSpecFields(sel, prefillValues, showSection) {
     var section = sel.closest('form').querySelector('#modelSpecSection') ||
                   sel.closest('.modal-body').querySelector('#modelSpecSection');
     var container = sel.closest('form').querySelector('#modelSpecFields') ||
@@ -662,7 +662,8 @@ function loadModelSpecFields(sel, prefillValues) {
     try { fields = JSON.parse(opt.dataset.fields || '[]'); } catch(e) {}
     if (!fields.length) { section.style.display = 'none'; container.innerHTML = ''; return; }
 
-    section.style.display = '';
+    var hasPrefill = prefillValues && Object.keys(prefillValues).length > 0;
+    section.style.display = (showSection || hasPrefill) ? '' : 'none';
     container.innerHTML = '';
     fields.forEach(function(label) {
         var key  = 'spec_' + label.toLowerCase().replace(/[^a-z0-9]+/g,'_');
@@ -674,6 +675,17 @@ function loadModelSpecFields(sel, prefillValues) {
                  + '</div>';
         container.insertAdjacentHTML('beforeend', html);
     });
+}
+
+function toggleModelDefaultSpecs(button) {
+    var form = button.closest('form');
+    var catSel = form.querySelector('[name=category_id]');
+    if (!catSel.value) {
+        alert('Please select category first.');
+        return;
+    }
+
+    loadModelSpecFields(catSel, {}, true);
 }
 
 // ══════════════════════════════════════════════
@@ -688,8 +700,8 @@ function openEditModel(m) {
 
     var catSel = f.querySelector('[name=category_id]');
     catSel.value = m.category_id || '';
-    // Trigger spec fields render with prefill
-    loadModelSpecFields(catSel, m.default_specs || {});
+    // Trigger spec fields render only when this model already has saved defaults.
+    loadModelSpecFields(catSel, m.default_specs || {}, Object.keys(m.default_specs || {}).length > 0);
 
     new bootstrap.Modal(document.getElementById('editModelModal')).show();
 }
@@ -697,7 +709,7 @@ function openEditModel(m) {
 // Init — if add model modal already has a category preselected (after validation error)
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('#modelCategorySelect').forEach(function(sel) {
-        if (sel.value) loadModelSpecFields(sel);
+        if (sel.value) loadModelSpecFields(sel, {}, false);
     });
 });
 </script>

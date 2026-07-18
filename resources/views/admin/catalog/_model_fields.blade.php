@@ -23,7 +23,7 @@
     </div>
     <div class="col-12">
         <label class="form-label fw-600" style="font-size:.78rem">Category</label>
-        <select name="category_id" class="form-select" id="modelCategorySelect" onchange="loadModelSpecFields(this)">
+        <select name="category_id" class="form-select" id="modelCategorySelect" onchange="loadModelSpecFields(this, {}, false)">
             <option value="">— Select Category —</option>
             @foreach($categories as $cat)
             <option value="{{ $cat->id }}"
@@ -33,19 +33,27 @@
             </option>
             @endforeach
         </select>
-        <div class="form-text">Selecting a category loads its specification fields below.</div>
+        <div class="form-text">Category links this model to the right asset type. Actual specifications are entered while adding each asset.</div>
+    </div>
+    <div class="col-12">
+        <button type="button" class="btn btn-sm btn-outline-secondary model-default-toggle" onclick="toggleModelDefaultSpecs(this)">
+            <i class="bi bi-sliders me-1"></i>Optional: Add model default specs
+        </button>
+        <div class="form-text">Use only when every asset of this model normally has the same standard configuration.</div>
     </div>
 
     {{-- Dynamic spec fields --}}
-    <div class="col-12" id="modelSpecSection" style="{{ ($assetModel->category_id ?? null) || old('category_id') ? '' : 'display:none' }}">
+    <div class="col-12" id="modelSpecSection" style="{{ !empty($assetModel->default_specs ?? []) ? '' : 'display:none' }}">
         <div style="display:flex;align-items:center;gap:.75rem;margin:.1rem 0 .75rem">
             <div style="flex:1;height:1px;background:#f1f5f9"></div>
             <span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">
-                <i class="bi bi-cpu me-1"></i>Default Specifications
+                <i class="bi bi-cpu me-1"></i>Optional Model Defaults
             </span>
             <div style="flex:1;height:1px;background:#f1f5f9"></div>
         </div>
-        <div class="form-text mb-2">These values will auto-fill when this model is selected on an asset.</div>
+        <div class="alert alert-warning small py-2 mb-2">
+            These values are not required. Leave them blank when RAM, storage, processor or other values may differ asset by asset.
+        </div>
         <div class="row g-2" id="modelSpecFields">
             {{-- Rendered by JS --}}
             @if(isset($assetModel) && $assetModel->category_id && !empty($assetModel->category->spec_template))
