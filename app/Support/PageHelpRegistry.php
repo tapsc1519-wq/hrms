@@ -87,6 +87,49 @@ class PageHelpRegistry
                 ],
                 'next' => 'Start with alerts, pending approvals, or items that show a high count.',
             ],
+            'admin.welcome.*' => [
+                'title' => 'Welcome Help',
+                'what' => 'This page helps a customer admin understand the first actions after signing in to OpsBridge.',
+                'how' => [
+                    'Change the temporary password if one was shared by Super Admin.',
+                    'Open Setup Wizard to continue organization setup in the recommended order.',
+                    'Use Continue to Dashboard after you understand the first-day checklist.',
+                ],
+                'sections' => [
+                    'First login' => 'Shows organization setup progress and confirms this is the first-login experience.',
+                    'Recommended First Day Checklist' => 'Lists the suggested setup order for a new customer admin.',
+                    'Continue' => 'Provides shortcuts to employees, production readiness and the dashboard.',
+                ],
+                'actions' => [
+                    'Change Password' => 'Opens the account password page.',
+                    'Open Setup Wizard' => 'Opens the guided organization setup checklist.',
+                    'Open Agent Download' => 'Opens endpoint management where agent installers are available.',
+                    'Continue to Dashboard' => 'Closes the first-login welcome page for this session.',
+                ],
+                'tour' => [
+                    [
+                        'target' => 'admin-welcome-hero',
+                        'title' => 'Welcome Summary',
+                        'body' => 'This shows setup progress and confirms the organization you are configuring.',
+                    ],
+                    [
+                        'target' => 'admin-welcome-steps',
+                        'title' => 'First Actions',
+                        'body' => 'Start with password security, then setup wizard, then endpoint agent preparation.',
+                    ],
+                    [
+                        'target' => 'admin-welcome-checklist',
+                        'title' => 'First Day Checklist',
+                        'body' => 'Follow these setup steps before inviting broad users or rolling out devices.',
+                    ],
+                    [
+                        'target' => 'admin-welcome-actions',
+                        'title' => 'Continue',
+                        'body' => 'Use these shortcuts when you are ready to continue setup or open the dashboard.',
+                    ],
+                ],
+                'next' => 'Open Setup Wizard and complete each stage in order.',
+            ],
             'admin.onboarding-wizard.*' => [
                 'title' => 'Setup Wizard Help',
                 'what' => 'The Setup Wizard shows the recommended order for preparing an organization before daily use or production rollout.',

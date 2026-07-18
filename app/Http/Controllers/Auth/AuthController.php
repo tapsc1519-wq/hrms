@@ -52,6 +52,9 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             $user = Auth::user();
+            if ($user->isAdmin() && ! $user->last_login_at) {
+                $request->session()->put('admin_first_login', true);
+            }
             $user->update(['last_login_at' => now()]);
             return $this->redirectByRole($user->role);
         }
@@ -150,6 +153,9 @@ class AuthController extends Controller
 
         Auth::login($user, true);
         $request->session()->regenerate();
+        if ($user->isAdmin() && ! $user->last_login_at) {
+            $request->session()->put('admin_first_login', true);
+        }
         $user->update(['last_login_at' => now()]);
 
         return $this->redirectByRole($user->role);
@@ -193,7 +199,9 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('admin.dashboard')
+        session()->put('admin_first_login', true);
+
+        return redirect()->route('admin.welcome.index')
             ->with('success', 'Your organization account is ready. Your one-month free trial has started.');
     }
 
@@ -292,6 +300,10 @@ class AuthController extends Controller
     }
     private function redirectByRole(string $role)
     {
+        if ($role === 'admin' && Auth::user()?->isAdmin() && (session('admin_first_login') || Auth::user()?->must_change_password)) {
+            return $this->redirectToPortalRoute('admin.welcome.index', config('niyantron.products.opsbridge.domain'));
+        }
+
         return match($role) {
             'super_admin' => $this->redirectToPortalRoute('super-admin.dashboard', config('niyantron.platform_domain')),
             'admin'       => $this->redirectToPortalRoute('admin.dashboard', config('niyantron.products.opsbridge.domain')),

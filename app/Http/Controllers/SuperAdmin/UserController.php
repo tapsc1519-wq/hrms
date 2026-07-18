@@ -61,6 +61,9 @@ class UserController extends Controller
         $validated['password'] = Hash::make($validated['password']);
         $redirectToOnboarding = (bool) ($validated['onboarding_redirect'] ?? false);
         unset($validated['onboarding_redirect']);
+        if ($redirectToOnboarding && ($validated['role'] ?? null) === 'admin') {
+            $validated['must_change_password'] = true;
+        }
 
         $user = User::create($validated);
 
