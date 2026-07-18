@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
+use App\Models\AssetBrand;
 use App\Models\AssetCategory;
+use App\Models\AssetModel;
 use App\Models\Facility;
 use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptItem;
@@ -62,6 +64,8 @@ class PurchaseOrderController extends Controller
                 'software licenses',
             ]))
             ->values();
+        $brands = AssetBrand::where('organization_id', $this->orgId())->where('is_active', true)->orderBy('name')->get();
+        $models = AssetModel::where('organization_id', $this->orgId())->where('is_active', true)->with('brand')->orderBy('name')->get();
         $softwareList = Software::where('organization_id', $this->orgId())->orderBy('name')->get(['id', 'name', 'vendor']);
         $poNumber   = 'PO-' . date('Y') . '-' . str_pad(PurchaseOrder::where('organization_id', $this->orgId())->count() + 1, 4, '0', STR_PAD_LEFT);
 
@@ -100,7 +104,7 @@ class PurchaseOrderController extends Controller
             })->values();
         }
 
-        return view('admin.purchase-orders.create', compact('suppliers', 'categories', 'softwareList', 'softwareDemand', 'poNumber'));
+        return view('admin.purchase-orders.create', compact('suppliers', 'categories', 'brands', 'models', 'softwareList', 'softwareDemand', 'poNumber'));
     }
 
     public function store(Request $request)
@@ -118,11 +122,13 @@ class PurchaseOrderController extends Controller
             'notes'                  => 'nullable|string',
             'items'                  => 'required|array|min:1',
             'items.*.item_type'      => 'required|in:asset,software',
-            'items.*.item_name'      => 'required|string|max:255',
+            'items.*.item_name'      => 'nullable|string|max:255',
             'items.*.quantity'       => 'required|integer|min:1',
             'items.*.unit_price'     => 'required|numeric|min:0',
             'items.*.tax_rate'       => 'nullable|numeric|min:0|max:100',
             'items.*.category_id'    => ['nullable', Rule::exists('asset_categories', 'id')->where('organization_id', $this->orgId())],
+            'items.*.asset_brand_id' => ['nullable', Rule::exists('asset_brands', 'id')->where('organization_id', $this->orgId())],
+            'items.*.asset_model_id' => ['nullable', Rule::exists('asset_models', 'id')->where('organization_id', $this->orgId())],
             'items.*.software_id'    => ['nullable', Rule::exists('software', 'id')->where('organization_id', $this->orgId())],
             'items.*.license_type'   => 'nullable|in:perpetual,subscription,concurrent,per_seat,per_device,oem,volume,open_source,freeware',
             'items.*.subscription_period' => 'nullable|in:monthly,quarterly,annual,multi_year,perpetual',
@@ -162,6 +168,8 @@ class PurchaseOrderController extends Controller
             ]);
 
             foreach ($validated['items'] as $index => $item) {
+                $resolvedItem = $this->resolvePurchaseOrderItem($item, $index);
+
                 if ($item['item_type'] === 'software') {
                     if (empty($item['software_id'])) {
                         throw ValidationException::withMessages(["items.{$index}.software_id" => 'Select the software being purchased.']);
@@ -183,12 +191,14 @@ class PurchaseOrderController extends Controller
                     'purchase_order_id' => $po->id,
                     'item_type'         => $item['item_type'],
                     'category_id'       => $item['item_type'] === 'asset' ? ($item['category_id'] ?? null) : null,
+                    'asset_brand_id'    => $item['item_type'] === 'asset' ? ($item['asset_brand_id'] ?? null) : null,
+                    'asset_model_id'    => $item['item_type'] === 'asset' ? ($item['asset_model_id'] ?? null) : null,
                     'software_id'       => $item['item_type'] === 'software' ? $item['software_id'] : null,
                     'license_type'      => $item['item_type'] === 'software' ? ($item['license_type'] ?? 'subscription') : null,
                     'subscription_period' => $item['item_type'] === 'software' ? ($item['subscription_period'] ?? 'annual') : null,
-                    'item_name'         => $item['item_name'],
-                    'brand'             => $item['brand'] ?? null,
-                    'model'             => $item['model'] ?? null,
+                    'item_name'         => $resolvedItem['item_name'],
+                    'brand'             => $resolvedItem['brand'],
+                    'model'             => $resolvedItem['model'],
                     'description'       => $item['description'] ?? null,
                     'quantity'          => $item['quantity'],
                     'unit_price'        => $item['unit_price'],
@@ -458,6 +468,8 @@ class PurchaseOrderController extends Controller
                             'purchase_order_item_id' => $item->id,
                             'goods_receipt_id' => $receipt->id,
                             'category_id' => $item->category_id,
+                            'asset_brand_id' => $item->asset_brand_id,
+                            'asset_model_id' => $item->asset_model_id,
                             'vendor_id' => $lockedOrder->vendor_id,
                             'location_id' => $validated['location_id'] ?? null,
                             'name' => $item->item_name,
@@ -549,6 +561,56 @@ class PurchaseOrderController extends Controller
             ->filter()
             ->values()
             ->all();
+    }
+
+    private function resolvePurchaseOrderItem(array $item, int $index): array
+    {
+        if ($item['item_type'] === 'software') {
+            $software = Software::where('organization_id', $this->orgId())->find($item['software_id'] ?? null);
+
+            return [
+                'item_name' => $software ? $software->name . ' license' : ($item['item_name'] ?? 'Software license'),
+                'brand' => $software?->vendor ?? ($item['brand'] ?? null),
+                'model' => null,
+            ];
+        }
+
+        $category = null;
+        $brand = null;
+        $model = null;
+
+        if (!empty($item['category_id'])) {
+            $category = AssetCategory::where('organization_id', $this->orgId())->find($item['category_id']);
+        }
+
+        if (!empty($item['asset_brand_id'])) {
+            $brand = AssetBrand::where('organization_id', $this->orgId())->find($item['asset_brand_id']);
+        }
+
+        if (!empty($item['asset_model_id'])) {
+            $model = AssetModel::where('organization_id', $this->orgId())->find($item['asset_model_id']);
+
+            if ($model && $brand && (int) $model->brand_id !== (int) $brand->id) {
+                throw ValidationException::withMessages(["items.{$index}.asset_model_id" => 'Selected model does not belong to the selected brand.']);
+            }
+
+            if ($model && $category && $model->category_id && (int) $model->category_id !== (int) $category->id) {
+                throw ValidationException::withMessages(["items.{$index}.asset_model_id" => 'Selected model does not belong to the selected asset category.']);
+            }
+
+            $brand = $brand ?: $model->brand;
+        }
+
+        $itemName = trim(implode(' ', array_filter([$brand?->name, $model?->name])));
+        if ($itemName === '') {
+            $itemName = $item['item_name'] ?? ($category ? $category->name . ' Item' : 'Asset Item');
+        }
+
+        return [
+            'item_name' => $itemName,
+            'brand' => $brand?->name ?? ($item['brand'] ?? null),
+            'model' => $model?->name ?? ($item['model'] ?? null),
+        ];
     }
 
     private function fulfillProcuredSoftwareRequests(PurchaseOrderItem $item, SoftwareLicense $license, int $availableSeats): void
