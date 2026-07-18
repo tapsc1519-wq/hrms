@@ -24,10 +24,11 @@
             <div class="form-card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label">Asset Name <span class="req">*</span></label>
+                        <label class="form-label">Asset Display Name <span class="req">*</span></label>
                         <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                               value="{{ old('name', $asset->name) }}" required placeholder="e.g. Dell Latitude 5530">
+                               value="{{ old('name', $asset->name) }}" required placeholder="e.g. IT Laptop 01, Reception Printer, CFO Laptop">
                         @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-text">Use a simple internal name for search and lists. Brand, model and category are selected separately.</div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Brand</label>
