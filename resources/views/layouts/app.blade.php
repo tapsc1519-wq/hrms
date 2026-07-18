@@ -394,6 +394,20 @@
         background: #f8fafc;
         transform: translateX(2px);
     }
+    .notification-item-button {
+        background: transparent;
+        border: 0;
+        text-align: left;
+        width: 100%;
+    }
+    .notification-section-label {
+        color: #64748b;
+        font-size: .64rem;
+        font-weight: 800;
+        letter-spacing: .04em;
+        padding: .48rem .62rem .22rem;
+        text-transform: uppercase;
+    }
     .notification-icon {
         align-items: center;
         border-radius: 10px;
@@ -1973,6 +1987,8 @@
         <div class="ms-auto d-flex align-items-center gap-2">
             @php
                 $actionNotifications = \App\Support\ActionNotificationService::forUser(auth()->user());
+                $persistentNotifications = \App\Support\NotificationService::forUser(auth()->user());
+                $notificationCount = $actionNotifications['count'] + $persistentNotifications['unread_count'];
                 $pageHelp = \App\Support\PageHelpRegistry::current();
                 $pageTourKey = request()->route()?->getName() ?? request()->path();
                 $pageHelpTourData = [
@@ -1995,20 +2011,49 @@
             <div class="dropdown">
                 <button class="topbar-icon-btn notification-trigger" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Action notifications">
                     <i class="bi bi-bell-fill"></i>
-                    @if($actionNotifications['count'] > 0)
-                        <span class="notification-badge">{{ $actionNotifications['count'] > 99 ? '99+' : $actionNotifications['count'] }}</span>
+                    @if($notificationCount > 0)
+                        <span class="notification-badge">{{ $notificationCount > 99 ? '99+' : $notificationCount }}</span>
                     @endif
                 </button>
                 <div class="dropdown-menu dropdown-menu-end notification-menu">
                     <div class="notification-menu-header">
                         <div>
-                            <div class="notification-menu-title">Action Center</div>
-                            <div class="notification-menu-subtitle">Priority reminders for your role</div>
+                            <div class="notification-menu-title">Notifications</div>
+                            <div class="notification-menu-subtitle">Updates and priority reminders</div>
                         </div>
-                        <span class="badge bg-primary">{{ $actionNotifications['count'] }}</span>
+                        <span class="badge bg-primary">{{ $notificationCount }}</span>
                     </div>
                     <div class="notification-list">
-                        @forelse($actionNotifications['items'] as $notice)
+                        @if($persistentNotifications['items']->isNotEmpty() || count($actionNotifications['items']) > 0)
+                        @foreach($persistentNotifications['items'] as $notice)
+                            <form action="{{ route('notifications.read', $notice) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="notification-item notification-item-button">
+                                    @php
+                                        $noticeData = $notice->data ?? [];
+                                        $noticeColor = $noticeData['color'] ?? 'primary';
+                                    @endphp
+                                    <span class="notification-icon {{ $noticeColor === 'purple' ? 'bg-purple' : 'bg-' . $noticeColor . '-subtle text-' . $noticeColor }}">
+                                        <i class="bi {{ $noticeData['icon'] ?? 'bi-bell' }}"></i>
+                                    </span>
+                                    <span class="flex-grow-1">
+                                        <span class="notification-item-title">{{ $notice->title }}</span>
+                                        @if($notice->message)
+                                            <span class="notification-item-subtitle d-block">{{ $notice->message }}</span>
+                                        @endif
+                                        <span class="notification-item-subtitle d-block">{{ $notice->created_at->diffForHumans() }}</span>
+                                    </span>
+                                    @if(!$notice->read_at)
+                                        <span class="notification-count-chip">New</span>
+                                    @endif
+                                </button>
+                            </form>
+                        @endforeach
+                        @if($persistentNotifications['items']->isNotEmpty() && count($actionNotifications['items']) > 0)
+                            <div class="notification-section-label">Action Center</div>
+                        @endif
+                        @foreach($actionNotifications['items'] as $notice)
                             <a href="{{ $notice['url'] }}" class="notification-item">
                                 @php
                                     $noticeColor = $notice['color'] === 'purple' ? 'purple' : $notice['color'];
@@ -2022,15 +2067,17 @@
                                 </span>
                                 <span class="notification-count-chip">{{ $notice['count'] }}</span>
                             </a>
-                        @empty
+                        @endforeach
+                        @else
                             <div class="notification-empty">
                                 <i class="bi bi-check2-circle"></i>
-                                <div class="fw-bold" style="font-size:.82rem;color:#0f172a">No pending actions</div>
+                                <div class="fw-bold" style="font-size:.82rem;color:#0f172a">No notifications</div>
                                 <div style="font-size:.72rem">You are clear for now.</div>
                             </div>
-                        @endforelse
+                        @endif
                     </div>
                     <div class="notification-footer">
+                        <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-outline-secondary w-100">View All</a>
                         @if(auth()->user()->isSuperAdmin())
                             <a href="{{ route('super-admin.dashboard') }}" class="btn btn-sm btn-outline-primary w-100">Platform Dashboard</a>
                         @elseif(auth()->user()->isAdmin())

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SADashboard;
 use App\Http\Controllers\SuperAdmin\MailSettingController as SAMailSettingController;
 use App\Http\Controllers\SuperAdmin\OrganizationController;
@@ -126,6 +127,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
     Route::get('/account/password', [AuthController::class, 'editPassword'])->name('account.password.edit');
     Route::patch('/account/password', [AuthController::class, 'updatePassword'])->name('account.password.update');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
 });
 
 // ─── Super Admin ──────────────────────────────────────────────────────────────

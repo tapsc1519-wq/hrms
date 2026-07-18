@@ -8,6 +8,7 @@ use App\Models\AssetHandoverRequest;
 use App\Models\AssetIssueReport;
 use App\Models\AssetRepair;
 use App\Models\User;
+use App\Support\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -106,7 +107,7 @@ class AssetController extends Controller
                 return back()->withErrors(['new_user_id' => 'A pending handover request already exists for this asset.']);
             }
 
-            AssetHandoverRequest::create([
+            $handover = AssetHandoverRequest::create([
                 'asset_assignment_id' => $assignment->id,
                 'asset_id'            => $assignment->asset_id,
                 'from_user_id'        => auth()->id(),
@@ -116,6 +117,16 @@ class AssetController extends Controller
                 'notes'               => $validated['notes'],
                 'status'              => 'pending_admin',
             ]);
+
+            NotificationService::notifyPermission(
+                (int) auth()->user()->organization_id,
+                'assignments.return',
+                'asset_handover.pending_admin',
+                'Asset handover needs approval',
+                auth()->user()->name . ' wants to hand over ' . ($assignment->asset->asset_tag ?? $assignment->asset->name) . ' to ' . $newUser->name . '.',
+                route('admin.assignments.index'),
+                ['icon' => 'bi-arrow-left-right', 'color' => 'warning', 'handover_id' => $handover->id]
+            );
 
             return back()->with('success', 'Handover request sent for IT/Admin approval. Recipient can accept it after approval.');
         }
@@ -134,6 +145,16 @@ class AssetController extends Controller
                 ->whereIn('status', ['pending', 'pending_admin', 'approved'])
                 ->update(['status' => 'cancelled', 'responded_at' => now()]);
         });
+
+        NotificationService::notifyPermission(
+            (int) auth()->user()->organization_id,
+            'assignments.return',
+            'asset_handover.returned_to_it',
+            'Asset handed over to IT/Admin',
+            auth()->user()->name . ' handed over ' . ($assignment->asset->asset_tag ?? $assignment->asset->name) . ' to IT Support/Admin.',
+            route('admin.assignments.index'),
+            ['icon' => 'bi-box-arrow-in-left', 'color' => 'info']
+        );
 
         return back()->with('success', 'Asset handed over to IT Support/Admin successfully.');
     }
@@ -260,6 +281,27 @@ class AssetController extends Controller
             $handover->asset->update(['status' => 'assigned']);
         });
 
+        $handover->loadMissing(['asset', 'fromUser', 'toUser']);
+
+        NotificationService::notify(
+            $handover->fromUser,
+            'asset_handover.accepted',
+            'Asset handover accepted',
+            $handover->toUser->name . ' accepted ' . ($handover->asset->asset_tag ?? $handover->asset->name) . '.',
+            route('staff.my-assets.index'),
+            ['icon' => 'bi-check2-circle', 'color' => 'success', 'handover_id' => $handover->id]
+        );
+
+        NotificationService::notifyPermission(
+            (int) auth()->user()->organization_id,
+            'assignments.return',
+            'asset_handover.accepted_admin',
+            'Asset handover completed',
+            $handover->toUser->name . ' accepted ' . ($handover->asset->asset_tag ?? $handover->asset->name) . '.',
+            route('admin.assignments.index'),
+            ['icon' => 'bi-check2-circle', 'color' => 'success', 'handover_id' => $handover->id]
+        );
+
         return back()->with('success', 'Asset handover accepted. The asset is now assigned to you.');
     }
 
@@ -277,6 +319,27 @@ class AssetController extends Controller
             'response_notes' => $validated['response_notes'] ?? null,
             'responded_at'   => now(),
         ]);
+
+        $handover->loadMissing(['asset', 'fromUser', 'toUser']);
+
+        NotificationService::notify(
+            $handover->fromUser,
+            'asset_handover.rejected',
+            'Asset handover rejected',
+            $handover->toUser->name . ' rejected ' . ($handover->asset->asset_tag ?? $handover->asset->name) . '.',
+            route('staff.my-assets.index'),
+            ['icon' => 'bi-x-circle', 'color' => 'danger', 'handover_id' => $handover->id]
+        );
+
+        NotificationService::notifyPermission(
+            (int) auth()->user()->organization_id,
+            'assignments.return',
+            'asset_handover.rejected_admin',
+            'Asset handover rejected by recipient',
+            $handover->toUser->name . ' rejected ' . ($handover->asset->asset_tag ?? $handover->asset->name) . '.',
+            route('admin.assignments.index'),
+            ['icon' => 'bi-x-circle', 'color' => 'danger', 'handover_id' => $handover->id]
+        );
 
         return back()->with('success', 'Asset handover rejected. The asset remains with the current employee.');
     }

@@ -67,6 +67,11 @@ class User extends Authenticatable
         return $this->hasMany(SoftwareRequest::class, 'requester_id');
     }
 
+    public function userNotifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
+    }
+
     public function requestedAssetRepairs(): HasMany
     {
         return $this->hasMany(AssetRepair::class, 'requested_by');
