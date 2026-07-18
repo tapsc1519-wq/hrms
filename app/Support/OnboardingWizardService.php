@@ -10,6 +10,8 @@ use App\Models\Department;
 use App\Models\DeviceAgent;
 use App\Models\EmployeeProfile;
 use App\Models\Facility;
+use App\Models\HrShift;
+use App\Models\Location;
 use App\Models\OrganizationRole;
 use App\Models\Software;
 use App\Models\SoftwareLicense;
@@ -25,18 +27,25 @@ class OnboardingWizardService
         $organization = $user->organization?->load('modules');
         $orgId = (int) $user->organization_id;
         $moduleEnabled = fn (string $module): bool => !$organization || $organization->hasModule($module);
+        $facilityCount = Facility::where('organization_id', $orgId)->count();
+        $locationCount = Location::where('organization_id', $orgId)->count();
+        $departmentCount = Department::where('organization_id', $orgId)->count();
+        $roleCount = OrganizationRole::where('organization_id', $orgId)->count();
+        $shiftCount = HrShift::where('organization_id', $orgId)->where('status', 'active')->count();
 
         $stages = [
             [
                 'key' => 'foundation',
                 'title' => 'Company Foundation',
-                'subtitle' => 'Create the base structure used by every module.',
+                'subtitle' => 'Complete these first. Employees, assets, attendance and approvals depend on this structure.',
                 'icon' => 'bi-building',
                 'items' => [
                     self::item((bool) $organization, 'Confirm organization profile', 'The admin account must be linked with an organization before setup can continue.', 'Linked', 'Review Dashboard', route('admin.dashboard')),
-                    self::item(Facility::where('organization_id', $orgId)->exists(), 'Add facilities and locations', 'Facilities help assets, employees, attendance and repairs point to the correct place.', self::countLabel(Facility::where('organization_id', $orgId)->count(), 'facility', 'facilities'), 'Open Facilities', route('admin.facilities.index'), 'facilities.manage', $user),
-                    self::item(Department::where('organization_id', $orgId)->exists(), 'Add departments', 'Departments make employee ownership, approvals and reporting easier to understand.', self::countLabel(Department::where('organization_id', $orgId)->count(), 'department', 'departments'), 'Add Suggested Departments', route('admin.departments.index', ['suggested' => 1]), 'departments.manage', $user),
-                    self::item(OrganizationRole::where('organization_id', $orgId)->exists(), 'Create roles and permissions', 'Roles keep employees, IT, HR, support and managers inside the correct access boundary.', self::countLabel(OrganizationRole::where('organization_id', $orgId)->count(), 'role', 'roles'), 'Add Suggested Roles', route('admin.roles.index', ['suggested' => 1]), 'roles.manage', $user),
+                    self::item($facilityCount > 0, 'Add facilities', 'Create offices, branches, warehouses or remote operating sites before creating work locations.', self::countLabel($facilityCount, 'facility', 'facilities'), 'Open Facilities', route('admin.facilities.index'), 'facilities.manage', $user),
+                    self::item($locationCount > 0, 'Add work locations', 'Create floors, rooms, desks or stores under facilities so assets and employees can be placed accurately.', self::countLabel($locationCount, 'work location', 'work locations'), 'Open Facilities', route('admin.facilities.index'), 'facilities.manage', $user),
+                    self::item($departmentCount > 0, 'Add departments', 'Departments make employee ownership, approvals and reporting easier to understand.', self::countLabel($departmentCount, 'department', 'departments'), 'Add Suggested Departments', route('admin.departments.index', ['suggested' => 1]), 'departments.manage', $user),
+                    self::item($roleCount > 0, 'Create roles and permissions', 'Roles keep employees, IT, HR, support and managers inside the correct access boundary.', self::countLabel($roleCount, 'role', 'roles'), 'Add Suggested Roles', route('admin.roles.index', ['suggested' => 1]), 'roles.manage', $user),
+                    self::item($shiftCount > 0, 'Define attendance shifts', 'Shifts decide working days, start time, end time, grace minutes, half-day and full-day rules.', self::countLabel($shiftCount, 'active shift', 'active shifts'), 'Open Shifts', route('admin.hrms-shifts.index'), 'hrms.settings', $user),
                 ],
             ],
             [

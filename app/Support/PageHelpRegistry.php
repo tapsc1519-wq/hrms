@@ -140,6 +140,7 @@ class PageHelpRegistry
                 ],
                 'sections' => [
                     'Admin onboarding' => 'Shows organization progress, enabled modules, remaining steps and the next recommended action.',
+                    'Operations Setup Path' => 'Shows the recommended order: facilities, work locations, departments, roles, shifts, employees, module setup and production readiness.',
                     'Company Foundation' => 'Confirms facilities, departments and permission roles are ready.',
                     'People Setup' => 'Checks whether employee profiles are ready for assignments and workflow testing.',
                     'Workflow & Go-Live' => 'Highlights tasks, blockers and final readiness checks.',
@@ -154,6 +155,11 @@ class PageHelpRegistry
                         'target' => 'onboarding-summary',
                         'title' => 'Setup Progress',
                         'body' => 'This area shows the setup percentage, enabled modules and the next recommended action.',
+                    ],
+                    [
+                        'target' => 'onboarding-setup-path',
+                        'title' => 'Operations Setup Path',
+                        'body' => 'Follow this order before inviting everyone to use the portal daily: facilities, locations, departments, roles, shifts, employees, module setup and readiness.',
                     ],
                     [
                         'target' => 'onboarding-stages',

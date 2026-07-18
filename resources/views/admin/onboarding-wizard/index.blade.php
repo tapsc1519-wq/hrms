@@ -112,6 +112,37 @@
         display: block;
         height: 100%;
     }
+    .setup-path {
+        background: #fff;
+        border: 1px solid #dbeafe;
+        border-radius: 8px;
+        box-shadow: 0 4px 18px rgba(15,23,42,.06);
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+    .setup-path-step {
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        display: flex;
+        gap: .65rem;
+        height: 100%;
+        padding: .75rem;
+    }
+    .setup-path-step span {
+        align-items: center;
+        background: #dbeafe;
+        border-radius: 50%;
+        color: #1d4ed8;
+        display: inline-flex;
+        flex: 0 0 28px;
+        font-size: .76rem;
+        font-weight: 800;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+    }
 </style>
 
 <div class="wizard-hero mb-4" data-tour="onboarding-summary">
@@ -143,6 +174,39 @@
                 <div class="small opacity-75">All visible setup steps are complete.</div>
             @endif
         </div>
+    </div>
+</div>
+
+<div class="setup-path" data-tour="onboarding-setup-path">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+            <h5 class="mb-1">Operations Setup Path</h5>
+            <div class="text-muted small">Follow this order before inviting everyone to use the portal daily.</div>
+        </div>
+        @if($next && $next['url'])
+            <a href="{{ $next['url'] }}" class="btn btn-sm btn-primary">
+                <i class="bi bi-arrow-right-circle me-1"></i>Continue Next Step
+            </a>
+        @endif
+    </div>
+    <div class="row g-2">
+        @foreach([
+            'Facilities',
+            'Work Locations',
+            'Departments',
+            'Roles & Permissions',
+            'Shifts',
+            'Employees',
+            'Assets / Software',
+            'Production Readiness',
+        ] as $index => $label)
+            <div class="col-md-3 col-sm-6">
+                <div class="setup-path-step">
+                    <span>{{ $index + 1 }}</span>
+                    <strong class="small">{{ $label }}</strong>
+                </div>
+            </div>
+        @endforeach
     </div>
 </div>
 

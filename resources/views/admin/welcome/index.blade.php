@@ -63,7 +63,7 @@
         <div class="col-lg-8">
             <div class="small text-uppercase fw-bold opacity-75 mb-2">First login</div>
             <h1 class="mb-2">Welcome to OpsBridge, {{ $user->name }}</h1>
-            <p class="lead mb-0">{{ $organization?->name ?? 'Your organization' }} is ready. Start with these steps so the portal feels clear from day one.</p>
+            <p class="lead mb-0">{{ $organization?->name ?? 'Your organization' }} is ready. Complete the setup path first so operations, attendance, assets and access control work correctly from day one.</p>
         </div>
         <div class="col-lg-4">
             <div class="d-flex justify-content-between small fw-bold mb-2">
@@ -97,7 +97,7 @@
                 <span class="welcome-step-number">2</span>
                 <h5 class="mb-0">Open Setup Wizard</h5>
             </div>
-            <p class="text-muted small">The wizard shows facilities, departments, employees, assets, software and go-live steps in the right order.</p>
+            <p class="text-muted small">The wizard shows facilities, work locations, departments, roles, shifts, employees, assets, software and go-live steps in the right order.</p>
             <a href="{{ route('admin.onboarding-wizard.index') }}" class="btn btn-primary btn-sm">
                 <i class="bi bi-arrow-right-circle me-1"></i>{{ $next['action'] ?? 'Start Setup' }}
             </a>
@@ -121,17 +121,20 @@
 <div class="row g-3">
     <div class="col-lg-7">
         <div class="welcome-card" data-tour="admin-welcome-checklist">
-            <h5 class="mb-3">Recommended First Day Checklist</h5>
+            <h5 class="mb-3">New Organization Launch Sequence</h5>
             <div class="d-grid gap-2">
                 @foreach([
-                    'Confirm organization name, contact and billing details with Niyantron team.',
-                    'Create facilities and departments before adding employees.',
-                    'Add employees and assign clear roles before sharing portal access.',
-                    'Load assets and software licenses before endpoint rollout.',
-                    'Use Production Readiness before live usage starts.'
-                ] as $item)
+                    'Confirm organization profile and enabled products.',
+                    'Create facilities first, then add work locations under each facility.',
+                    'Add suggested departments such as IT, HR, Finance, Procurement and Operations.',
+                    'Add suggested roles and permissions before creating admin or manager users.',
+                    'Define attendance shifts before adding employees who will mark attendance.',
+                    'Add employees with department, shift, portal access and permission role.',
+                    'Load assets, suppliers, software catalog and licenses before endpoint rollout.',
+                    'Use Production Readiness before daily live usage starts.'
+                ] as $index => $item)
                     <div class="d-flex align-items-start gap-2 p-2 rounded border bg-light">
-                        <i class="bi bi-check2-circle text-success"></i>
+                        <span class="welcome-step-number">{{ $index + 1 }}</span>
                         <div class="small">{{ $item }}</div>
                     </div>
                 @endforeach
