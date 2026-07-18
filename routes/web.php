@@ -277,32 +277,32 @@ Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', '
 
     // Software Asset Management
     Route::middleware('module:sam')->group(function () {
-    Route::get('sam', [SamDashboardController::class, 'index'])->name('sam-dashboard.index');
-    Route::get('software', [AdminSoftwareController::class, 'index'])->name('software.index');
-    Route::get('software/create', [AdminSoftwareController::class, 'create'])->name('software.create');
-    Route::post('software', [AdminSoftwareController::class, 'store'])->name('software.store');
-    Route::get('software/{software}', [AdminSoftwareController::class, 'show'])->name('software.show');
-    Route::get('software/{software}/edit', [AdminSoftwareController::class, 'edit'])->name('software.edit');
-    Route::put('software/{software}', [AdminSoftwareController::class, 'update'])->name('software.update');
-    Route::delete('software/{software}', [AdminSoftwareController::class, 'destroy'])->name('software.destroy');
+    Route::get('sam', [SamDashboardController::class, 'index'])->middleware('permission:software.manage')->name('sam-dashboard.index');
+    Route::get('software', [AdminSoftwareController::class, 'index'])->middleware('permission:software.manage')->name('software.index');
+    Route::get('software/create', [AdminSoftwareController::class, 'create'])->middleware('permission:software.manage')->name('software.create');
+    Route::post('software', [AdminSoftwareController::class, 'store'])->middleware('permission:software.manage')->name('software.store');
+    Route::get('software/{software}', [AdminSoftwareController::class, 'show'])->middleware('permission:software.manage')->name('software.show');
+    Route::get('software/{software}/edit', [AdminSoftwareController::class, 'edit'])->middleware('permission:software.manage')->name('software.edit');
+    Route::put('software/{software}', [AdminSoftwareController::class, 'update'])->middleware('permission:software.manage')->name('software.update');
+    Route::delete('software/{software}', [AdminSoftwareController::class, 'destroy'])->middleware('permission:software.manage')->name('software.destroy');
     Route::get('software-policies', [SoftwarePolicyController::class, 'index'])->middleware('permission:software.policies.manage')->name('software-policies.index');
     Route::patch('software-policies/{software}', [SoftwarePolicyController::class, 'update'])->middleware('permission:software.policies.manage')->name('software-policies.update');
     Route::post('software-policies/{software}/remediation-tasks', [SoftwarePolicyController::class, 'createRemediationTasks'])->middleware('permission:software.policies.manage')->name('software-policies.remediation');
     Route::get('sam-audit', [SamAuditReportController::class, 'index'])->middleware('permission:software.audit.export')->name('sam-audit.index');
     Route::post('sam-audit/download', [SamAuditReportController::class, 'download'])->middleware('permission:software.audit.export')->name('sam-audit.download');
 
-    Route::get('software-licenses', [SoftwareLicenseController::class, 'index'])->name('software-licenses.index');
-    Route::get('software-licenses/renewals', [SoftwareLicenseController::class, 'renewals'])->name('software-licenses.renewals');
+    Route::get('software-licenses', [SoftwareLicenseController::class, 'index'])->middleware('permission:software.manage')->name('software-licenses.index');
+    Route::get('software-licenses/renewals', [SoftwareLicenseController::class, 'renewals'])->middleware('permission:software.manage')->name('software-licenses.renewals');
     Route::post('software-licenses/{softwareLicense}/renewal-plans', [SoftwareLicenseController::class, 'planRenewal'])->middleware('permission:software.manage')->name('software-licenses.renewal-plans.store');
     Route::patch('software-licenses/{softwareLicense}/renewal-plans/{decision}/complete', [SoftwareLicenseController::class, 'completeRenewal'])->middleware('permission:software.manage')->name('software-licenses.renewal-plans.complete');
     Route::patch('software-licenses/{softwareLicense}/renewal-plans/{decision}/cancel', [SoftwareLicenseController::class, 'cancelRenewalPlan'])->middleware('permission:software.manage')->name('software-licenses.renewal-plans.cancel');
-    Route::get('software-licenses/create', [SoftwareLicenseController::class, 'create'])->name('software-licenses.create');
-    Route::post('software-licenses', [SoftwareLicenseController::class, 'store'])->name('software-licenses.store');
-    Route::get('software-licenses/{softwareLicense}', [SoftwareLicenseController::class, 'show'])->name('software-licenses.show');
+    Route::get('software-licenses/create', [SoftwareLicenseController::class, 'create'])->middleware('permission:software.manage')->name('software-licenses.create');
+    Route::post('software-licenses', [SoftwareLicenseController::class, 'store'])->middleware('permission:software.manage')->name('software-licenses.store');
+    Route::get('software-licenses/{softwareLicense}', [SoftwareLicenseController::class, 'show'])->middleware('permission:software.manage')->name('software-licenses.show');
     Route::patch('software-licenses/{softwareLicense}/evidence', [SoftwareLicenseController::class, 'updateEvidence'])->middleware('permission:software.manage')->name('software-licenses.evidence.update');
-    Route::post('software-licenses/{softwareLicense}/assign', [SoftwareLicenseController::class, 'assign'])->name('software-licenses.assign');
-    Route::patch('software-licenses/{softwareLicense}/assignments/{assignment}/return', [SoftwareLicenseController::class, 'returnLicense'])->name('software-licenses.return');
-    Route::delete('software-licenses/{softwareLicense}', [SoftwareLicenseController::class, 'destroy'])->name('software-licenses.destroy');
+    Route::post('software-licenses/{softwareLicense}/assign', [SoftwareLicenseController::class, 'assign'])->middleware('permission:software.manage')->name('software-licenses.assign');
+    Route::patch('software-licenses/{softwareLicense}/assignments/{assignment}/return', [SoftwareLicenseController::class, 'returnLicense'])->middleware('permission:software.manage')->name('software-licenses.return');
+    Route::delete('software-licenses/{softwareLicense}', [SoftwareLicenseController::class, 'destroy'])->middleware('permission:software.manage')->name('software-licenses.destroy');
 
     Route::get('software-requests', [SoftwareRequestController::class, 'index'])->middleware('permission:software.requests.view')->name('software-requests.index');
     Route::get('software-requests/{softwareRequest}', [SoftwareRequestController::class, 'show'])->middleware('permission:software.requests.view')->name('software-requests.show');
@@ -332,29 +332,29 @@ Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', '
     Route::post('agent-sources/commands/inventory-refresh/bulk', [AgentSourceController::class, 'bulkQueueInventory'])->middleware('permission:software.agents.manage')->name('agent-sources.commands.inventory-refresh.bulk');
     Route::patch('agent-sources/{deviceAgent}/commands/{command}/cancel', [AgentSourceController::class, 'cancelCommand'])->middleware('permission:software.agents.manage')->name('agent-sources.commands.cancel');
 
-    Route::get('software-discovery', [SoftwareDiscoveryController::class, 'index'])->name('software-discovery.index');
-    Route::get('software-discovery/import', [SoftwareDiscoveryController::class, 'import'])->name('software-discovery.import');
-    Route::post('software-discovery/import', [SoftwareDiscoveryController::class, 'storeImport'])->name('software-discovery.import.store');
-    Route::get('software-discovery/template', [SoftwareDiscoveryController::class, 'template'])->name('software-discovery.template');
-    Route::get('software-normalization', [SoftwareDiscoveryController::class, 'workbench'])->name('software-normalization.index');
+    Route::get('software-discovery', [SoftwareDiscoveryController::class, 'index'])->middleware('permission:software.manage')->name('software-discovery.index');
+    Route::get('software-discovery/import', [SoftwareDiscoveryController::class, 'import'])->middleware('permission:software.manage')->name('software-discovery.import');
+    Route::post('software-discovery/import', [SoftwareDiscoveryController::class, 'storeImport'])->middleware('permission:software.manage')->name('software-discovery.import.store');
+    Route::get('software-discovery/template', [SoftwareDiscoveryController::class, 'template'])->middleware('permission:software.manage')->name('software-discovery.template');
+    Route::get('software-normalization', [SoftwareDiscoveryController::class, 'workbench'])->middleware('permission:software.manage')->name('software-normalization.index');
     Route::get('software-recognition-rules', [SoftwareDiscoveryController::class, 'recognitionRules'])->middleware('permission:software.manage')->name('software-recognition-rules.index');
     Route::post('software-recognition-rules', [SoftwareDiscoveryController::class, 'storeRecognitionRule'])->middleware('permission:software.manage')->name('software-recognition-rules.store');
     Route::delete('software-recognition-rules/{rule}', [SoftwareDiscoveryController::class, 'destroyRecognitionRule'])->middleware('permission:software.manage')->name('software-recognition-rules.destroy');
-    Route::patch('software-normalization/map-group', [SoftwareDiscoveryController::class, 'normalizeGroup'])->name('software-normalization.map-group');
-    Route::post('software-normalization/create-and-map-group', [SoftwareDiscoveryController::class, 'createAndNormalizeGroup'])->name('software-normalization.create-and-map-group');
-    Route::patch('software-normalization/ignore-group', [SoftwareDiscoveryController::class, 'ignoreGroup'])->name('software-normalization.ignore-group');
-    Route::patch('software-discovery/{discovery}/normalize', [SoftwareDiscoveryController::class, 'normalize'])->name('software-discovery.normalize');
-    Route::patch('software-discovery/{discovery}/ignore', [SoftwareDiscoveryController::class, 'ignore'])->name('software-discovery.ignore');
-    Route::get('software-compliance', [SoftwareComplianceController::class, 'index'])->name('software-compliance.index');
-    Route::get('software-compliance/{software}', [SoftwareComplianceController::class, 'show'])->name('software-compliance.show');
-    Route::post('software-compliance/{software}/assign-missing-license', [SoftwareComplianceController::class, 'assignMissingLicense'])->name('software-compliance.assign-missing-license');
-    Route::post('software-compliance/{software}/discoveries/{discovery}/uninstall-action', [SoftwareComplianceController::class, 'createUninstallAction'])->name('software-compliance.uninstall-action');
+    Route::patch('software-normalization/map-group', [SoftwareDiscoveryController::class, 'normalizeGroup'])->middleware('permission:software.manage')->name('software-normalization.map-group');
+    Route::post('software-normalization/create-and-map-group', [SoftwareDiscoveryController::class, 'createAndNormalizeGroup'])->middleware('permission:software.manage')->name('software-normalization.create-and-map-group');
+    Route::patch('software-normalization/ignore-group', [SoftwareDiscoveryController::class, 'ignoreGroup'])->middleware('permission:software.manage')->name('software-normalization.ignore-group');
+    Route::patch('software-discovery/{discovery}/normalize', [SoftwareDiscoveryController::class, 'normalize'])->middleware('permission:software.manage')->name('software-discovery.normalize');
+    Route::patch('software-discovery/{discovery}/ignore', [SoftwareDiscoveryController::class, 'ignore'])->middleware('permission:software.manage')->name('software-discovery.ignore');
+    Route::get('software-compliance', [SoftwareComplianceController::class, 'index'])->middleware('permission:software.manage')->name('software-compliance.index');
+    Route::get('software-compliance/{software}', [SoftwareComplianceController::class, 'show'])->middleware('permission:software.manage')->name('software-compliance.show');
+    Route::post('software-compliance/{software}/assign-missing-license', [SoftwareComplianceController::class, 'assignMissingLicense'])->middleware('permission:software.manage')->name('software-compliance.assign-missing-license');
+    Route::post('software-compliance/{software}/discoveries/{discovery}/uninstall-action', [SoftwareComplianceController::class, 'createUninstallAction'])->middleware('permission:software.manage')->name('software-compliance.uninstall-action');
     Route::post('software-compliance/{software}/discoveries/{discovery}/policy-exceptions', [SoftwareComplianceController::class, 'approvePolicyException'])->middleware('permission:software.policies.manage')->name('software-compliance.policy-exceptions.store');
     Route::patch('software-compliance/{software}/policy-exceptions/{exception}/extend', [SoftwareComplianceController::class, 'extendPolicyException'])->middleware('permission:software.policies.manage')->name('software-compliance.policy-exceptions.extend');
     Route::patch('software-compliance/{software}/policy-exceptions/{exception}/revoke', [SoftwareComplianceController::class, 'revokePolicyException'])->middleware('permission:software.policies.manage')->name('software-compliance.policy-exceptions.revoke');
-    Route::post('software-compliance/{software}/actions', [SoftwareComplianceController::class, 'storeAction'])->name('software-compliance.actions.store');
+    Route::post('software-compliance/{software}/actions', [SoftwareComplianceController::class, 'storeAction'])->middleware('permission:software.manage')->name('software-compliance.actions.store');
     Route::post('software-compliance/{software}/actions/{action}/queue-uninstall', [SoftwareComplianceController::class, 'queueUninstallCommand'])->middleware('permission:endpoint.software.manage')->name('software-compliance.actions.queue-uninstall');
-    Route::patch('software-compliance/{software}/actions/{action}/complete', [SoftwareComplianceController::class, 'completeAction'])->name('software-compliance.actions.complete');
+    Route::patch('software-compliance/{software}/actions/{action}/complete', [SoftwareComplianceController::class, 'completeAction'])->middleware('permission:software.manage')->name('software-compliance.actions.complete');
     });
 
     // HRMS
