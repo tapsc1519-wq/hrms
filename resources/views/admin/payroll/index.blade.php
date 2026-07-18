@@ -51,8 +51,8 @@
     <div class="col-md-3">
         <div class="stat-card-gradient grad-purple p-3">
             <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
-            <div class="stat-value">{{ $structures->total() }}</div>
-            <div class="stat-label">Salary Structures</div>
+            <div class="stat-value">{{ $activeStructures }}/{{ $structures->total() }}</div>
+            <div class="stat-label">Active / Total Structures</div>
         </div>
     </div>
 </div>
@@ -101,7 +101,7 @@
         <div class="table-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>Employee Salary Structures</span>
-                <span class="badge bg-primary">{{ $structures->total() }}</span>
+                <span class="badge bg-primary">{{ $activeStructures }} Active / {{ $inactiveStructures }} Inactive</span>
             </div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
@@ -132,8 +132,27 @@
                                 <td class="text-end">&#8377;{{ number_format((float) $structure->gross_earnings, 2) }}</td>
                                 <td class="text-end">&#8377;{{ number_format((float) $structure->total_deductions, 2) }}</td>
                                 <td class="text-end fw-bold">&#8377;{{ number_format((float) $structure->net_salary, 2) }}</td>
-                                <td><span class="badge bg-{{ $structure->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($structure->status) }}</span></td>
+                                <td>
+                                    @if($structure->status === 'active')
+                                        <span class="badge bg-success d-inline-flex align-items-center gap-1">
+                                            <i class="bi bi-check2-circle"></i> Active - Used in Payroll
+                                        </span>
+                                    @else
+                                        <span class="badge bg-secondary d-inline-flex align-items-center gap-1">
+                                            <i class="bi bi-archive"></i> Inactive - History Only
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="text-end pe-4">
+                                    @if($structure->status !== 'active')
+                                        <form method="POST" action="{{ route('admin.payroll.structures.activate', $structure) }}" class="d-inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button class="btn btn-sm btn-outline-success" title="Use this salary in payroll">
+                                                <i class="bi bi-check2-circle"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editSalary{{ $structure->id }}">
                                         <i class="bi bi-pencil"></i>
                                     </button>
@@ -210,6 +229,7 @@
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
+                        <div class="form-text">Active salary is used in payroll.</div>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Currency</label>
@@ -284,7 +304,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info border-0">
-                        Payroll readiness counts this employee only when this structure is Active and Effective From is on or before the selected payroll month end date.
+                        Active salary is used in payroll. Inactive salary stays as history and is not used for payroll runs.
                     </div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-5">
@@ -301,6 +321,7 @@
                                 <option value="active" @selected($structure->status === 'active')>Active</option>
                                 <option value="inactive" @selected($structure->status === 'inactive')>Inactive</option>
                             </select>
+                            <div class="form-text">Active salary is used in payroll.</div>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Currency</label>

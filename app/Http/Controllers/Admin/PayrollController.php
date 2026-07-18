@@ -36,7 +36,14 @@ class PayrollController extends Controller
             ->latest('effective_from')
             ->paginate(20);
 
-        return view('admin.payroll.index', compact('components', 'employees', 'structures'));
+        $activeStructures = EmployeeSalaryStructure::where('organization_id', $this->orgId())
+            ->where('status', 'active')
+            ->count();
+        $inactiveStructures = EmployeeSalaryStructure::where('organization_id', $this->orgId())
+            ->where('status', 'inactive')
+            ->count();
+
+        return view('admin.payroll.index', compact('components', 'employees', 'structures', 'activeStructures', 'inactiveStructures'));
     }
 
     public function runs(Request $request)
@@ -397,6 +404,22 @@ class PayrollController extends Controller
         });
 
         return back()->with('success', 'Salary structure updated.');
+    }
+
+    public function activateStructure(EmployeeSalaryStructure $structure)
+    {
+        abort_if($structure->organization_id !== $this->orgId(), 403);
+
+        DB::transaction(function () use ($structure) {
+            EmployeeSalaryStructure::where('organization_id', $this->orgId())
+                ->where('employee_profile_id', $structure->employee_profile_id)
+                ->whereKeyNot($structure->id)
+                ->update(['status' => 'inactive']);
+
+            $structure->update(['status' => 'active']);
+        });
+
+        return back()->with('success', 'Salary structure activated for payroll.');
     }
 
     private function componentData(Request $request, ?PayrollComponent $component = null): array

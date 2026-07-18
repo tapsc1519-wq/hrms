@@ -420,6 +420,7 @@ Route::prefix('admin')->name('admin.')->middleware(['portal.domain:opsbridge', '
     Route::delete('payroll/components/{component}', [PayrollController::class, 'destroyComponent'])->middleware('permission:payroll.setup')->name('payroll.components.destroy');
     Route::post('payroll/structures', [PayrollController::class, 'storeStructure'])->middleware('permission:payroll.setup')->name('payroll.structures.store');
     Route::patch('payroll/structures/{structure}', [PayrollController::class, 'updateStructure'])->middleware('permission:payroll.setup')->name('payroll.structures.update');
+    Route::patch('payroll/structures/{structure}/activate', [PayrollController::class, 'activateStructure'])->middleware('permission:payroll.setup')->name('payroll.structures.activate');
     Route::delete('payroll/structures/{structure}', [PayrollController::class, 'destroyStructure'])->middleware('permission:payroll.setup')->name('payroll.structures.destroy');
     });
 
