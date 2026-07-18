@@ -350,8 +350,8 @@
         border: 1px solid #e2e8f0;
         border-radius: 14px;
         box-shadow: 0 16px 38px rgba(15, 23, 42, .14);
-        max-height: 430px;
-        min-width: 360px;
+        max-height: 520px;
+        min-width: 390px;
         overflow: hidden;
         padding: 0;
     }
@@ -440,6 +440,13 @@
         display: block;
         font-size: 1.8rem;
         margin-bottom: .35rem;
+    }
+    .notification-footer {
+        background: #f8fafc;
+        border-top: 1px solid #eef2f7;
+        display: flex;
+        gap: .5rem;
+        padding: .65rem .75rem;
     }
 
     /* ═══════════════════════════════════════════════
@@ -1875,7 +1882,7 @@
                 <i class="bi bi-question-circle"></i>
                 <span class="d-none d-md-inline">Page Help</span>
             </button>
-            @if(in_array(auth()->user()->role, ['admin', 'staff'], true))
+            @if(in_array(auth()->user()->role, ['super_admin', 'admin', 'staff'], true))
             <div class="dropdown">
                 <button class="topbar-icon-btn notification-trigger" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Action notifications">
                     <i class="bi bi-bell-fill"></i>
@@ -1887,7 +1894,7 @@
                     <div class="notification-menu-header">
                         <div>
                             <div class="notification-menu-title">Action Center</div>
-                            <div class="notification-menu-subtitle">Pending tasks and requests for your role</div>
+                            <div class="notification-menu-subtitle">Priority reminders for your role</div>
                         </div>
                         <span class="badge bg-primary">{{ $actionNotifications['count'] }}</span>
                     </div>
@@ -1913,6 +1920,17 @@
                                 <div style="font-size:.72rem">You are clear for now.</div>
                             </div>
                         @endforelse
+                    </div>
+                    <div class="notification-footer">
+                        @if(auth()->user()->isSuperAdmin())
+                            <a href="{{ route('super-admin.dashboard') }}" class="btn btn-sm btn-outline-primary w-100">Platform Dashboard</a>
+                        @elseif(auth()->user()->isAdmin())
+                            <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-outline-primary w-100">Admin Dashboard</a>
+                            <a href="{{ route('admin.tasks.index') }}" class="btn btn-sm btn-primary w-100">Tasks</a>
+                        @else
+                            <a href="{{ route('staff.dashboard') }}" class="btn btn-sm btn-outline-primary w-100">My Dashboard</a>
+                            <a href="{{ route('staff.tasks.index') }}" class="btn btn-sm btn-primary w-100">My Tasks</a>
+                        @endif
                     </div>
                 </div>
             </div>
