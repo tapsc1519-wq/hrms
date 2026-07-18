@@ -141,6 +141,19 @@ class ActionNotificationService
                 'priority' => 75,
             ]);
 
+            if ($user->hasPermission('assignments.return')) {
+                self::push($items, AssetHandoverRequest::whereHas('asset', fn($query) => $query->where('organization_id', $orgId))
+                    ->whereIn('status', ['pending', 'pending_admin'])
+                    ->count(), [
+                    'title' => 'Asset handovers need approval',
+                    'subtitle' => 'Approve or reject employee-to-employee handover requests',
+                    'icon' => 'bi-arrow-left-right',
+                    'color' => 'warning',
+                    'url' => route('admin.assignments.index'),
+                    'priority' => 86,
+                ]);
+            }
+
             self::push($items, AssetRepair::where('organization_id', $orgId)->where('status', 'qc_pending')->count(), [
                 'title' => 'Repair jobs need quality check',
                 'subtitle' => 'Complete QC before returning repaired assets',
@@ -345,13 +358,35 @@ class ActionNotificationService
         }
 
         if ($org?->hasModule('itam')) {
-            self::push($items, AssetHandoverRequest::where('to_user_id', $user->id)->where('status', 'pending')->count(), [
-                'title' => 'Incoming asset handover',
-                'subtitle' => 'Accept or reject asset transfer requests',
+            if ($user->hasPermission('assignments.return')) {
+                self::push($items, AssetHandoverRequest::whereHas('asset', fn($query) => $query->where('organization_id', $user->organization_id))
+                    ->whereIn('status', ['pending', 'pending_admin'])
+                    ->count(), [
+                    'title' => 'Asset handovers need approval',
+                    'subtitle' => 'Approve or reject employee handover requests',
+                    'icon' => 'bi-arrow-left-right',
+                    'color' => 'warning',
+                    'url' => route('admin.assignments.index'),
+                    'priority' => 92,
+                ]);
+            }
+
+            self::push($items, AssetHandoverRequest::where('to_user_id', $user->id)->where('status', 'approved')->count(), [
+                'title' => 'Asset handover approved for you',
+                'subtitle' => 'Accept or reject the incoming asset handover',
                 'icon' => 'bi-arrow-left-right',
                 'color' => 'primary',
                 'url' => route('staff.my-assets.index'),
                 'priority' => 90,
+            ]);
+
+            self::push($items, AssetHandoverRequest::where('from_user_id', $user->id)->whereIn('status', ['pending', 'pending_admin'])->count(), [
+                'title' => 'Asset handover waiting for IT',
+                'subtitle' => 'Track handover requests you submitted for approval',
+                'icon' => 'bi-hourglass-split',
+                'color' => 'warning',
+                'url' => route('staff.my-assets.index'),
+                'priority' => 58,
             ]);
 
             self::push($items, AssetRequest::where('requester_id', $user->id)->whereIn('status', ['pending', 'approved'])->count(), [
