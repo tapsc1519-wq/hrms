@@ -20,11 +20,13 @@ use Throwable;
 
 class AuthController extends Controller
 {
-    public function showLogin()
+    public function showLogin(Request $request)
     {
+        $this->rememberRequestedProduct($request);
         if (Auth::check()) {
-            return $this->redirectByRole(Auth::user()->role);
+            return $this->redirectAfterAuthentication(Auth::user()->role);
         }
+
         return view('auth.login', [
             'ssoProviders' => [
                 'google' => $this->hasConfiguredOrganizationSso('google'),
@@ -45,7 +47,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
 
@@ -56,7 +58,8 @@ class AuthController extends Controller
                 $request->session()->put('admin_first_login', true);
             }
             $user->update(['last_login_at' => now()]);
-            return $this->redirectByRole($user->role);
+
+            return $this->redirectAfterAuthentication($user->role);
         }
 
         return back()->withErrors(['email' => 'Invalid email or password.'])->onlyInput('email');
@@ -71,13 +74,13 @@ class AuthController extends Controller
 
         $provider = $validated['provider'];
 
-        if (!$this->isSupportedSsoProvider($provider)) {
+        if (! $this->isSupportedSsoProvider($provider)) {
             abort(404);
         }
 
         $organization = $this->resolveOrganizationForSso($validated['organization']);
 
-        if (!$organization) {
+        if (! $organization) {
             return redirect()->route('login')
                 ->with('error', 'We could not find that organization. Try the organization name, workspace slug, admin email, or company email domain.')
                 ->withInput();
@@ -87,9 +90,9 @@ class AuthController extends Controller
             ->where('provider', $provider)
             ->first();
 
-        if (!$setting?->isReady()) {
+        if (! $setting?->isReady()) {
             return redirect()->route('login')
-                ->with('error', ucfirst($provider) . ' SSO is not enabled for ' . $organization->name . '.')
+                ->with('error', ucfirst($provider).' SSO is not enabled for '.$organization->name.'.')
                 ->withInput();
         }
 
@@ -107,7 +110,7 @@ class AuthController extends Controller
         $provider = $ssoSession['provider'] ?? null;
         $organizationId = $ssoSession['organization_id'] ?? null;
 
-        if (!$this->isSupportedSsoProvider($provider)) {
+        if (! $this->isSupportedSsoProvider($provider)) {
             return redirect()->route('login')
                 ->with('error', 'Your SSO session expired. Please start Microsoft or Google sign-in again.');
         }
@@ -117,28 +120,28 @@ class AuthController extends Controller
             ->with('organization')
             ->first();
 
-        if (!$setting?->isReady()) {
+        if (! $setting?->isReady()) {
             return redirect()->route('login')
-                ->with('error', ucfirst($provider) . ' SSO is no longer enabled for this organization.');
+                ->with('error', ucfirst($provider).' SSO is no longer enabled for this organization.');
         }
 
         try {
             $ssoUser = $this->socialiteDriver($setting)->user();
         } catch (Throwable) {
             return redirect()->route('login')
-                ->with('error', 'Unable to sign in with ' . ucfirst($provider) . '. Please try again.');
+                ->with('error', 'Unable to sign in with '.ucfirst($provider).'. Please try again.');
         }
 
         $email = strtolower((string) ($ssoUser->getEmail() ?: ($ssoUser->user['mail'] ?? $ssoUser->user['userPrincipalName'] ?? '')));
 
         if ($email === '') {
             return redirect()->route('login')
-                ->with('error', ucfirst($provider) . ' did not return an email address for this account.');
+                ->with('error', ucfirst($provider).' did not return an email address for this account.');
         }
 
-        if (!$setting->allowsEmail($email)) {
+        if (! $setting->allowsEmail($email)) {
             return redirect()->route('login')
-                ->with('error', $email . ' is not allowed for ' . $setting->organization->name . ' SSO.');
+                ->with('error', $email.' is not allowed for '.$setting->organization->name.' SSO.');
         }
 
         $user = User::whereRaw('LOWER(email) = ?', [$email])
@@ -146,9 +149,9 @@ class AuthController extends Controller
             ->where('status', 'active')
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login')
-                ->with('error', 'No active user account exists for ' . $email . ' in ' . $setting->organization->name . '. Please ask your administrator to create your account first.');
+                ->with('error', 'No active user account exists for '.$email.' in '.$setting->organization->name.'. Please ask your administrator to create your account first.');
         }
 
         Auth::login($user, true);
@@ -158,8 +161,9 @@ class AuthController extends Controller
         }
         $user->update(['last_login_at' => now()]);
 
-        return $this->redirectByRole($user->role);
+        return $this->redirectAfterAuthentication($user->role);
     }
+
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -188,7 +192,7 @@ class AuthController extends Controller
 
             return User::create([
                 'organization_id' => $organization->id,
-                'name' => $validated['organization_name'] . ' Admin',
+                'name' => $validated['organization_name'].' Admin',
                 'email' => $validated['organization_email'],
                 'password' => Hash::make($validated['password']),
                 'role' => 'admin',
@@ -236,6 +240,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/login');
     }
 
@@ -276,9 +281,9 @@ class AuthController extends Controller
 
                 if (str_contains($value, '@')) {
                     $domain = str($value)->afterLast('@')->toString();
-                    $query->orWhereRaw('LOWER(email) LIKE ?', ['%@' . $domain]);
+                    $query->orWhereRaw('LOWER(email) LIKE ?', ['%@'.$domain]);
                 } elseif (str_contains($value, '.')) {
-                    $query->orWhereRaw('LOWER(email) LIKE ?', ['%@' . $value]);
+                    $query->orWhereRaw('LOWER(email) LIKE ?', ['%@'.$value]);
                 }
             });
 
@@ -299,31 +304,49 @@ class AuthController extends Controller
 
         return Socialite::driver($setting->provider);
     }
+
     private function redirectByRole(string $role)
     {
         if ($role === 'admin' && Auth::user()?->isAdmin() && (session('admin_first_login') || Auth::user()?->must_change_password)) {
             return $this->redirectToPortalRoute('admin.welcome.index', config('niyantron.products.opsbridge.domain'));
         }
 
-        return match($role) {
+        return match ($role) {
             'super_admin' => $this->redirectToPortalRoute('super-admin.dashboard', config('niyantron.platform_domain')),
-            'admin'       => $this->redirectToPortalRoute('admin.dashboard', config('niyantron.products.opsbridge.domain')),
-            'supplier'    => $this->redirectToPortalRoute('supplier.dashboard', config('niyantron.products.opsbridge.domain')),
-            'partner'     => $this->redirectToPortalRoute('partner.dashboard', config('niyantron.platform_domain')),
-            'staff'       => $this->redirectToPortalRoute('staff.dashboard', config('niyantron.products.opsbridge.domain')),
-            default       => redirect()->route('login'),
+            'admin' => $this->redirectToPortalRoute('admin.dashboard', config('niyantron.products.opsbridge.domain')),
+            'supplier' => $this->redirectToPortalRoute('supplier.dashboard', config('niyantron.products.opsbridge.domain')),
+            'partner' => $this->redirectToPortalRoute('partner.dashboard', config('niyantron.platform_domain')),
+            'staff' => $this->redirectToPortalRoute('staff.dashboard', config('niyantron.products.opsbridge.domain')),
+            default => redirect()->route('login'),
         };
+    }
+
+    private function rememberRequestedProduct(Request $request): void
+    {
+        $product = strtolower((string) $request->query('product'));
+        if (in_array($product, ['erp'], true)) {
+            $request->session()->put('intended_product', $product);
+        }
+    }
+
+    private function redirectAfterAuthentication(string $role)
+    {
+        if (session()->pull('intended_product') === 'erp' && Auth::user()?->organization_id) {
+            return $this->redirectToPortalRoute('products.erp.launch', config('niyantron.platform_domain'));
+        }
+
+        return $this->redirectByRole($role);
     }
 
     private function redirectToPortalRoute(string $routeName, ?string $domain)
     {
-        if (!$this->shouldUsePortalDomain($domain)) {
+        if (! $this->shouldUsePortalDomain($domain)) {
             return redirect()->route($routeName);
         }
 
         $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: 'https';
 
-        return redirect()->to($scheme . '://' . $domain . route($routeName, [], false));
+        return redirect()->to($scheme.'://'.$domain.route($routeName, [], false));
     }
 
     private function shouldUsePortalDomain(?string $domain): bool
@@ -342,7 +365,7 @@ class AuthController extends Controller
         $counter = 2;
 
         while (Organization::where('slug', $slug)->exists()) {
-            $slug = $base . '-' . $counter;
+            $slug = $base.'-'.$counter;
             $counter++;
         }
 
@@ -353,7 +376,7 @@ class AuthController extends Controller
     {
         $product = Product::where('slug', 'opsbridge')->first();
 
-        if (!$product) {
+        if (! $product) {
             return;
         }
 
@@ -373,7 +396,7 @@ class AuthController extends Controller
                 'subscription_started_at' => $organization->last_payment_at,
                 'subscription_ends_at' => $organization->subscription_ends_at,
                 'last_payment_at' => $organization->last_payment_at,
-                'product_database' => config('database.connections.' . config('database.product_connection', 'opsbridge') . '.database'),
+                'product_database' => config('database.connections.'.config('database.product_connection', 'opsbridge').'.database'),
                 'product_domain' => $product->domain ?: 'opsbridge.niyantron.com',
             ]
         );
