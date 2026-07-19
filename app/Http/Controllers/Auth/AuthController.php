@@ -20,11 +20,10 @@ use Throwable;
 
 class AuthController extends Controller
 {
-    public function showLogin(Request $request)
+    public function showLogin()
     {
-        $this->rememberRequestedProduct($request);
         if (Auth::check()) {
-            return $this->redirectAfterAuthentication(Auth::user()->role);
+            return $this->redirectByRole(Auth::user()->role);
         }
 
         return view('auth.login', [
@@ -59,7 +58,7 @@ class AuthController extends Controller
             }
             $user->update(['last_login_at' => now()]);
 
-            return $this->redirectAfterAuthentication($user->role);
+            return $this->redirectByRole($user->role);
         }
 
         return back()->withErrors(['email' => 'Invalid email or password.'])->onlyInput('email');
@@ -161,7 +160,7 @@ class AuthController extends Controller
         }
         $user->update(['last_login_at' => now()]);
 
-        return $this->redirectAfterAuthentication($user->role);
+        return $this->redirectByRole($user->role);
     }
 
     public function register(Request $request)
@@ -319,23 +318,6 @@ class AuthController extends Controller
             'staff' => $this->redirectToPortalRoute('staff.dashboard', config('niyantron.products.opsbridge.domain')),
             default => redirect()->route('login'),
         };
-    }
-
-    private function rememberRequestedProduct(Request $request): void
-    {
-        $product = strtolower((string) $request->query('product'));
-        if (in_array($product, ['erp'], true)) {
-            $request->session()->put('intended_product', $product);
-        }
-    }
-
-    private function redirectAfterAuthentication(string $role)
-    {
-        if (session()->pull('intended_product') === 'erp' && Auth::user()?->organization_id) {
-            return $this->redirectToPortalRoute('products.erp.launch', config('niyantron.platform_domain'));
-        }
-
-        return $this->redirectByRole($role);
     }
 
     private function redirectToPortalRoute(string $routeName, ?string $domain)
