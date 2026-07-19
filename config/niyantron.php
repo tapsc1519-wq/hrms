@@ -16,5 +16,11 @@ return [
             'login_title' => env('OPSBRIDGE_LOGIN_TITLE', 'Welcome back to OpsBridge'),
             'login_subtitle' => env('OPSBRIDGE_LOGIN_SUBTITLE', 'Access your IT operations workspace.'),
         ],
+        'erp' => [
+            'name' => env('ERP_NAME', 'Niyantron ERP'),
+            'domain' => env('ERP_DOMAIN', 'erp.niyantron.com'),
+            'url' => env('ERP_URL', 'https://erp.niyantron.com'),
+            'sso_secret' => env('ERP_SSO_SHARED_SECRET'),
+        ],
     ],
 ];

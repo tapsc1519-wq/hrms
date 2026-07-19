@@ -125,6 +125,9 @@ Route::post('/auth/sso/redirect', [AuthController::class, 'redirectToSso'])->nam
 Route::get('/auth/sso/callback', [AuthController::class, 'handleSsoCallback'])->name('sso.callback');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
+    Route::get('/launch/erp', \App\Http\Controllers\Platform\ErpLaunchController::class)
+        ->middleware(['portal.domain:platform', 'product.access:erp'])
+        ->name('products.erp.launch');
     Route::get('/account/password', [AuthController::class, 'editPassword'])->name('account.password.edit');
     Route::patch('/account/password', [AuthController::class, 'updatePassword'])->name('account.password.update');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
