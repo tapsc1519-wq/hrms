@@ -52,6 +52,7 @@ use App\Http\Controllers\Partner\DashboardController as PartnerDashboard;
 use App\Http\Controllers\Partner\LeadController as PartnerLeadPortalController;
 use App\Http\Controllers\Platform\ErpLaunchController;
 use App\Http\Controllers\Platform\ProductLogoutController;
+use App\Http\Controllers\Platform\ProductSessionLogoutController;
 use App\Http\Controllers\Staff\AssetController as StaffAssetController;
 use App\Http\Controllers\Staff\AttendanceController as StaffAttendanceController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboard;
@@ -128,6 +129,9 @@ Route::get('/auth/sso/callback', [AuthController::class, 'handleSsoCallback'])->
 Route::get('/auth/product-logout', ProductLogoutController::class)
     ->middleware('portal.domain:platform')
     ->name('products.logout');
+Route::get('/auth/product-session-logout', ProductSessionLogoutController::class)
+    ->middleware('portal.domain:opsbridge')
+    ->name('products.session-logout');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
     Route::get('/launch/erp', ErpLaunchController::class)

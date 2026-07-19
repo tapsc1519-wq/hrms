@@ -8,19 +8,16 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-final class ProductLogoutController extends Controller
+final class ProductSessionLogoutController extends Controller
 {
     public function __invoke(Request $request, ErpLogoutTicketVerifier $tickets): RedirectResponse
     {
-        $ticket = $request->validate(['ticket' => ['required', 'string', 'max:8192']])['ticket'];
-        $tickets->verify($ticket);
+        $tickets->verify($request->validate(['ticket' => ['required', 'string', 'max:8192']])['ticket']);
 
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        $opsBridge = 'https://'.config('niyantron.products.opsbridge.domain');
-
-        return redirect()->away($opsBridge.'/auth/product-session-logout?ticket='.urlencode($ticket));
+        return redirect()->away(rtrim((string) config('niyantron.products.erp.url'), '/').'/login?logged_out=1');
     }
 }
