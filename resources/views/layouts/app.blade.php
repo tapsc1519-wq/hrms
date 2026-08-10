@@ -166,10 +166,10 @@
     }
     .sidebar-powered-by:hover { color: #94a3b8; }
     .sidebar-powered-by img {
-        background: #fff;
-        border-radius: 3px;
         display: block;
-        height: 19px;
+        filter: brightness(0) invert(1);
+        height: 21px;
+        opacity: .78;
         object-fit: contain;
         width: auto;
     }
@@ -1986,7 +1986,7 @@
     @if($isOrganizationWorkspace)
         <a class="sidebar-powered-by" href="https://niyantron.com" target="_blank" rel="noopener" aria-label="Powered by Niyantron">
             <span>Powered by</span>
-            <img src="{{ asset('brand/niyantron-logo-full.jpg') }}" alt="Niyantron" width="88" height="19">
+            <img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron" width="96" height="21">
         </a>
     @endif
 
