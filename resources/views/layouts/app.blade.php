@@ -168,7 +168,7 @@
     .sidebar-powered-by img {
         display: block;
         filter: brightness(0) invert(1);
-        height: 21px;
+        height: 13px;
         opacity: .78;
         object-fit: contain;
         width: auto;
@@ -1986,7 +1986,7 @@
     @if($isOrganizationWorkspace)
         <a class="sidebar-powered-by" href="https://niyantron.com" target="_blank" rel="noopener" aria-label="Powered by Niyantron">
             <span>Powered by</span>
-            <img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron" width="96" height="21">
+            <img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron" width="60" height="13">
         </a>
     @endif
 
