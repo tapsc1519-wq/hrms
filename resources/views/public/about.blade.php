@@ -1,89 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>About Niyantron</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        :root { --ink:#102033; --muted:#607085; --line:#dce5ee; }
-        body { background:#f7fafc; color:var(--ink); font-family:Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-        .nav-wrap { backdrop-filter:blur(16px); background:rgba(255,255,255,.9); border-bottom:1px solid var(--line); position:fixed; top:0; left:0; right:0; z-index:20; }
-        .brand-mark { align-items:center; background:#102033; border-radius:10px; color:#fff; display:inline-flex; font-weight:900; height:34px; justify-content:center; width:34px; }
-        .hero { min-height:58vh; padding:8.5rem 0 4rem; position:relative; overflow:hidden; }
-        .hero:before { background:linear-gradient(135deg,#fff 0%,#eef6ff 55%,#f7fafc 100%); content:""; inset:0; position:absolute; z-index:-1; }
-        h1 { font-size:clamp(2.2rem,5vw,4.5rem); font-weight:900; letter-spacing:0; line-height:1.05; }
-        h2 { font-weight:900; letter-spacing:0; }
-        .lead { color:var(--muted); line-height:1.75; }
-        .btn { border-radius:999px; font-weight:800; padding:.72rem 1.1rem; }
-        .panel { background:#fff; border:1px solid var(--line); border-radius:18px; box-shadow:0 16px 40px rgba(16,32,51,.07); height:100%; padding:1.5rem; }
-        .icon-box { align-items:center; border-radius:14px; display:inline-flex; height:44px; justify-content:center; width:44px; }
-        .section { padding:5rem 0; }
-        .story-card { background:#102033; border-radius:24px; color:#fff; padding:2rem; }
-        .principle { border-left:4px solid #1e66f5; padding-left:1rem; }
-        @media (max-width:767.98px) { .hero { padding-top:7rem; } .nav-links { display:none!important; } }
-    </style>
-</head>
-<body>
-    <nav class="nav-wrap">
-        <div class="container py-3 d-flex justify-content-between align-items-center">
-            <a href="/" class="d-flex align-items-center gap-2 text-dark text-decoration-none"><span class="brand-mark">N</span><strong>Niyantron</strong></a>
-            <div class="nav-links d-flex align-items-center gap-4 small fw-bold">
-                <a href="/" class="text-dark text-decoration-none">Home</a>
-                <a href="/about" class="text-dark text-decoration-none">About</a>
-                <a href="/contact" class="text-dark text-decoration-none">Contact</a>
-                <a href="https://partner.niyantron.com" class="text-dark text-decoration-none">Partners</a>
-            </div>
-            <a href="https://opsbridge.niyantron.com/login" class="btn btn-primary btn-sm">Product Login</a>
-        </div>
-    </nav>
-
-    <main>
-        <section class="hero">
-            <div class="container">
-                <div class="row g-5 align-items-center">
-                    <div class="col-lg-7">
-                        <h1>We are building a product company for operational control.</h1>
-                        <p class="lead mt-4">Niyantron is the mother company behind OpsBridge and future business products. Our direction is simple: help organizations control the moving parts of daily operations with software that is clear, accountable and practical.</p>
-                    </div>
-                    <div class="col-lg-5">
-                        <div class="story-card">
-                            <div class="small text-white-50 text-uppercase fw-bold mb-2">Company belief</div>
-                            <h3 class="fw-bold">Good software should make responsibility visible.</h3>
-                            <p class="text-white-50 mb-0">Assets, people, vendors, subscriptions and partners should not disappear into spreadsheets and messages. They should be owned, tracked and acted on.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section">
-            <div class="container">
-                <div class="row g-3">
-                    <div class="col-md-4"><div class="panel"><span class="icon-box bg-primary-subtle text-primary"><i class="bi bi-layers"></i></span><h5 class="fw-bold mt-3">Mother brand</h5><p class="text-muted mb-0">Niyantron manages multiple products under one trusted company identity.</p></div></div>
-                    <div class="col-md-4"><div class="panel"><span class="icon-box bg-success-subtle text-success"><i class="bi bi-hdd-network"></i></span><h5 class="fw-bold mt-3">First product</h5><p class="text-muted mb-0">OpsBridge is our first live product for IT assets, employees, software and repairs.</p></div></div>
-                    <div class="col-md-4"><div class="panel"><span class="icon-box bg-warning-subtle text-warning"><i class="bi bi-person-workspace"></i></span><h5 class="fw-bold mt-3">Partner growth</h5><p class="text-muted mb-0">Partners help us onboard organizations and grow product adoption with commission visibility.</p></div></div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section pt-0">
-            <div class="container">
-                <div class="row g-5">
-                    <div class="col-lg-5">
-                        <h2>Our product principles</h2>
-                        <p class="lead">Every Niyantron product should feel focused to the user, while the platform remains connected behind the scenes.</p>
-                    </div>
-                    <div class="col-lg-7">
-                        <div class="principle mb-4"><h5 class="fw-bold">Clarity before complexity</h5><p class="text-muted mb-0">Users should understand what a page does, what action is expected, and what is pending.</p></div>
-                        <div class="principle mb-4"><h5 class="fw-bold">Separate products, common control</h5><p class="text-muted mb-0">Organizations should experience each product independently while Niyantron manages subscriptions and partners centrally.</p></div>
-                        <div class="principle"><h5 class="fw-bold">Real workflows, not decoration</h5><p class="text-muted mb-0">We build around actual operational steps: onboarding, approvals, assets, payments, repair, disposal and compliance.</p></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-    @include('public.partials.advisor')
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Niyantron builds connected enterprise products for assets, people, procurement, quality, inventory, finance and private commerce."><title>About Niyantron | Connected Enterprise Products</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<style>:root{--bg:#06101e;--panel:#0c1b30;--ink:#f5f8ff;--muted:#94a8c3;--line:rgba(255,255,255,.11);--blue:#2878ff;--cyan:#2ee4ff;--violet:#7457ff;--green:#2ee6a6}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:var(--bg);font-family:Inter,system-ui,sans-serif}.container{width:min(1160px,calc(100% - 40px));margin:auto}a{color:inherit}.nav{position:fixed;z-index:50;inset:0 0 auto;background:rgba(255,255,255,.96);border-bottom:1px solid rgba(8,42,94,.09);backdrop-filter:blur(18px)}.nav-inner{height:80px;display:flex;align-items:center;justify-content:space-between;gap:26px}.brand img{display:block;height:44px;width:auto}.nav-links{display:flex;gap:27px;color:#536b86;font-size:13px;font-weight:750}.nav-links a{text-decoration:none}.nav-links a:hover,.nav-links .active{color:#082d64}.nav-cta{padding:11px 17px;border-radius:999px;color:#fff;background:#0a326d;text-decoration:none;font-size:12px;font-weight:800}.hero{position:relative;overflow:hidden;min-height:100vh;display:flex;align-items:center;padding:130px 0 70px;background:radial-gradient(circle at 72% 42%,rgba(40,120,255,.2),transparent 29%),radial-gradient(circle at 85% 15%,rgba(116,87,255,.15),transparent 23%),#06101e}.hero:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:55px 55px;mask-image:linear-gradient(to right,transparent,#000)}.hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.03fr .97fr;gap:70px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.045);color:#bcecf5;font-size:10px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}.hero h1{margin:22px 0 0;font:700 clamp(48px,6vw,78px)/1.02 Sora;letter-spacing:-.06em}.gradient{background:linear-gradient(90deg,var(--cyan),#4c85ff 54%,#9c78ff);-webkit-background-clip:text;color:transparent}.hero p{max-width:650px;color:var(--muted);font-size:17px;line-height:1.72}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}.btn{display:inline-flex;gap:8px;align-items:center;padding:13px 18px;border-radius:999px;text-decoration:none;font-size:12px;font-weight:800}.btn-primary{background:linear-gradient(135deg,var(--blue),var(--violet))}.btn-ghost{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05)}.universe{position:relative;height:540px;perspective:1100px}.core{position:absolute;left:50%;top:50%;width:145px;height:145px;transform:translate(-50%,-50%) rotateX(58deg) rotateZ(45deg);border:1px solid rgba(46,228,255,.45);background:linear-gradient(145deg,#174078,#251e6c);box-shadow:0 0 80px rgba(46,228,255,.18),55px 55px 90px rgba(0,0,0,.45);animation:core 8s ease-in-out infinite}.core:after{content:"N";position:absolute;inset:0;display:grid;place-items:center;transform:rotateZ(-45deg);font:700 48px Sora;color:#fff}.orbit{position:absolute;left:50%;top:50%;border:1px solid rgba(95,144,255,.28);border-radius:50%;transform:translate(-50%,-50%) rotateX(66deg);animation:spin 16s linear infinite}.orbit.o1{width:430px;height:430px}.orbit.o2{width:570px;height:260px;animation-direction:reverse;animation-duration:21s}.world{position:absolute;width:150px;padding:16px;border:1px solid var(--line);border-radius:19px;background:rgba(9,25,46,.82);box-shadow:0 22px 55px rgba(0,0,0,.32);backdrop-filter:blur(14px);animation:float 5s ease-in-out infinite}.world i{font-size:21px}.world strong{display:block;margin-top:10px;font-size:12px}.world small{display:block;margin-top:4px;color:#8096b3;font-size:9px}.world.w1{left:0;top:105px;color:var(--cyan)}.world.w2{right:0;top:190px;color:#a68fff;animation-delay:-1.7s}.world.w3{left:105px;bottom:52px;color:var(--green);animation-delay:-3.2s}@keyframes spin{to{transform:translate(-50%,-50%) rotateX(66deg) rotateZ(360deg)}}@keyframes core{50%{transform:translate(-50%,-55%) rotateX(58deg) rotateZ(225deg)}}@keyframes float{50%{transform:translateY(-14px)}}
+.story{padding:100px 0}.section-head{max-width:760px}.section-head small{color:var(--cyan);font-size:10px;font-weight:850;letter-spacing:.16em;text-transform:uppercase}.section-head h2{margin:13px 0 0;font:700 clamp(38px,4.8vw,58px)/1.08 Sora;letter-spacing:-.05em}.section-head p{color:var(--muted);font-size:16px;line-height:1.7}.products{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:42px}.product{min-height:330px;position:relative;padding:28px;border:1px solid var(--line);border-radius:25px;background:linear-gradient(150deg,rgba(18,38,66,.9),rgba(7,18,33,.96));overflow:hidden}.product:before{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:var(--accent);filter:blur(80px);opacity:.16}.product i{font-size:25px;color:var(--accent)}.product h3{margin:25px 0 0;font:700 23px Sora}.product p{color:var(--muted);font-size:13px;line-height:1.65}.product a{position:absolute;left:28px;bottom:27px;color:var(--accent);text-decoration:none;font-size:11px;font-weight:850}.architecture{padding:100px 0;background:#091526}.arch-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:60px;align-items:center}.principles{display:grid;gap:12px}.principle{display:grid;grid-template-columns:45px 1fr;gap:15px;padding:18px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.035)}.principle i{width:43px;height:43px;display:grid;place-items:center;border-radius:13px;background:rgba(40,120,255,.12);color:var(--cyan)}.principle strong{display:block;font-size:13px}.principle p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.55}.cta{margin:90px auto;padding:48px;border:1px solid var(--line);border-radius:30px;text-align:center;background:radial-gradient(circle at 50% 0,rgba(40,120,255,.22),transparent 50%),#0b1a2e}.cta h2{margin:0;font:700 clamp(36px,4.5vw,55px)/1.08 Sora}.cta p{color:var(--muted)}.cta .actions{justify-content:center}.footer{padding:30px 0;border-top:1px solid var(--line);color:#7489a3;font-size:11px}.footer-row{display:flex;justify-content:space-between;align-items:center;gap:20px}.footer img{height:25px;filter:brightness(0) invert(1);opacity:.75}
+@media(max-width:900px){.nav-links{display:none}.hero-grid,.arch-grid{grid-template-columns:1fr}.universe{height:470px}.products{grid-template-columns:1fr 1fr}}@media(max-width:620px){.container{width:calc(100% - 28px)}.nav-inner{height:70px}.brand img{height:37px}.nav-cta{font-size:10px;padding:10px 12px}.hero{padding-top:115px}.hero h1{font-size:45px}.universe{height:410px}.products{grid-template-columns:1fr}.product{min-height:310px}.story,.architecture{padding:72px 0}.cta{padding:34px 22px}.footer-row{flex-direction:column}}@media(prefers-reduced-motion:reduce){.core,.orbit,.world{animation:none}}
+</style></head><body><nav class="nav"><div class="container nav-inner"><a class="brand" href="/"><img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron"></a><div class="nav-links"><a href="/">Home</a><a href="{{ route('public.products.opsbridge') }}">OpsBridge</a><a href="{{ route('public.products.erp') }}">Niyantron ERP</a><a class="active" href="/about">About</a><a href="/contact">Contact</a></div><a class="nav-cta" href="/contact">Talk to Niyantron</a></div></nav>
+<main><section class="hero"><div class="container hero-grid"><div><span class="eyebrow"><i class="bi bi-stars"></i>Why Niyantron exists</span><h1>Make every operational decision <span class="gradient">visible and accountable.</span></h1><p>Niyantron builds focused enterprise products for the moving parts that organizations struggle to control—assets, endpoints, people, procurement, quality, inventory, finance and trusted commerce.</p><div class="actions"><a class="btn btn-primary" href="#ecosystem">Explore the ecosystem <i class="bi bi-arrow-down"></i></a><a class="btn btn-ghost" href="/contact">Discuss your operating model</a></div></div><div class="universe" aria-hidden="true"><div class="orbit o1"></div><div class="orbit o2"></div><div class="core"></div><div class="world w1"><i class="bi bi-hdd-network"></i><strong>OpsBridge</strong><small>Assets · Endpoints · People</small></div><div class="world w2"><i class="bi bi-command"></i><strong>Enterprise ERP</strong><small>Source · Inspect · Trade</small></div><div class="world w3"><i class="bi bi-broadcast"></i><strong>Offers</strong><small>Bid · Negotiate · Allocate</small></div></div></div></section>
+<section class="story" id="ecosystem"><div class="container"><div class="section-head"><small>Focused products, connected control</small><h2>One company. Three clear operating experiences.</h2><p>Each product has its own application, workflows and data boundaries. Common identity and subscription control connect the ecosystem without turning it into one confusing interface.</p></div><div class="products"><article class="product" style="--accent:#2ee4ff"><i class="bi bi-hdd-network"></i><h3>OpsBridge</h3><p>Connect IT assets, endpoint intelligence, employees, software governance, maintenance and lifecycle evidence.</p><a href="{{ route('public.products.opsbridge') }}">Experience OpsBridge →</a></article><article class="product" style="--accent:#a48eff"><i class="bi bi-command"></i><h3>Niyantron ERP</h3><p>Run catalogue, procurement, dynamic QC, serialized inventory, CRM, sales, finance and reporting.</p><a href="{{ route('public.products.erp') }}">Experience ERP →</a></article><article class="product" style="--accent:#2ee6a6"><i class="bi bi-broadcast"></i><h3>Niyantron Offers</h3><p>Give connected buyers a private workspace for offers, bids, counteroffers and allocation progress.</p><a href="https://bid.niyantron.com">Visit buyer portal →</a></article></div></div></section>
+<section class="architecture"><div class="container arch-grid"><div class="section-head"><small>How we build</small><h2>Enterprise discipline without enterprise confusion.</h2><p>Our products are designed around real responsibility: who owns the action, what happens next and what evidence remains.</p></div><div class="principles"><div class="principle"><i class="bi bi-signpost-split"></i><div><strong>Guided, adaptable workflows</strong><p>Solo users can work simply; structured teams can enable approvals, separation of duties and controlled exceptions.</p></div></div><div class="principle"><i class="bi bi-building-lock"></i><div><strong>Tenant and legal-company safety</strong><p>Organization data stays logically isolated, while accounting and inventory ownership remain company-specific.</p></div></div><div class="principle"><i class="bi bi-fingerprint"></i><div><strong>Traceability by design</strong><p>Immutable integration IDs, audit history, unit identity and controlled status changes preserve operational evidence.</p></div></div><div class="principle"><i class="bi bi-people"></i><div><strong>Human-first product experience</strong><p>Clear language, recommended next actions and contextual guidance reduce dependency on specialist operators.</p></div></div></div></div></section>
+<div class="container cta"><h2>Bring us the operational problem.<br>We will show you the connected system.</h2><p>Explore the product yourself or request a guided walkthrough built around your organization.</p><div class="actions"><a class="btn btn-primary" href="/contact">Start a conversation</a><a class="btn btn-ghost" href="/">Return to product universe</a></div></div></main><footer class="footer"><div class="container footer-row"><img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron"><span>Connected control for modern organizations.</span><span>&copy; {{ date('Y') }} Niyantron</span></div></footer>@include('public.partials.advisor')</body></html>
