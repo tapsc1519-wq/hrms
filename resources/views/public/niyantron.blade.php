@@ -33,8 +33,9 @@
 
         .site-nav {
             backdrop-filter: blur(18px);
-            background: rgba(7,16,30,.72);
-            border-bottom: 1px solid var(--line);
+            background: rgba(255,255,255,.96);
+            border-bottom: 1px solid rgba(8,42,94,.1);
+            box-shadow: 0 10px 32px rgba(4,18,44,.08);
             left: 0;
             position: fixed;
             right: 0;
@@ -44,27 +45,27 @@
         .brand-lockup {
             align-items: center;
             display: inline-flex;
-            gap: .72rem;
+            gap: .82rem;
             min-width: max-content;
         }
         .brand-symbol {
             display: block;
-            filter: brightness(1.28) saturate(1.14) drop-shadow(0 5px 12px rgba(26,116,255,.22));
-            height: 50px;
+            filter: saturate(1.1) drop-shadow(0 5px 12px rgba(26,116,255,.16));
+            height: 54px;
             object-fit: contain;
-            width: 50px;
+            width: 54px;
         }
         .brand-wordmark {
-            color: #fff;
+            color: #082a5e;
             font-family: "Sora", Inter, system-ui, sans-serif;
-            font-size: 1.18rem;
+            font-size: 1.34rem;
             font-weight: 700;
             letter-spacing: -.035em;
             line-height: 1;
         }
-        .site-nav a { color: var(--text); }
-        .site-nav .nav-links a { color: #cbd8ea; }
-        .site-nav .nav-links a:hover { color: #fff; }
+        .site-nav a { color: #082a5e; }
+        .site-nav .nav-links a { color: #526783; }
+        .site-nav .nav-links a:hover { color: #082a5e; }
 
         .btn {
             border-radius: 999px;
@@ -352,7 +353,7 @@
     <nav class="site-nav">
         <div class="container py-3 d-flex align-items-center justify-content-between">
             <a href="/" class="brand-lockup text-decoration-none" aria-label="Niyantron home">
-                <img class="brand-symbol" src="{{ asset('brand/niyantron-symbol-gradient.png') }}" alt="" width="50" height="50">
+                <img class="brand-symbol" src="{{ asset('brand/niyantron-symbol-gradient.png') }}" alt="" width="54" height="54">
                 <span class="brand-wordmark">Niyantron</span>
             </a>
             <div class="nav-links d-flex align-items-center gap-4 small fw-bold">
