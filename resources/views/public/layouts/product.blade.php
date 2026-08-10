@@ -27,8 +27,8 @@
 <body style="--scene-glow:@yield('scene-glow','#2878ff')">
 <nav class="nav"><div class="container nav-inner">
     <a class="brand" href="/"><img src="{{ asset('brand/niyantron-logo-full.jpg') }}" alt="Niyantron" width="239" height="52"></a>
-    <div class="nav-links"><a href="/">Home</a><a href="{{ route('public.products.opsbridge') }}" class="{{ request()->routeIs('public.products.opsbridge')?'active':'' }}">OpsBridge</a><a href="{{ route('public.products.erp') }}" class="{{ request()->routeIs('public.products.erp')?'active':'' }}">ERP</a><a href="/about">About</a><a href="/contact">Contact</a></div>
-    <a class="nav-cta" href="@yield('login-url')">@yield('login-label','Product login')</a>
+    <div class="nav-links"><a href="/">Home</a><a href="{{ route('public.products.opsbridge') }}" class="{{ request()->routeIs('public.products.opsbridge')?'active':'' }}">OpsBridge product</a><a href="{{ route('public.products.erp') }}" class="{{ request()->routeIs('public.products.erp')?'active':'' }}">ERP product</a><a href="/about">About</a><a href="/contact">Contact</a></div>
+    <a class="nav-cta" href="@yield('login-url')">@yield('login-label','Sign in to product')</a>
 </div></nav>
 @yield('content')
 <footer><div class="container footer-row"><img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron"><span>Connected control for modern organizations.</span><span>&copy; {{ date('Y') }} Niyantron</span></div></footer>
