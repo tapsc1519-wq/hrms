@@ -39,10 +39,15 @@
 </div></nav>
 @yield('content')
 <footer><div class="container footer-row"><img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron"><span>Connected control for modern organizations.</span><span>&copy; {{ date('Y') }} Niyantron</span></div></footer>
+@include('public.partials.advisor')
 <script>
     const scene=document.querySelector('.scene-core');
+    const opsDevice=document.querySelector('.ops-device');
     if(scene&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
         document.addEventListener('pointermove',e=>{const x=(e.clientX/innerWidth-.5)*7;const y=(e.clientY/innerHeight-.5)*-5;scene.style.transform=`rotateY(${-9+x}deg) rotateX(${5+y}deg)`});
+    }
+    if(opsDevice&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+        document.addEventListener('pointermove',e=>{const x=(e.clientX/innerWidth-.5)*6;const y=(e.clientY/innerHeight-.5)*-4;opsDevice.style.transform=`rotateY(${12+x}deg) rotateX(${7+y}deg) rotateZ(1deg)`});
     }
 </script>
 </body></html>

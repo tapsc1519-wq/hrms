@@ -84,5 +84,6 @@
             </div>
         </section>
     </main>
+    @include('public.partials.advisor')
 </body>
 </html>
