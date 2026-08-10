@@ -2,625 +2,74 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Niyantron - World of Softwares</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Niyantron connects OpsBridge, Enterprise ERP and private B2B commerce in one intelligent business software ecosystem.">
+    <meta name="theme-color" content="#050b16">
+    <title>Niyantron | Connected Business Software Universe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        :root {
-            --ink: #0b1220;
-            --panel: #101a2d;
-            --panel-soft: #16243d;
-            --text: #eaf2ff;
-            --muted: #9fb0ca;
-            --line: rgba(255,255,255,.14);
-            --blue: #4f8cff;
-            --cyan: #2ee4ff;
-            --green: #2de39f;
-            --gold: #ffc857;
-            --pink: #ff6bd6;
-        }
-
-        * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body {
-            background: #07101e;
-            color: var(--text);
-            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            margin: 0;
-        }
-
-        .site-nav {
-            backdrop-filter: blur(18px);
-            background: rgba(255,255,255,.96);
-            border-bottom: 1px solid rgba(8,42,94,.1);
-            box-shadow: 0 10px 32px rgba(4,18,44,.08);
-            left: 0;
-            position: fixed;
-            right: 0;
-            top: 0;
-            z-index: 30;
-        }
-        .brand-lockup {
-            align-items: center;
-            display: inline-flex;
-            min-width: max-content;
-        }
-        .brand-logo {
-            display: block;
-            height: 52px;
-            object-fit: contain;
-            object-position: left center;
-            width: auto;
-        }
-        .site-nav a { color: #082a5e; }
-        .site-nav .nav-links a { color: #526783; }
-        .site-nav .nav-links a:hover { color: #082a5e; }
-
-        .btn {
-            border-radius: 999px;
-            font-weight: 800;
-            padding: .72rem 1.1rem;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--blue), #2868ff);
-            border: 0;
-            box-shadow: 0 14px 30px rgba(79,140,255,.28);
-        }
-        .btn-outline-light { border-color: rgba(255,255,255,.28); color: #fff; }
-
-        .universe-hero {
-            min-height: 100vh;
-            overflow: hidden;
-            position: relative;
-        }
-        #softwareUniverse {
-            background: #07101e;
-            display: block;
-            height: 100%;
-            inset: 0;
-            position: absolute;
-            width: 100%;
-            z-index: 0;
-        }
-        .universe-hero::after {
-            background:
-                linear-gradient(90deg, rgba(7,16,30,.94) 0%, rgba(7,16,30,.78) 38%, rgba(7,16,30,.18) 72%, rgba(7,16,30,.55) 100%),
-                linear-gradient(180deg, rgba(7,16,30,.2) 0%, rgba(7,16,30,.78) 100%);
-            content: "";
-            inset: 0;
-            pointer-events: none;
-            position: absolute;
-            z-index: 1;
-        }
-        .hero-content {
-            min-height: 100vh;
-            padding: 8.5rem 0 4rem;
-            position: relative;
-            z-index: 2;
-        }
-        .hero-copy {
-            max-width: 650px;
-        }
-        .kicker {
-            align-items: center;
-            background: rgba(255,255,255,.08);
-            border: 1px solid var(--line);
-            border-radius: 999px;
-            color: #d9e8ff;
-            display: inline-flex;
-            font-size: 13px;
-            font-weight: 850;
-            gap: .5rem;
-            padding: .48rem .82rem;
-        }
-        h1 {
-            color: #fff;
-            font-size: 72px;
-            font-weight: 900;
-            letter-spacing: 0;
-            line-height: 1.02;
-            margin: 1.2rem 0 0;
-        }
-        h2 {
-            color: #fff;
-            font-size: 42px;
-            font-weight: 900;
-            letter-spacing: 0;
-            line-height: 1.08;
-        }
-        h3, h4, h5 { letter-spacing: 0; }
-        .lead {
-            color: var(--muted);
-            font-size: 18px;
-            line-height: 1.75;
-        }
-        .hero-lead { max-width: 580px; }
-
-        .hero-product-panel {
-            background: rgba(16,26,45,.78);
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            box-shadow: 0 24px 70px rgba(0,0,0,.3);
-            margin-top: 2rem;
-            max-width: 620px;
-            padding: 1rem;
-        }
-        .product-dock {
-            display: grid;
-            gap: .75rem;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-        .dock-item {
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.11);
-            border-radius: 14px;
-            color: #fff;
-            min-height: 112px;
-            padding: .85rem;
-            text-decoration: none;
-            transition: border-color .18s ease, background .18s ease, transform .18s ease;
-        }
-        .dock-item:hover {
-            background: rgba(255,255,255,.1);
-            border-color: rgba(79,140,255,.65);
-            color: #fff;
-            transform: translateY(-2px);
-        }
-        .dock-icon {
-            align-items: center;
-            border-radius: 11px;
-            display: inline-flex;
-            height: 34px;
-            justify-content: center;
-            margin-bottom: .7rem;
-            width: 34px;
-        }
-        .dock-item strong {
-            display: block;
-            font-size: 14px;
-            line-height: 1.15;
-        }
-        .dock-item span {
-            color: var(--muted);
-            display: block;
-            font-size: 12px;
-            line-height: 1.35;
-            margin-top: .25rem;
-        }
-
-        .scene-hint {
-            align-items: center;
-            bottom: 1.5rem;
-            color: rgba(234,242,255,.72);
-            display: inline-flex;
-            font-size: 13px;
-            gap: .5rem;
-            position: absolute;
-            right: 1.5rem;
-            z-index: 2;
-        }
-        .scene-hint i { color: var(--cyan); }
-
-        .section {
-            background: #07101e;
-            padding: 5rem 0;
-            position: relative;
-        }
-        .section.alt { background: #0a1424; }
-        .section-title {
-            max-width: 760px;
-            margin-bottom: 2rem;
-        }
-        .section-title p {
-            color: var(--muted);
-            font-size: 17px;
-            line-height: 1.7;
-            margin: .9rem 0 0;
-        }
-        .panel {
-            background: linear-gradient(180deg, rgba(22,36,61,.96), rgba(16,26,45,.96));
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            box-shadow: 0 20px 54px rgba(0,0,0,.22);
-            height: 100%;
-            padding: 1.35rem;
-        }
-        .panel p, .muted { color: var(--muted); }
-        .icon-box {
-            align-items: center;
-            border-radius: 14px;
-            display: inline-flex;
-            height: 44px;
-            justify-content: center;
-            width: 44px;
-        }
-        .product-zone {
-            background: linear-gradient(135deg, rgba(22,36,61,.96), rgba(9,20,36,.96));
-            border: 1px solid var(--line);
-            border-radius: 24px;
-            box-shadow: 0 28px 70px rgba(0,0,0,.24);
-            overflow: hidden;
-        }
-        .product-command {
-            background:
-                linear-gradient(135deg, rgba(79,140,255,.95), rgba(46,228,255,.62)),
-                #10223d;
-            min-height: 360px;
-            padding: 1.3rem;
-        }
-        .command-card {
-            background: rgba(5,13,26,.46);
-            border: 1px solid rgba(255,255,255,.16);
-            border-radius: 18px;
-            color: #fff;
-            padding: 1rem;
-        }
-        .command-grid {
-            display: grid;
-            gap: .9rem;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            margin-top: 1rem;
-        }
-        .software-node-list {
-            display: grid;
-            gap: .9rem;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        .software-node {
-            align-items: center;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.12);
-            border-radius: 16px;
-            display: flex;
-            gap: .85rem;
-            min-height: 84px;
-            padding: 1rem;
-        }
-        .software-node strong { color: #fff; display: block; }
-        .software-node span { color: var(--muted); font-size: 13px; }
-        .timeline {
-            border-left: 2px solid rgba(255,255,255,.13);
-            padding-left: 1.3rem;
-        }
-        .timeline-item {
-            margin-bottom: 1.35rem;
-            position: relative;
-        }
-        .timeline-item::before {
-            background: var(--cyan);
-            border: 4px solid #07101e;
-            border-radius: 50%;
-            box-shadow: 0 0 0 1px rgba(255,255,255,.18);
-            content: "";
-            height: 18px;
-            left: -1.93rem;
-            position: absolute;
-            top: .2rem;
-            width: 18px;
-        }
-        .cta-band {
-            background: linear-gradient(135deg, #11213a, #091426);
-            border: 1px solid var(--line);
-            border-radius: 24px;
-            box-shadow: 0 24px 70px rgba(0,0,0,.22);
-            color: #fff;
-            padding: 2rem;
-        }
-        footer {
-            background: #050b15;
-            border-top: 1px solid var(--line);
-            color: var(--muted);
-            padding: 1.5rem 0;
-        }
-        footer a { color: var(--muted); }
-        footer a:hover { color: #fff; }
-
-        @media (max-width: 991.98px) {
-            h1 { font-size: 52px; }
-            h2 { font-size: 34px; }
-            .universe-hero::after {
-                background: linear-gradient(180deg, rgba(7,16,30,.92), rgba(7,16,30,.74));
-            }
-            .product-dock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        }
-        @media (max-width: 767.98px) {
-            .site-nav .nav-links { display: none !important; }
-            .brand-logo { height: 42px; }
-            .hero-content { padding: 7rem 0 3rem; }
-            h1 { font-size: 40px; }
-            h2 { font-size: 30px; }
-            .lead { font-size: 16px; }
-            .product-dock,
-            .command-grid,
-            .software-node-list { grid-template-columns: 1fr; }
-            .scene-hint { display: none; }
-        }
+        :root{--bg:#050b16;--ink:#f5f8ff;--muted:#95a8c3;--line:rgba(255,255,255,.12);--blue:#397cff;--cyan:#28e4ff;--violet:#7556ff;--green:#2ee6a6;--gold:#ffc95a}
+        *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;overflow-x:hidden}a{color:inherit}.container{width:min(1180px,calc(100% - 40px));margin:auto}
+        .nav{position:fixed;z-index:100;inset:0 0 auto;background:rgba(5,11,22,.64);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(22px);transition:.25s}.nav.scrolled{background:rgba(5,11,22,.9);box-shadow:0 16px 45px rgba(0,0,0,.22)}.nav-inner{height:82px;display:flex;align-items:center;justify-content:space-between;gap:28px}.brand img{display:block;filter:brightness(0) invert(1);height:47px;opacity:.96;width:auto}.nav-links{display:flex;align-items:center;gap:27px;font-size:13px;font-weight:700;color:#b2c0d4}.nav-links a{text-decoration:none;transition:.18s}.nav-links a:hover{color:#fff}.nav-cta{display:inline-flex;align-items:center;gap:8px;padding:12px 17px;border-radius:999px;text-decoration:none;font-size:13px;font-weight:800;background:linear-gradient(135deg,var(--blue),var(--violet));box-shadow:0 14px 34px rgba(57,124,255,.24)}
+        #universe{position:fixed;inset:0;width:100%;height:100%;z-index:0;background:radial-gradient(circle at 65% 35%,#0d1d38 0,#050b16 48%,#030811 100%)}.vignette{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(3,8,17,.95) 0%,rgba(3,8,17,.68) 39%,rgba(3,8,17,.08) 72%,rgba(3,8,17,.48) 100%),linear-gradient(180deg,rgba(3,8,17,.15),rgba(3,8,17,.62))}.noise{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E")}
+        .experience{position:relative;z-index:4}.chapter{min-height:115vh;display:flex;align-items:center;position:relative;padding:120px 0 80px}.chapter.hero{min-height:125vh}.chapter-copy{width:min(680px,56vw);opacity:.22;transform:translateY(36px);transition:opacity .65s ease,transform .65s ease}.chapter.is-active .chapter-copy{opacity:1;transform:none}.eyebrow{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.055);padding:8px 13px;color:#dce8fb;font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}.eyebrow i{color:var(--accent,var(--cyan))}.chapter h1,.chapter h2{font-family:Sora,Inter,sans-serif;margin:22px 0 0;letter-spacing:-.06em;line-height:1.02}.chapter h1{font-size:clamp(54px,7.25vw,96px)}.chapter h2{font-size:clamp(44px,6vw,76px)}.gradient{background:linear-gradient(90deg,var(--accent,var(--cyan)),#5f7dff 58%,#a769ff);-webkit-background-clip:text;color:transparent}.chapter p{max-width:650px;color:var(--muted);font-size:18px;line-height:1.72;margin:26px 0 0}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:31px}.btn{display:inline-flex;align-items:center;gap:9px;padding:14px 20px;border-radius:999px;text-decoration:none;font-weight:800}.btn-primary{background:linear-gradient(135deg,var(--blue),var(--violet));box-shadow:0 16px 38px rgba(57,124,255,.25)}.btn-glass{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.055);backdrop-filter:blur(12px)}
+        .chapter-note{display:flex;gap:12px;align-items:flex-start;margin-top:32px;max-width:570px;padding:15px 17px;border-left:2px solid var(--accent,var(--cyan));background:linear-gradient(90deg,rgba(255,255,255,.06),transparent);color:#b8c6d9;font-size:13px;line-height:1.55}.chapter-note i{color:var(--accent,var(--cyan));font-size:18px}.scroll-cue{position:absolute;bottom:10vh;left:0;display:flex;align-items:center;gap:10px;color:#8fa1bb;font-size:12px;font-weight:700}.scroll-cue span{width:34px;height:54px;border:1px solid rgba(255,255,255,.24);border-radius:20px;position:relative}.scroll-cue span:after{content:"";position:absolute;width:4px;height:9px;border-radius:4px;background:var(--cyan);left:14px;top:10px;animation:scroll 1.8s infinite}@keyframes scroll{to{transform:translateY(21px);opacity:0}}
+        .scene-label{position:absolute;right:5vw;bottom:12vh;width:310px;padding:19px 21px;border:1px solid var(--line);border-radius:20px;background:rgba(8,19,35,.58);backdrop-filter:blur(18px);opacity:0;transform:translateY(20px);transition:.5s}.chapter.is-active .scene-label{opacity:1;transform:none}.scene-label small{color:var(--accent,var(--cyan));font-size:10px;font-weight:850;letter-spacing:.14em}.scene-label strong{display:block;font:700 18px/1.2 Sora;margin-top:8px}.scene-label span{display:block;color:var(--muted);font-size:12px;line-height:1.55;margin-top:7px}
+        .progress{position:fixed;z-index:10;right:24px;top:50%;transform:translateY(-50%);display:grid;gap:11px}.progress button{appearance:none;width:7px;height:7px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.25);cursor:pointer;transition:.25s}.progress button.active{height:28px;border-radius:8px;background:linear-gradient(var(--cyan),var(--blue));box-shadow:0 0 18px rgba(40,228,255,.5)}
+        .content-shell{position:relative;z-index:8;background:linear-gradient(180deg,rgba(5,11,22,.2),#07101e 4%,#07101e 100%);padding:120px 0 0}.section-head{max-width:780px}.section-head small{color:var(--cyan);font-size:11px;font-weight:850;letter-spacing:.17em;text-transform:uppercase}.section-head h2{font:700 clamp(38px,5vw,62px)/1.08 Sora;margin:14px 0 0;letter-spacing:-.05em}.section-head p{color:var(--muted);font-size:17px;line-height:1.72}.product-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:45px}.product-card{min-height:520px;position:relative;overflow:hidden;border:1px solid var(--line);border-radius:32px;background:linear-gradient(145deg,#132743,#0a1425);padding:38px;text-decoration:none;box-shadow:0 35px 80px rgba(0,0,0,.23);transition:.3s}.product-card:hover{transform:translateY(-7px);border-color:rgba(79,140,255,.52)}.product-card:before{content:"";position:absolute;width:330px;height:330px;border-radius:50%;right:-90px;top:-110px;background:var(--card-glow);filter:blur(90px);opacity:.24}.product-card .product-icon{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:rgba(255,255,255,.09);font-size:25px;color:var(--card-accent)}.product-card h3{font:700 35px/1.1 Sora;margin:28px 0 0;letter-spacing:-.04em}.product-card>p{max-width:520px;color:var(--muted);line-height:1.7}.feature-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:25px}.feature-tags span{border:1px solid var(--line);border-radius:999px;padding:8px 11px;color:#cad6e7;font-size:11px;font-weight:700}.explore{position:absolute;left:38px;bottom:35px;display:flex;align-items:center;gap:9px;color:var(--card-accent);font-weight:800}.ecosystem{margin-top:26px;border:1px solid var(--line);border-radius:32px;background:radial-gradient(circle at 85% 20%,rgba(46,230,166,.16),transparent 28%),linear-gradient(135deg,#101f36,#091321);padding:38px;display:grid;grid-template-columns:.9fr 1.1fr;gap:45px}.ecosystem h3{font:700 34px/1.15 Sora;margin:14px 0}.ecosystem p{color:var(--muted);line-height:1.7}.ecosystem-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:center}.flow-node{min-height:150px;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.045);display:grid;place-items:center;text-align:center;padding:18px}.flow-node i{font-size:25px;color:var(--green)}.flow-node strong{display:block;margin-top:10px;font-size:13px}.flow-node span{color:var(--muted);font-size:11px}.final-cta{margin:100px 0;padding:55px;border:1px solid var(--line);border-radius:34px;text-align:center;background:radial-gradient(circle at 50% 0,rgba(57,124,255,.24),transparent 50%),#0b1729}.final-cta h2{font:700 clamp(38px,5vw,60px)/1.08 Sora;margin:0;letter-spacing:-.05em}.final-cta p{color:var(--muted);font-size:17px}.final-cta .actions{justify-content:center}footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:12px}.footer-row{display:flex;justify-content:space-between;align-items:center;gap:20px}.footer-row img{height:25px;filter:brightness(0) invert(1);opacity:.72;width:auto}
+        @media(max-width:900px){.nav-links{display:none}.chapter{min-height:105vh}.chapter-copy{width:min(720px,86vw);text-shadow:0 3px 18px rgba(0,0,0,.4)}.vignette{background:linear-gradient(90deg,rgba(3,8,17,.94),rgba(3,8,17,.56) 72%,rgba(3,8,17,.22)),linear-gradient(180deg,rgba(3,8,17,.2),rgba(3,8,17,.72))}.scene-label{display:none}.product-grid,.ecosystem{grid-template-columns:1fr}.progress{right:10px}.ecosystem-flow{margin-top:10px}}
+        @media(max-width:620px){.container{width:calc(100% - 28px)}.nav-inner{height:70px}.brand img{height:38px}.nav-cta{font-size:11px;padding:10px 12px}.chapter{padding-top:100px}.chapter h1{font-size:46px}.chapter h2{font-size:41px}.chapter p{font-size:16px}.chapter-copy{width:92vw}.product-grid{grid-template-columns:1fr}.product-card{min-height:490px;padding:27px}.explore{left:27px}.ecosystem{padding:27px}.ecosystem-flow{grid-template-columns:1fr}.final-cta{padding:34px 22px}.footer-row{flex-direction:column}.progress{display:none}}
+        @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.scroll-cue span:after{animation:none}.chapter-copy{opacity:1;transform:none}.product-card{transition:none}}
     </style>
 </head>
 <body>
-    <nav class="site-nav">
-        <div class="container py-3 d-flex align-items-center justify-content-between">
-            <a href="/" class="brand-lockup text-decoration-none" aria-label="Niyantron home">
-                <img class="brand-logo" src="{{ asset('brand/niyantron-logo-full.jpg') }}" alt="Niyantron" width="239" height="52">
-            </a>
-            <div class="nav-links d-flex align-items-center gap-4 small fw-bold">
-                <a href="{{ route('public.products.opsbridge') }}" class="text-decoration-none">OpsBridge</a>
-                <a href="{{ route('public.products.erp') }}" class="text-decoration-none">ERP</a>
-                <a href="#platform" class="text-decoration-none">Platform</a>
-                <a href="/about" class="text-decoration-none">About</a>
-                <a href="/contact" class="text-decoration-none">Contact</a>
-                <a href="https://partner.niyantron.com" class="text-decoration-none">Partners</a>
-            </div>
-            <a href="#products" class="btn btn-primary btn-sm">Explore Products</a>
-        </div>
-    </nav>
-
-    <main>
-        <section class="universe-hero" id="home">
-            <canvas id="softwareUniverse" aria-label="Interactive Niyantron software universe"></canvas>
-            <div class="container hero-content d-flex align-items-center">
-                <div class="hero-copy">
-                    <span class="kicker"><i class="bi bi-stars"></i> Enter the Niyantron control universe</span>
-                    <h1>Connected software for organizations that need control.</h1>
-                    <p class="lead hero-lead mt-4">OpsBridge controls assets, endpoints and people. Niyantron ERP connects sourcing, quality, inventory, sales and finance. One ecosystem, two focused products.</p>
-                    <div class="d-flex flex-wrap gap-2 mt-4">
-                        <a href="#products" class="btn btn-primary"><i class="bi bi-rocket-takeoff me-1"></i>Explore Software Worlds</a>
-                        <a href="https://partner.niyantron.com" class="btn btn-outline-light"><i class="bi bi-person-workspace me-1"></i>Partner With Us</a>
-                    </div>
-
-                    <div class="hero-product-panel">
-                        <div class="product-dock">
-                            <a class="dock-item" href="{{ route('public.products.opsbridge') }}">
-                                <span class="dock-icon" style="background:rgba(46,228,255,.16);color:var(--cyan)"><i class="bi bi-hdd-network"></i></span>
-                                <strong>OpsBridge</strong>
-                                <span>Live IT operations software</span>
-                            </a>
-                            <a class="dock-item" href="{{ route('public.products.erp') }}">
-                                <span class="dock-icon" style="background:rgba(255,200,87,.16);color:var(--gold)"><i class="bi bi-clipboard-data"></i></span>
-                                <strong>Enterprise ERP</strong>
-                                <span>Source, inspect, stock and sell</span>
-                            </a>
-                            <a class="dock-item" href="https://bid.niyantron.com">
-                                <span class="dock-icon" style="background:rgba(45,227,159,.16);color:var(--green)"><i class="bi bi-megaphone"></i></span>
-                                <strong>Niyantron Offers</strong>
-                                <span>Private B2B bidding workspace</span>
-                            </a>
-                            <a class="dock-item" href="https://platform.niyantron.com/login">
-                                <span class="dock-icon" style="background:rgba(255,107,214,.16);color:var(--pink)"><i class="bi bi-command"></i></span>
-                                <strong>Platform Core</strong>
-                                <span>Control center for products</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="scene-hint"><i class="bi bi-mouse"></i> Move pointer across the software worlds</div>
-        </section>
-
-        <section id="products" class="section">
-            <div class="container">
-                <div class="section-title">
-                    <span class="kicker"><i class="bi bi-grid-3x3-gap"></i> Software worlds</span>
-                    <h2 class="mt-3">Each product gets its own world. Niyantron keeps the universe connected.</h2>
-                    <p>Customers should feel they are using a focused product. Behind the scenes, Niyantron keeps product access, partners, onboarding and subscriptions connected.</p>
-                </div>
-
-                <div class="product-zone">
-                    <div class="row g-0">
-                        <div class="col-lg-5 product-command">
-                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                <strong>OpsBridge World</strong>
-                                <span class="badge bg-success">Live</span>
-                            </div>
-                            <div class="command-grid">
-                                <div class="command-card"><div class="small text-white-50">Assets</div><div class="fs-3 fw-bold">ITAM</div></div>
-                                <div class="command-card"><div class="small text-white-50">People</div><div class="fs-3 fw-bold">HRMS</div></div>
-                                <div class="command-card"><div class="small text-white-50">Software</div><div class="fs-3 fw-bold">SAM</div></div>
-                                <div class="command-card"><div class="small text-white-50">Lifecycle</div><div class="fs-3 fw-bold">AMC</div></div>
-                            </div>
-                        </div>
-                        <div class="col-lg-7 p-4 p-lg-5">
-                            <h3 class="fw-bold text-white">OpsBridge is the first live Niyantron product world.</h3>
-                            <p class="muted mt-3">It connects IT assets, endpoint agents, software compliance, employees, vendors, repair workflows and disposal into one operating system for organizations.</p>
-                            <div class="software-node-list mt-4">
-                                <div class="software-node"><span class="icon-box bg-primary-subtle text-primary"><i class="bi bi-box-seam"></i></span><div><strong>Asset Control</strong><span>Procurement, assignment, repair and disposal</span></div></div>
-                                <div class="software-node"><span class="icon-box bg-success-subtle text-success"><i class="bi bi-shield-check"></i></span><div><strong>Endpoint Layer</strong><span>Device enrollment, discovery and commands</span></div></div>
-                                <div class="software-node"><span class="icon-box bg-warning-subtle text-warning"><i class="bi bi-disc"></i></span><div><strong>Software Governance</strong><span>Licenses, audit packs and remediation</span></div></div>
-                                <div class="software-node"><span class="icon-box bg-info-subtle text-info"><i class="bi bi-people"></i></span><div><strong>Employee Operations</strong><span>Attendance, leave, payroll and self-service</span></div></div>
-                            </div>
-                            <a href="https://opsbridge.niyantron.com" class="btn btn-primary mt-4">Open OpsBridge</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="platform" class="section alt">
-            <div class="container">
-                <div class="row g-4 align-items-center">
-                    <div class="col-lg-5">
-                        <span class="kicker"><i class="bi bi-layers"></i> Mother company architecture</span>
-                        <h2 class="mt-3">One Niyantron platform. Many product experiences.</h2>
-                        <p class="lead mt-3">As we launch more products, each one can have its own identity, URL and workflow. Niyantron remains the common layer for products, partners, subscriptions and growth.</p>
-                    </div>
-                    <div class="col-lg-7">
-                        <div class="row g-3">
-                            <div class="col-md-6"><div class="panel"><span class="icon-box bg-primary-subtle text-primary"><i class="bi bi-globe2"></i></span><h5 class="fw-bold mt-3 text-white">Product Worlds</h5><p class="mb-0">OpsBridge today, more product worlds tomorrow.</p></div></div>
-                            <div class="col-md-6"><div class="panel"><span class="icon-box bg-success-subtle text-success"><i class="bi bi-person-workspace"></i></span><h5 class="fw-bold mt-3 text-white">Partner Network</h5><p class="mb-0">Partners bring leads and grow with product sales.</p></div></div>
-                            <div class="col-md-6"><div class="panel"><span class="icon-box bg-warning-subtle text-warning"><i class="bi bi-kanban"></i></span><h5 class="fw-bold mt-3 text-white">Common Control</h5><p class="mb-0">Subscriptions, billing and onboarding stay visible.</p></div></div>
-                            <div class="col-md-6"><div class="panel"><span class="icon-box bg-info-subtle text-info"><i class="bi bi-building-check"></i></span><h5 class="fw-bold mt-3 text-white">Organization Layer</h5><p class="mb-0">Customers get focused access to the products they use.</p></div></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row g-4 mt-5">
-                    <div class="col-lg-5">
-                        <h2>Where the universe expands next</h2>
-                        <p class="lead">The roadmap is not about adding pages. It is about creating product worlds that solve real operational problems.</p>
-                    </div>
-                    <div class="col-lg-7">
-                        <div class="timeline">
-                            <div class="timeline-item"><strong class="text-white">OpsBridge live foundation</strong><p class="mb-0 muted">ITAM, HRMS, SAM, endpoint agent, AMC and disposal modules under one product.</p></div>
-                            <div class="timeline-item"><strong class="text-white">Partner-led growth</strong><p class="mb-0 muted">Partner onboarding, lead tracking, customer conversion and commission workflow.</p></div>
-                            <div class="timeline-item"><strong class="text-white">Product family expansion</strong><p class="mb-0 muted">New software products can join the same Niyantron universe without confusing product users.</p></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="cta-band d-lg-flex align-items-center justify-content-between gap-4 mt-5">
-                    <div>
-                        <h2 class="mb-2">Build with us from the first chapter.</h2>
-                        <p class="mb-lg-0 muted">Join the Niyantron partner network and help organizations enter better software worlds for operational control.</p>
-                    </div>
-                    <a href="https://partner.niyantron.com" class="btn btn-light flex-shrink-0 mt-3 mt-lg-0">Partner Program</a>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <div class="container d-flex flex-wrap align-items-center justify-content-between gap-3 small">
-            <div><strong class="text-white">Niyantron</strong> is building a world of operational software products.</div>
-            <div class="d-flex gap-3">
-                <a href="/about" class="text-decoration-none">About</a>
-                <a href="/contact" class="text-decoration-none">Contact</a>
-                <a href="https://partner.niyantron.com" class="text-decoration-none">Partners</a>
-            </div>
-        </div>
-    </footer>
-
-    <script type="module">
-        import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
-
-        const canvas = document.getElementById('softwareUniverse');
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-
-        const coreGroup = new THREE.Group();
-        const orbitGroup = new THREE.Group();
-        const pointer = new THREE.Vector2(0, 0);
-        scene.add(coreGroup, orbitGroup);
-
-        const ambient = new THREE.AmbientLight(0x8fb7ff, 1.3);
-        const keyLight = new THREE.PointLight(0x4f8cff, 50, 18);
-        keyLight.position.set(0, 4, 5);
-        const rimLight = new THREE.PointLight(0x2ee4ff, 35, 16);
-        rimLight.position.set(-4, -2, 4);
-        scene.add(ambient, keyLight, rimLight);
-
-        const starGeometry = new THREE.BufferGeometry();
-        const starCount = 700;
-        const positions = new Float32Array(starCount * 3);
-        for (let i = 0; i < starCount; i++) {
-            positions[i * 3] = (Math.random() - 0.5) * 26;
-            positions[i * 3 + 1] = (Math.random() - 0.5) * 16;
-            positions[i * 3 + 2] = -Math.random() * 18 - 3;
-        }
-        starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0x87a8d8, size: 0.018, transparent: true, opacity: 0.76 }));
-        scene.add(stars);
-
-        const coreMaterial = new THREE.MeshStandardMaterial({
-            color: 0x4f8cff,
-            emissive: 0x173a88,
-            metalness: 0.55,
-            roughness: 0.25,
-        });
-        const core = new THREE.Mesh(new THREE.IcosahedronGeometry(1.05, 3), coreMaterial);
-        coreGroup.add(core);
-
-        const halo = new THREE.Mesh(
-            new THREE.TorusGeometry(1.55, 0.012, 12, 160),
-            new THREE.MeshBasicMaterial({ color: 0x2ee4ff, transparent: true, opacity: 0.52 })
-        );
-        halo.rotation.x = Math.PI / 2.6;
-        coreGroup.add(halo);
-
-        const worlds = [
-            { name: 'OpsBridge', color: 0x2ee4ff, radius: 3.3, speed: 0.45, size: 0.42, y: 0.15, url: '{{ route('public.products.opsbridge') }}' },
-            { name: 'Niyantron ERP', color: 0xffc857, radius: 4.25, speed: 0.32, size: 0.38, y: -0.35, url: '{{ route('public.products.erp') }}' },
-            { name: 'Niyantron Offers', color: 0x2de39f, radius: 5.05, speed: 0.24, size: 0.3, y: 0.42, url: 'https://bid.niyantron.com' },
-            { name: 'Platform Core', color: 0xff6bd6, radius: 2.55, speed: 0.58, size: 0.28, y: -0.65, url: 'https://platform.niyantron.com/login' },
-        ];
-        const worldMeshes = [];
-
-        worlds.forEach((world, index) => {
-            const ring = new THREE.Mesh(
-                new THREE.TorusGeometry(world.radius, 0.006, 8, 180),
-                new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12 })
-            );
-            ring.rotation.x = Math.PI / 2;
-            orbitGroup.add(ring);
-
-            const material = new THREE.MeshStandardMaterial({
-                color: world.color,
-                emissive: world.color,
-                emissiveIntensity: 0.24,
-                metalness: 0.4,
-                roughness: 0.28,
-            });
-            const mesh = new THREE.Mesh(new THREE.SphereGeometry(world.size, 36, 24), material);
-            mesh.userData = { ...world, angle: index * 1.58 };
-            orbitGroup.add(mesh);
-            worldMeshes.push(mesh);
-        });
-
-        camera.position.set(0.4, 0.5, 8.6);
-
-        function resize() {
-            const width = canvas.clientWidth || window.innerWidth;
-            const height = canvas.clientHeight || window.innerHeight;
-            renderer.setSize(width, height, false);
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            const elapsed = performance.now() * 0.001;
-
-            core.rotation.x = elapsed * 0.22;
-            core.rotation.y = elapsed * 0.35;
-            halo.rotation.z = elapsed * 0.24;
-            orbitGroup.rotation.x = -0.24 + pointer.y * 0.12;
-            orbitGroup.rotation.y = pointer.x * 0.16;
-            stars.rotation.y = elapsed * 0.012;
-
-            worldMeshes.forEach((mesh) => {
-                const data = mesh.userData;
-                const angle = data.angle + elapsed * data.speed;
-                mesh.position.set(Math.cos(angle) * data.radius, data.y + Math.sin(angle * 1.4) * 0.2, Math.sin(angle) * data.radius * 0.38);
-                mesh.rotation.y = elapsed * 0.7;
-                mesh.rotation.x = elapsed * 0.28;
-            });
-
-            renderer.render(scene, camera);
-        }
-
-        window.addEventListener('resize', resize);
-        window.addEventListener('pointermove', (event) => {
-            pointer.x = (event.clientX / window.innerWidth - 0.5) * 2;
-            pointer.y = (event.clientY / window.innerHeight - 0.5) * -2;
-        });
-        canvas.addEventListener('click', (event) => {
-            const bounds = canvas.getBoundingClientRect();
-            const mouse = new THREE.Vector2(
-                ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
-                -((event.clientY - bounds.top) / bounds.height) * 2 + 1
-            );
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-            const hit = raycaster.intersectObjects(worldMeshes)[0];
-            if (hit?.object?.userData?.url) {
-                window.location.href = hit.object.userData.url;
-            }
-        });
-
-        resize();
-        animate();
-    </script>
-</body>
-</html>
+<nav class="nav" id="siteNav"><div class="container nav-inner">
+    <a href="/" class="brand"><img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron" width="221" height="47"></a>
+    <div class="nav-links"><a href="#experience">Experience</a><a href="{{ route('public.products.opsbridge') }}">OpsBridge</a><a href="{{ route('public.products.erp') }}">ERP</a><a href="https://bid.niyantron.com">Offers</a><a href="/about">About</a><a href="/contact">Contact</a></div>
+    <a class="nav-cta" href="#products">Explore products <i class="bi bi-arrow-down"></i></a>
+</div></nav>
+<canvas id="universe" aria-label="Interactive Niyantron product universe"></canvas><div class="vignette"></div><div class="noise"></div>
+<div class="progress" aria-label="Experience chapters">@foreach(['Control core','OpsBridge','ERP','Offers','Ecosystem'] as $i=>$label)<button type="button" data-jump="{{ $i }}" aria-label="{{ $label }}"></button>@endforeach</div>
+<main class="experience" id="experience">
+    <section class="chapter hero is-active" data-scene="0" style="--accent:var(--cyan)"><div class="container"><div class="chapter-copy"><span class="eyebrow"><i class="bi bi-stars"></i>Niyantron control universe</span><h1>Business software that <span class="gradient">moves as one.</span></h1><p>OpsBridge controls assets, endpoints and people. Niyantron ERP connects sourcing, quality, inventory, sales and finance. Private commerce turns trusted stock into structured deals.</p><div class="actions"><a class="btn btn-primary" href="#products">Enter the ecosystem <i class="bi bi-arrow-down"></i></a><a class="btn btn-glass" href="/contact">Book a guided experience</a></div><div class="chapter-note"><i class="bi bi-command"></i><span>Scroll to move through the Niyantron control core and see how each product changes the operating model.</span></div></div><div class="scroll-cue"><span></span>Scroll to transform</div></div><div class="scene-label"><small>SCENE 01 · CONTROL CORE</small><strong>One shared intelligence layer</strong><span>Organization identity, product access and operational signals remain connected.</span></div></section>
+    <section class="chapter" data-scene="1" style="--accent:var(--cyan)"><div class="container"><div class="chapter-copy"><span class="eyebrow"><i class="bi bi-hdd-network"></i>OpsBridge world</span><h2>Every device becomes <span class="gradient">operational intelligence.</span></h2><p>A physical endpoint turns into a living record—ownership, employee custody, discovered software, maintenance, compliance and lifecycle evidence connected in real time.</p><div class="actions"><a class="btn btn-primary" href="{{ route('public.products.opsbridge') }}">Explore OpsBridge <i class="bi bi-arrow-right"></i></a><a class="btn btn-glass" href="https://opsbridge.niyantron.com/login">Customer login</a></div></div></div><div class="scene-label"><small>SCENE 02 · DEVICE GRAPH</small><strong>Asset → Endpoint → Employee</strong><span>Discovery signals orbit the device while custody and lifecycle remain traceable.</span></div></section>
+    <section class="chapter" data-scene="2" style="--accent:var(--violet)"><div class="container"><div class="chapter-copy"><span class="eyebrow"><i class="bi bi-upc-scan"></i>Enterprise ERP world</span><h2>Source. Inspect. Identify. <span class="gradient">Trade with control.</span></h2><p>Supplier opportunities pass through category-specific specifications and quality logic, receive unique identities and barcodes, and become accountable company-owned inventory.</p><div class="actions"><a class="btn btn-primary" href="{{ route('public.products.erp') }}">Explore Niyantron ERP <i class="bi bi-arrow-right"></i></a><a class="btn btn-glass" href="https://erp.niyantron.com/login">Customer login</a></div></div></div><div class="scene-label"><small>SCENE 03 · QUALITY GATE</small><strong>Dynamic by category</strong><span>Laptop, mobile, AC, printer or furniture—each category owns its specification and QC behavior.</span></div></section>
+    <section class="chapter" data-scene="3" style="--accent:var(--green)"><div class="container"><div class="chapter-copy"><span class="eyebrow"><i class="bi bi-broadcast"></i>Niyantron Offers</span><h2>Stock becomes a <span class="gradient">private market opportunity.</span></h2><p>Connected buyers see approved broadcasts, submit quantity and price, negotiate structured counteroffers and follow allocation—without exposing commercial data publicly.</p><div class="actions"><a class="btn btn-primary" href="https://bid.niyantron.com">Open buyer portal <i class="bi bi-arrow-up-right"></i></a></div></div></div><div class="scene-label"><small>SCENE 04 · COMMERCE NETWORK</small><strong>Offer → Bid → Counter → Award</strong><span>Every commercial decision moves through a private, auditable connection.</span></div></section>
+    <section class="chapter" data-scene="4" style="--accent:var(--gold)"><div class="container"><div class="chapter-copy"><span class="eyebrow"><i class="bi bi-diagram-3"></i>Unified ecosystem</span><h2>Different products. <span class="gradient">One Niyantron intelligence.</span></h2><p>Organizations can use OpsBridge, ERP or both. Each product remains focused while subscriptions, identity, partners and management visibility stay connected behind the scenes.</p><div class="actions"><a class="btn btn-primary" href="#products">Choose your product <i class="bi bi-arrow-down"></i></a><a class="btn btn-glass" href="/contact">Talk to Niyantron</a></div></div></div><div class="scene-label"><small>SCENE 05 · COMPLETE CONTROL</small><strong>OpsBridge + ERP + Offers</strong><span>A connected software ecosystem designed around real operational accountability.</span></div></section>
+</main>
+<section class="content-shell" id="products"><div class="container"><div class="section-head"><small>Choose your operating world</small><h2>Focused products. Shared enterprise discipline.</h2><p>Start with the operational problem you need to solve. Add the second product when your organization is ready—without losing identity or control.</p></div><div class="product-grid">
+    <a class="product-card" href="{{ route('public.products.opsbridge') }}" style="--card-glow:#28e4ff;--card-accent:#28e4ff"><div class="product-icon"><i class="bi bi-hdd-network"></i></div><h3>OpsBridge</h3><p>IT assets, endpoint intelligence, employees, software governance, maintenance and lifecycle evidence in one operational workspace.</p><div class="feature-tags"><span>ITAM</span><span>Endpoint agent</span><span>HRMS</span><span>SAM</span><span>AMC</span><span>Disposal</span></div><span class="explore">Enter OpsBridge world <i class="bi bi-arrow-right"></i></span></a>
+    <a class="product-card" href="{{ route('public.products.erp') }}" style="--card-glow:#7556ff;--card-accent:#a58fff"><div class="product-icon"><i class="bi bi-command"></i></div><h3>Niyantron ERP</h3><p>Catalogue, procurement, dynamic quality, serialized inventory, CRM, sales, finance and private commerce for accountable trade.</p><div class="feature-tags"><span>Procurement</span><span>Dynamic QC</span><span>Inventory</span><span>CRM</span><span>Finance</span><span>Bidding</span></div><span class="explore">Enter ERP world <i class="bi bi-arrow-right"></i></span></a>
+</div><div class="ecosystem"><div><small class="eyebrow"><i class="bi bi-shield-lock"></i>Platform ecosystem</small><h3>Control without mixing product boundaries.</h3><p>Common organization identity and subscriptions remain on the Niyantron platform. Product applications and databases remain focused and logically isolated.</p><a class="btn btn-glass" href="/about">Understand the architecture</a></div><div class="ecosystem-flow"><div class="flow-node"><div><i class="bi bi-buildings"></i><strong>Organization</strong><span>Common identity</span></div></div><div class="flow-node"><div><i class="bi bi-grid-1x2"></i><strong>Products</strong><span>Separate experiences</span></div></div><div class="flow-node"><div><i class="bi bi-shield-check"></i><strong>Control</strong><span>Tenant-safe data</span></div></div></div></div><div class="final-cta"><h2>Ready to see your organization<br>as one connected system?</h2><p>Choose a product walkthrough based on your operating model.</p><div class="actions"><a class="btn btn-primary" href="/contact">Book a Niyantron demo</a><a class="btn btn-glass" href="https://partner.niyantron.com">Partner with us</a></div></div></div>
+<footer><div class="container footer-row"><img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron"><span>Connected control for modern organizations.</span><span>&copy; {{ date('Y') }} Niyantron</span></div></footer></section>
+<script type="module">
+import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
+const canvas=document.getElementById('universe'), reduced=matchMedia('(prefers-reduced-motion: reduce)').matches, mobile=innerWidth<760;
+const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(48,1,.1,100), renderer=new THREE.WebGLRenderer({canvas,antialias:!mobile,alpha:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.25:1.8));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;
+scene.add(new THREE.AmbientLight(0x86a8dc,1.25));const key=new THREE.PointLight(0x4d86ff,70,20);key.position.set(2,5,6);scene.add(key);const rim=new THREE.PointLight(0x2ee4ff,55,18);rim.position.set(-5,-1,4);scene.add(rim);const violet=new THREE.PointLight(0x8a63ff,45,16);violet.position.set(5,-2,1);scene.add(violet);
+const starGeo=new THREE.BufferGeometry(), count=mobile?420:950, points=new Float32Array(count*3);for(let i=0;i<count;i++){points[i*3]=(Math.random()-.5)*28;points[i*3+1]=(Math.random()-.5)*17;points[i*3+2]=-Math.random()*18-2}starGeo.setAttribute('position',new THREE.BufferAttribute(points,3));const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({color:0x92b4e6,size:.018,transparent:true,opacity:.68}));scene.add(stars);
+const mat=(color,emissive=color)=>new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity:.18,metalness:.62,roughness:.25,transparent:true,opacity:1});const lineMat=color=>new THREE.MeshBasicMaterial({color,transparent:true,opacity:.3});
+const coreG=new THREE.Group();scene.add(coreG);const core=new THREE.Mesh(new THREE.IcosahedronGeometry(1.05,2),mat(0x397cff,0x153d9c));coreG.add(core);const coreWire=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(1.34,1)),new THREE.LineBasicMaterial({color:0x28e4ff,transparent:true,opacity:.32}));coreG.add(coreWire);for(let i=0;i<3;i++){const ring=new THREE.Mesh(new THREE.TorusGeometry(1.75+i*.42,.008,8,160),lineMat(i===1?0x7556ff:0x28e4ff));ring.rotation.set(Math.PI/(2.3+i*.2),i*.42,i*.7);coreG.add(ring)}
+const worldG=new THREE.Group();scene.add(worldG);const makeWorld=(color,x)=>{const g=new THREE.Group(),s=new THREE.Mesh(new THREE.SphereGeometry(.62,42,28),mat(color,color));g.add(s);const r=new THREE.Mesh(new THREE.TorusGeometry(.92,.01,8,120),lineMat(color));r.rotation.x=Math.PI/2.5;g.add(r);g.position.x=x;worldG.add(g);return g};const opsWorld=makeWorld(0x28e4ff,-2.05),erpWorld=makeWorld(0x7556ff,2.05),offerWorld=makeWorld(0x2ee6a6,0);
+const laptopG=new THREE.Group();scene.add(laptopG);const base=new THREE.Mesh(new THREE.BoxGeometry(3.2,.16,2.05),mat(0x152a49,0x0b1730));base.position.y=-.9;laptopG.add(base);const screenFrame=new THREE.Mesh(new THREE.BoxGeometry(3.05,2.05,.12),mat(0x17345b,0x0a1830));screenFrame.position.set(0,.2,-.88);laptopG.add(screenFrame);const screen=new THREE.Mesh(new THREE.PlaneGeometry(2.65,1.66),new THREE.MeshBasicMaterial({color:0x071225,transparent:true,opacity:.96}));screen.position.set(0,.2,-.81);laptopG.add(screen);for(let i=0;i<7;i++){const dot=new THREE.Mesh(new THREE.SphereGeometry(.065,12,8),new THREE.MeshBasicMaterial({color:i%2?0x28e4ff:0x397cff}));dot.position.set(-1.05+i*.35,.22+Math.sin(i)*.45,-.77);laptopG.add(dot)}
+const erpG=new THREE.Group();scene.add(erpG);const scanRing=new THREE.Mesh(new THREE.TorusGeometry(1.55,.035,12,120),new THREE.MeshBasicMaterial({color:0x9c7cff,transparent:true,opacity:.8}));scanRing.rotation.x=Math.PI/2;erpG.add(scanRing);for(let i=0;i<12;i++){const cube=new THREE.Mesh(new THREE.BoxGeometry(.44,.44,.44),mat(i%3===0?0x7556ff:0x244f9a));cube.position.set((i%4-1.5)*.62,(Math.floor(i/4)-1)*.58,(i%2-.5)*.8);erpG.add(cube)}const barcode=new THREE.Group();for(let i=0;i<14;i++){const b=new THREE.Mesh(new THREE.BoxGeometry(i%3===0?.08:.035,.9,.04),new THREE.MeshBasicMaterial({color:0xffffff}));b.position.x=(i-6.5)*.1;barcode.add(b)}barcode.position.set(0,-1.35,.7);erpG.add(barcode);
+const offerG=new THREE.Group();scene.add(offerG);for(let i=0;i<5;i++){const card=new THREE.Mesh(new THREE.BoxGeometry(1.25,.78,.08),mat(i===0?0x2ee6a6:0x17375b,i===0?0x0b5f47:0x0b2038));const a=i/5*Math.PI*2;card.position.set(Math.cos(a)*2.25,Math.sin(a)*1.25,Math.sin(a)*.55);card.rotation.z=a+Math.PI/2;offerG.add(card)}const bidCore=new THREE.Mesh(new THREE.OctahedronGeometry(.7,1),mat(0x2ee6a6,0x0b6b4e));offerG.add(bidCore);
+[laptopG,erpG,offerG].forEach(g=>g.visible=false);camera.position.set(.7,.3,8.5);
+const clamp=v=>Math.max(0,Math.min(1,v)),smooth=v=>{v=clamp(v);return v*v*(3-2*v)},mix=(a,b,t)=>a+(b-a)*t,range=(p,a,b)=>smooth((p-a)/(b-a));let targetProgress=0,currentProgress=0,pointerX=0,pointerY=0;
+const chapters=[...document.querySelectorAll('.chapter')],dots=[...document.querySelectorAll('.progress button')],experience=document.querySelector('.experience');function measure(){const r=experience.getBoundingClientRect(),total=experience.offsetHeight-innerHeight;targetProgress=clamp(-r.top/Math.max(total,1))}addEventListener('scroll',()=>{measure();document.getElementById('siteNav').classList.toggle('scrolled',scrollY>30)},{passive:true});addEventListener('pointermove',e=>{pointerX=(e.clientX/innerWidth-.5)*2;pointerY=(e.clientY/innerHeight-.5)*-2},{passive:true});dots.forEach((d,i)=>d.addEventListener('click',()=>chapters[i].scrollIntoView({behavior:reduced?'auto':'smooth'})));
+const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){chapters.forEach(c=>c.classList.remove('is-active'));e.target.classList.add('is-active');const i=chapters.indexOf(e.target);dots.forEach((d,j)=>d.classList.toggle('active',i===j))}}),{threshold:.48});chapters.forEach(c=>observer.observe(c));
+function fadeObject(group,opacity){group.visible=opacity>.015;group.traverse(o=>{if(o.material&&'opacity'in o.material){o.material.transparent=true;o.material.opacity=Math.min(o.userData.baseOpacity||1,opacity)}})}
+function render(){requestAnimationFrame(render);currentProgress+= (targetProgress-currentProgress)*(reduced?1:.055);const p=currentProgress,t=performance.now()*.001;stars.rotation.y=t*.008+p*.25;stars.rotation.x=pointerY*.015;
+ core.rotation.x=t*.16+p*2.4;core.rotation.y=t*.25+p*3.3;coreWire.rotation.y=-t*.15;coreG.rotation.y=pointerX*.08;const coreFade=1-range(p,.12,.22)+range(p,.82,.94);fadeObject(coreG,clamp(coreFade));coreG.scale.setScalar(mix(1.15,.72,range(p,0,.18))+range(p,.84,1)*.55);coreG.position.x=mix(1.3,0,range(p,.84,1));
+ const split=range(p,.07,.2),worldFade=split*(1-range(p,.83,.94));fadeObject(worldG,worldFade);worldG.position.z=mix(-2,0,split);opsWorld.position.x=mix(-.3,-2.2,split);erpWorld.position.x=mix(.3,2.2,split);offerWorld.position.y=mix(-2.5,1.7,range(p,.58,.75));[opsWorld,erpWorld,offerWorld].forEach((g,i)=>{g.rotation.y=t*(.22+i*.06);g.rotation.x=Math.sin(t*.5+i)*.12});
+ const lapIn=range(p,.17,.27),lapOut=range(p,.39,.48);fadeObject(laptopG,lapIn*(1-lapOut));laptopG.visible=lapIn*(1-lapOut)>.02;laptopG.position.set(mix(4.5,1.9,lapIn),mix(-1.5,.1,lapIn),mix(-2,0,lapIn));laptopG.rotation.set(-.12+pointerY*.04,-.35+pointerX*.08,0);screenFrame.rotation.x=screen.rotation.x=mix(-.12,0,lapIn);laptopG.scale.setScalar(mix(.72,1.05,lapIn));
+ const erpIn=range(p,.37,.49),erpOut=range(p,.60,.69);fadeObject(erpG,erpIn*(1-erpOut));erpG.visible=erpIn*(1-erpOut)>.02;erpG.position.set(mix(4.5,2.05,erpIn),0,0);erpG.rotation.y=t*.22+pointerX*.08;scanRing.rotation.z=t*.65;barcode.position.y=-1.35+Math.sin(t*2)*.08;
+ const offerIn=range(p,.57,.68),offerOut=range(p,.78,.87);fadeObject(offerG,offerIn*(1-offerOut));offerG.visible=offerIn*(1-offerOut)>.02;offerG.position.set(mix(4.2,2.0,offerIn),0,0);offerG.rotation.y=t*.16+pointerX*.08;bidCore.rotation.x=t*.5;bidCore.rotation.y=t*.7;
+ const camFinal=range(p,.82,1);camera.position.x=mix(.7,0,camFinal)+pointerX*.08;camera.position.y=mix(.3,.1,camFinal)+pointerY*.05;camera.position.z=mix(8.5,7.2,camFinal);camera.lookAt(0,0,0);renderer.render(scene,camera)}
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}addEventListener('resize',resize);measure();resize();dots[0].classList.add('active');render();
+</script>
+</body></html>
