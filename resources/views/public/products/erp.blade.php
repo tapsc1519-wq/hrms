@@ -2,6 +2,7 @@
 @section('title','Niyantron ERP - Procurement, Quality, Inventory and Commerce')
 @section('description','Run procurement, category-specific quality checks, serialized inventory, CRM, sales, finance and private B2B bidding in one enterprise ERP.')
 @section('scene-glow','#7457ff')
+@section('product-class','product-erp')
 @section('login-url','https://erp.niyantron.com/login')
 @section('login-label','Sign in to ERP')
 @section('content')
