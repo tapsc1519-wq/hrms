@@ -1,92 +1,21 @@
 <!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Contact Niyantron</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        :root { --ink:#102033; --muted:#607085; --line:#dce5ee; }
-        body { background:#f7fafc; color:var(--ink); font-family:Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-        .nav-wrap { backdrop-filter:blur(16px); background:rgba(255,255,255,.9); border-bottom:1px solid var(--line); position:fixed; top:0; left:0; right:0; z-index:20; }
-        .brand-mark { align-items:center; background:#102033; border-radius:10px; color:#fff; display:inline-flex; font-weight:900; height:34px; justify-content:center; width:34px; }
-        .hero { min-height:52vh; padding:8.5rem 0 4rem; position:relative; overflow:hidden; }
-        .hero:before { background:linear-gradient(135deg,#fff 0%,#eef7f4 48%,#eef4ff 100%); content:""; inset:0; position:absolute; z-index:-1; }
-        h1 { font-size:clamp(2.2rem,5vw,4.5rem); font-weight:900; letter-spacing:0; line-height:1.05; }
-        .lead { color:#607085; line-height:1.75; }
-        .btn { border-radius:999px; font-weight:800; padding:.72rem 1.1rem; }
-        .panel { background:#fff; border:1px solid var(--line); border-radius:18px; box-shadow:0 16px 40px rgba(16,32,51,.07); height:100%; padding:1.5rem; }
-        .icon-box { align-items:center; border-radius:14px; display:inline-flex; height:44px; justify-content:center; width:44px; }
-        .section { padding:5rem 0; }
-        .contact-card { background:#102033; border-radius:24px; color:#fff; padding:2rem; }
-        @media (max-width:767.98px) { .hero { padding-top:7rem; } .nav-links { display:none!important; } }
-    </style>
-</head>
-<body>
-    <nav class="nav-wrap">
-        <div class="container py-3 d-flex justify-content-between align-items-center">
-            <a href="/" class="d-flex align-items-center gap-2 text-dark text-decoration-none"><span class="brand-mark">N</span><strong>Niyantron</strong></a>
-            <div class="nav-links d-flex align-items-center gap-4 small fw-bold">
-                <a href="/" class="text-dark text-decoration-none">Home</a>
-                <a href="/about" class="text-dark text-decoration-none">About</a>
-                <a href="/contact" class="text-dark text-decoration-none">Contact</a>
-                <a href="https://partner.niyantron.com" class="text-dark text-decoration-none">Partners</a>
-            </div>
-            <a href="https://opsbridge.niyantron.com/login" class="btn btn-primary btn-sm">Product Login</a>
-        </div>
-    </nav>
-
-    <main>
-        <section class="hero">
-            <div class="container">
-                <div class="row g-5 align-items-center">
-                    <div class="col-lg-7">
-                        <h1>Let us talk about your operational control needs.</h1>
-                        <p class="lead mt-4">Whether you want OpsBridge for your organization, want to become a partner, or want to discuss future Niyantron products, use the right contact path below.</p>
-                    </div>
-                    <div class="col-lg-5">
-                        <div class="contact-card">
-                            <div class="small text-white-50 text-uppercase fw-bold mb-2">Fastest path</div>
-                            <h3 class="fw-bold">Start with OpsBridge or partnership.</h3>
-                            <p class="text-white-50 mb-0">Email setup for automated website forms is pending, so these direct links are the cleanest contact channel for now.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section">
-            <div class="container">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="panel">
-                            <span class="icon-box bg-primary-subtle text-primary"><i class="bi bi-hdd-network"></i></span>
-                            <h5 class="fw-bold mt-3">Product enquiry</h5>
-                            <p class="text-muted">For OpsBridge demo, pricing, onboarding and organization setup.</p>
-                            <a href="mailto:hello@niyantron.com?subject=OpsBridge%20Product%20Enquiry" class="btn btn-outline-primary btn-sm">hello@niyantron.com</a>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="panel">
-                            <span class="icon-box bg-success-subtle text-success"><i class="bi bi-person-workspace"></i></span>
-                            <h5 class="fw-bold mt-3">Partner programme</h5>
-                            <p class="text-muted">For partnership, lead collaboration and commission discussion.</p>
-                            <a href="mailto:partner@niyantron.com?subject=Niyantron%20Partner%20Programme" class="btn btn-outline-success btn-sm">partner@niyantron.com</a>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="panel">
-                            <span class="icon-box bg-warning-subtle text-warning"><i class="bi bi-life-preserver"></i></span>
-                            <h5 class="fw-bold mt-3">Existing customer</h5>
-                            <p class="text-muted">For active portal users who need support or onboarding help.</p>
-                            <a href="https://opsbridge.niyantron.com/login" class="btn btn-outline-dark btn-sm">Open OpsBridge</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-    @include('public.partials.advisor')
-</body>
-</html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Talk to Niyantron about OpsBridge, Enterprise ERP, private B2B commerce, demos, onboarding and partnerships."><title>Talk to Niyantron | Product Demo and Consultation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+:root{--navy:#071426;--ink:#092344;--muted:#657b96;--line:#dce6f1;--blue:#2878ff;--violet:#7457ff;--cyan:#25dff4;--green:#21bd88}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:#f7faff;font-family:Inter,system-ui,sans-serif}.container{width:min(1160px,calc(100% - 40px));margin:auto}a{color:inherit}.nav{position:fixed;z-index:50;inset:0 0 auto;background:rgba(255,255,255,.94);border-bottom:1px solid rgba(9,35,68,.08);backdrop-filter:blur(18px)}.nav-inner{height:80px;display:flex;align-items:center;justify-content:space-between;gap:28px}.brand img{display:block;height:44px;width:auto}.nav-links{display:flex;gap:28px;align-items:center;color:#536b86;font-size:13px;font-weight:750}.nav-links a{text-decoration:none}.nav-links a:hover,.nav-links a.active{color:#082d64}.nav-action{padding:11px 17px;border-radius:999px;text-decoration:none;color:#fff;background:#0a326d;font-size:12px;font-weight:800;box-shadow:0 12px 25px rgba(9,48,104,.16)}
+.hero{position:relative;overflow:hidden;padding:150px 0 92px;color:#fff;background:radial-gradient(circle at 78% 35%,rgba(72,124,255,.34),transparent 27%),radial-gradient(circle at 54% 5%,rgba(37,223,244,.13),transparent 26%),linear-gradient(125deg,#06101f,#09254a 65%,#11174b)}.hero:after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:46px 46px;mask-image:linear-gradient(to right,transparent,#000)}.hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.08fr .92fr;gap:76px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid rgba(255,255,255,.15);border-radius:999px;background:rgba(255,255,255,.055);color:#bfefff;font-size:10px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}.hero h1{max-width:720px;margin:22px 0 0;font:700 clamp(48px,5.7vw,76px)/1.03 Sora;letter-spacing:-.055em}.gradient{background:linear-gradient(90deg,#27e4f5,#4d8aff 55%,#a383ff);-webkit-background-clip:text;color:transparent}.hero p{max-width:650px;margin:24px 0 0;color:#afc2da;font-size:17px;line-height:1.7}.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 17px;border-radius:999px;text-decoration:none;font-size:12px;font-weight:800}.btn-primary{background:linear-gradient(135deg,#2878ff,#7457ff);color:#fff}.btn-ghost{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff}.contact-console{position:relative;padding:16px;border:1px solid rgba(255,255,255,.16);border-radius:28px;background:rgba(6,18,36,.62);box-shadow:0 40px 90px rgba(0,0,0,.32);backdrop-filter:blur(15px);transform:rotateY(-5deg) rotateX(2deg)}.console-head{display:flex;justify-content:space-between;padding:11px 12px 17px;color:#84a2c5;font-size:9px;font-weight:800;letter-spacing:.12em}.console-head span:last-child{color:#29dfa3}.console-path{display:grid;grid-template-columns:46px 1fr auto;gap:12px;align-items:center;padding:15px;margin-bottom:9px;border:1px solid rgba(255,255,255,.09);border-radius:16px;background:rgba(255,255,255,.045)}.console-path i{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:rgba(63,133,255,.14);color:#5ee9f8;font-size:18px}.console-path strong{display:block;font-size:12px}.console-path small{display:block;margin-top:4px;color:#8199b8;font-size:9px}.console-path em{color:#2ee6a6;font-size:9px;font-style:normal;font-weight:850}
+.journeys{padding:92px 0}.section-head{max-width:740px}.section-head small{color:#2368c5;font-size:10px;font-weight:850;letter-spacing:.16em;text-transform:uppercase}.section-head h2{margin:12px 0 0;font:700 clamp(36px,4.5vw,55px)/1.08 Sora;letter-spacing:-.045em}.section-head p{color:var(--muted);font-size:16px;line-height:1.7}.journey-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}.journey{position:relative;min-height:330px;padding:27px;border:1px solid var(--line);border-radius:25px;background:#fff;box-shadow:0 22px 55px rgba(15,50,90,.07);overflow:hidden}.journey:before{content:"";position:absolute;right:-55px;top:-55px;width:180px;height:180px;border-radius:50%;background:var(--glow);filter:blur(60px);opacity:.18}.journey-icon{width:50px;height:50px;display:grid;place-items:center;border-radius:16px;background:var(--soft);color:var(--accent);font-size:21px}.journey h3{margin:24px 0 0;font:700 21px Sora}.journey>p{color:var(--muted);font-size:13px;line-height:1.65}.journey ul{list-style:none;padding:0;margin:20px 0;display:grid;gap:9px}.journey li{display:flex;gap:8px;color:#425d7c;font-size:11px}.journey li i{color:var(--accent)}.journey-link{position:absolute;left:27px;bottom:25px;display:inline-flex;align-items:center;gap:7px;color:var(--accent);text-decoration:none;font-size:11px;font-weight:850}
+.access{padding:0 0 100px}.access-shell{display:grid;grid-template-columns:.85fr 1.15fr;gap:24px;padding:34px;border:1px solid #d8e4f1;border-radius:30px;background:linear-gradient(135deg,#eef5ff,#fff);box-shadow:0 30px 70px rgba(11,47,91,.08)}.access-copy h2{margin:12px 0 0;font:700 35px/1.1 Sora}.access-copy p{color:var(--muted);line-height:1.65}.access-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.access-card{padding:20px;border:1px solid #d8e5f2;border-radius:18px;background:#fff;text-decoration:none;transition:.2s}.access-card:hover{transform:translateY(-3px);border-color:#8bb3ff}.access-card i{color:#2878ff;font-size:20px}.access-card strong{display:block;margin-top:14px;font-size:12px}.access-card small{display:block;margin-top:5px;color:#7890aa;font-size:9px}.footer{padding:30px 0;border-top:1px solid var(--line);color:#71859e;font-size:11px}.footer-row{display:flex;justify-content:space-between;align-items:center;gap:20px}.footer img{height:25px;width:auto}
+@media(max-width:900px){.nav-links{display:none}.hero-grid,.access-shell{grid-template-columns:1fr}.contact-console{transform:none}.journey-grid{grid-template-columns:1fr 1fr}}@media(max-width:620px){.container{width:calc(100% - 28px)}.nav-inner{height:70px}.brand img{height:37px}.nav-action{padding:10px 12px;font-size:10px}.hero{padding:120px 0 68px}.hero h1{font-size:44px}.hero p{font-size:15px}.journeys{padding:70px 0}.journey-grid,.access-grid{grid-template-columns:1fr}.journey{min-height:315px}.access-shell{padding:22px}.footer-row{flex-direction:column}}
+</style></head><body>
+<nav class="nav"><div class="container nav-inner"><a class="brand" href="/"><img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron"></a><div class="nav-links"><a href="/">Home</a><a href="{{ route('public.products.opsbridge') }}">OpsBridge</a><a href="{{ route('public.products.erp') }}">Niyantron ERP</a><a href="/about">About</a><a class="active" href="/contact">Contact</a></div><a class="nav-action" href="#start">Start a conversation</a></div></nav>
+<main><section class="hero"><div class="container hero-grid"><div><span class="eyebrow"><i class="bi bi-chat-heart"></i>Talk to Niyantron</span><h1>Tell us the outcome.<br><span class="gradient">We will map the system.</span></h1><p>Whether you need control over assets and people, an end-to-end ERP, a private buyer network—or all three—start with your real operating challenge. We will show the relevant workflow, not a generic sales deck.</p><div class="hero-actions"><a class="btn btn-primary" href="mailto:hello@niyantron.com?subject=Niyantron%20Product%20Consultation">Discuss my requirement <i class="bi bi-arrow-right"></i></a><a class="btn btn-ghost" href="#start">Choose a conversation path</a></div></div><div class="contact-console"><div class="console-head"><span>NIYANTRON · DISCOVERY ROUTER</span><span>● AVAILABLE</span></div><div class="console-path"><i class="bi bi-hdd-network"></i><div><strong>Assets, endpoints and people</strong><small>OpsBridge product consultation</small></div><em>ROUTE 01</em></div><div class="console-path"><i class="bi bi-command"></i><div><strong>Purchase, QC, stock and finance</strong><small>Niyantron ERP walkthrough</small></div><em>ROUTE 02</em></div><div class="console-path"><i class="bi bi-broadcast"></i><div><strong>Private offers and connected buyers</strong><small>Commerce and bidding discussion</small></div><em>ROUTE 03</em></div></div></div></section>
+<section class="journeys" id="start"><div class="container"><div class="section-head"><small>Choose why you are here</small><h2>Start the right conversation immediately.</h2><p>Each path reaches the right context, so you do not have to explain the Niyantron product structure before explaining your requirement.</p></div><div class="journey-grid">
+<article class="journey" style="--accent:#158bd2;--soft:#e7f7ff;--glow:#20dff5"><div class="journey-icon"><i class="bi bi-window-stack"></i></div><h3>Explore a product</h3><p>For organizations evaluating OpsBridge, ERP or a connected deployment.</p><ul><li><i class="bi bi-check-circle-fill"></i>Requirement-based product mapping</li><li><i class="bi bi-check-circle-fill"></i>Relevant modules and workflow demo</li><li><i class="bi bi-check-circle-fill"></i>Onboarding and commercial discussion</li></ul><a class="journey-link" href="mailto:hello@niyantron.com?subject=Niyantron%20Product%20Demo">Request product consultation <i class="bi bi-arrow-right"></i></a></article>
+<article class="journey" style="--accent:#6c4de8;--soft:#f1edff;--glow:#7457ff"><div class="journey-icon"><i class="bi bi-headset"></i></div><h3>Get customer support</h3><p>For existing customers who need onboarding guidance, product help or account assistance.</p><ul><li><i class="bi bi-check-circle-fill"></i>Identify the correct product workspace</li><li><i class="bi bi-check-circle-fill"></i>Share the affected workflow—not credentials</li><li><i class="bi bi-check-circle-fill"></i>Route operational or access support</li></ul><a class="journey-link" href="mailto:hello@niyantron.com?subject=Niyantron%20Customer%20Support">Contact customer support <i class="bi bi-arrow-right"></i></a></article>
+<article class="journey" style="--accent:#189968;--soft:#e8faf3;--glow:#2ee6a6"><div class="journey-icon"><i class="bi bi-people"></i></div><h3>Partner with Niyantron</h3><p>For consultants, resellers and implementation partners building recurring value.</p><ul><li><i class="bi bi-check-circle-fill"></i>Lead collaboration and deal visibility</li><li><i class="bi bi-check-circle-fill"></i>Commission and enablement discussion</li><li><i class="bi bi-check-circle-fill"></i>Dedicated partner workspace</li></ul><a class="journey-link" href="https://partner.niyantron.com">Visit partner programme <i class="bi bi-arrow-up-right"></i></a></article>
+</div></div></section>
+<section class="access"><div class="container access-shell"><div class="access-copy"><small class="eyebrow" style="color:#1761b8;border-color:#bdd3ec;background:#fff">Existing customer?</small><h2>Go directly to your product workspace.</h2><p>Choose the product you already use. Product logins are separate from the Niyantron platform administration workspace.</p></div><div class="access-grid"><a class="access-card" href="https://opsbridge.niyantron.com/login"><i class="bi bi-hdd-network"></i><strong>OpsBridge sign in</strong><small>Assets, endpoints and people</small></a><a class="access-card" href="https://erp.niyantron.com/login"><i class="bi bi-command"></i><strong>ERP sign in</strong><small>Purchase, QC, inventory and finance</small></a><a class="access-card" href="https://bid.niyantron.com/login"><i class="bi bi-broadcast"></i><strong>Buyer sign in</strong><small>Offers, bids and negotiation</small></a></div></div></section></main>
+<footer class="footer"><div class="container footer-row"><img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron"><span>Connected control for modern organizations.</span><span>&copy; {{ date('Y') }} Niyantron</span></div></footer>
+@include('public.partials.advisor')
+</body></html>
