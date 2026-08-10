@@ -6,7 +6,6 @@
     <title>Niyantron - World of Softwares</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --ink: #0b1220;
@@ -45,23 +44,14 @@
         .brand-lockup {
             align-items: center;
             display: inline-flex;
-            gap: .82rem;
             min-width: max-content;
         }
-        .brand-symbol {
+        .brand-logo {
             display: block;
-            filter: saturate(1.1) drop-shadow(0 5px 12px rgba(26,116,255,.16));
-            height: 54px;
+            height: 52px;
             object-fit: contain;
-            width: 54px;
-        }
-        .brand-wordmark {
-            color: #082a5e;
-            font-family: "Sora", Inter, system-ui, sans-serif;
-            font-size: 1.34rem;
-            font-weight: 700;
-            letter-spacing: -.035em;
-            line-height: 1;
+            object-position: left center;
+            width: auto;
         }
         .site-nav a { color: #082a5e; }
         .site-nav .nav-links a { color: #526783; }
@@ -336,8 +326,7 @@
         }
         @media (max-width: 767.98px) {
             .site-nav .nav-links { display: none !important; }
-            .brand-symbol { height: 40px; width: 40px; }
-            .brand-wordmark { font-size: 1.02rem; }
+            .brand-logo { height: 42px; }
             .hero-content { padding: 7rem 0 3rem; }
             h1 { font-size: 40px; }
             h2 { font-size: 30px; }
@@ -353,8 +342,7 @@
     <nav class="site-nav">
         <div class="container py-3 d-flex align-items-center justify-content-between">
             <a href="/" class="brand-lockup text-decoration-none" aria-label="Niyantron home">
-                <img class="brand-symbol" src="{{ asset('brand/niyantron-symbol-gradient.png') }}" alt="" width="54" height="54">
-                <span class="brand-wordmark">Niyantron</span>
+                <img class="brand-logo" src="{{ asset('brand/niyantron-logo-full.jpg') }}" alt="Niyantron" width="239" height="52">
             </a>
             <div class="nav-links d-flex align-items-center gap-4 small fw-bold">
                 <a href="#products" class="text-decoration-none">Software Worlds</a>
