@@ -118,6 +118,22 @@ Route::get('/contact', function () {
 
     return redirect('/');
 })->name('public.contact');
+Route::get('/products/opsbridge', function () {
+    $host = Str::lower(request()->getHost());
+    $mainDomain = Str::lower((string) config('niyantron.main_domain'));
+
+    abort_unless(in_array($host, [$mainDomain, 'www.'.$mainDomain], true), 404);
+
+    return view('public.products.opsbridge');
+})->name('public.products.opsbridge');
+Route::get('/products/erp', function () {
+    $host = Str::lower(request()->getHost());
+    $mainDomain = Str::lower((string) config('niyantron.main_domain'));
+
+    abort_unless(in_array($host, [$mainDomain, 'www.'.$mainDomain], true), 404);
+
+    return view('public.products.erp');
+})->name('public.products.erp');
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');

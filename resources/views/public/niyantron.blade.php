@@ -345,13 +345,14 @@
                 <img class="brand-logo" src="{{ asset('brand/niyantron-logo-full.jpg') }}" alt="Niyantron" width="239" height="52">
             </a>
             <div class="nav-links d-flex align-items-center gap-4 small fw-bold">
-                <a href="#products" class="text-decoration-none">Software Worlds</a>
+                <a href="{{ route('public.products.opsbridge') }}" class="text-decoration-none">OpsBridge</a>
+                <a href="{{ route('public.products.erp') }}" class="text-decoration-none">ERP</a>
                 <a href="#platform" class="text-decoration-none">Platform</a>
                 <a href="/about" class="text-decoration-none">About</a>
                 <a href="/contact" class="text-decoration-none">Contact</a>
                 <a href="https://partner.niyantron.com" class="text-decoration-none">Partners</a>
             </div>
-            <a href="https://opsbridge.niyantron.com/login" class="btn btn-primary btn-sm">Product Login</a>
+            <a href="#products" class="btn btn-primary btn-sm">Explore Products</a>
         </div>
     </nav>
 
@@ -360,9 +361,9 @@
             <canvas id="softwareUniverse" aria-label="Interactive Niyantron software universe"></canvas>
             <div class="container hero-content d-flex align-items-center">
                 <div class="hero-copy">
-                    <span class="kicker"><i class="bi bi-stars"></i> Enter the world of softwares</span>
-                    <h1>Niyantron is a universe of business software products.</h1>
-                    <p class="lead hero-lead mt-4">One mother company. Multiple focused products. A connected platform where organizations, partners, subscriptions and software worlds move together.</p>
+                    <span class="kicker"><i class="bi bi-stars"></i> Enter the Niyantron control universe</span>
+                    <h1>Connected software for organizations that need control.</h1>
+                    <p class="lead hero-lead mt-4">OpsBridge controls assets, endpoints and people. Niyantron ERP connects sourcing, quality, inventory, sales and finance. One ecosystem, two focused products.</p>
                     <div class="d-flex flex-wrap gap-2 mt-4">
                         <a href="#products" class="btn btn-primary"><i class="bi bi-rocket-takeoff me-1"></i>Explore Software Worlds</a>
                         <a href="https://partner.niyantron.com" class="btn btn-outline-light"><i class="bi bi-person-workspace me-1"></i>Partner With Us</a>
@@ -370,20 +371,20 @@
 
                     <div class="hero-product-panel">
                         <div class="product-dock">
-                            <a class="dock-item" href="https://opsbridge.niyantron.com">
+                            <a class="dock-item" href="{{ route('public.products.opsbridge') }}">
                                 <span class="dock-icon" style="background:rgba(46,228,255,.16);color:var(--cyan)"><i class="bi bi-hdd-network"></i></span>
                                 <strong>OpsBridge</strong>
                                 <span>Live IT operations software</span>
                             </a>
-                            <a class="dock-item" href="https://partner.niyantron.com">
-                                <span class="dock-icon" style="background:rgba(45,227,159,.16);color:var(--green)"><i class="bi bi-person-workspace"></i></span>
-                                <strong>Partner Hub</strong>
-                                <span>Leads and commission world</span>
-                            </a>
-                            <a class="dock-item" href="#products">
+                            <a class="dock-item" href="{{ route('public.products.erp') }}">
                                 <span class="dock-icon" style="background:rgba(255,200,87,.16);color:var(--gold)"><i class="bi bi-clipboard-data"></i></span>
-                                <strong>Future Suite</strong>
-                                <span>More software worlds coming</span>
+                                <strong>Enterprise ERP</strong>
+                                <span>Source, inspect, stock and sell</span>
+                            </a>
+                            <a class="dock-item" href="https://bid.niyantron.com">
+                                <span class="dock-icon" style="background:rgba(45,227,159,.16);color:var(--green)"><i class="bi bi-megaphone"></i></span>
+                                <strong>Niyantron Offers</strong>
+                                <span>Private B2B bidding workspace</span>
                             </a>
                             <a class="dock-item" href="https://platform.niyantron.com/login">
                                 <span class="dock-icon" style="background:rgba(255,107,214,.16);color:var(--pink)"><i class="bi bi-command"></i></span>
@@ -539,9 +540,9 @@
         coreGroup.add(halo);
 
         const worlds = [
-            { name: 'OpsBridge', color: 0x2ee4ff, radius: 3.3, speed: 0.45, size: 0.42, y: 0.15, url: 'https://opsbridge.niyantron.com' },
-            { name: 'Partner Hub', color: 0x2de39f, radius: 4.25, speed: 0.32, size: 0.34, y: -0.35, url: 'https://partner.niyantron.com' },
-            { name: 'Future Suite', color: 0xffc857, radius: 5.05, speed: 0.24, size: 0.3, y: 0.42, url: '#products' },
+            { name: 'OpsBridge', color: 0x2ee4ff, radius: 3.3, speed: 0.45, size: 0.42, y: 0.15, url: '{{ route('public.products.opsbridge') }}' },
+            { name: 'Niyantron ERP', color: 0xffc857, radius: 4.25, speed: 0.32, size: 0.38, y: -0.35, url: '{{ route('public.products.erp') }}' },
+            { name: 'Niyantron Offers', color: 0x2de39f, radius: 5.05, speed: 0.24, size: 0.3, y: 0.42, url: 'https://bid.niyantron.com' },
             { name: 'Platform Core', color: 0xff6bd6, radius: 2.55, speed: 0.58, size: 0.28, y: -0.65, url: 'https://platform.niyantron.com/login' },
         ];
         const worldMeshes = [];
