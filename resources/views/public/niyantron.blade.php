@@ -6,6 +6,7 @@
     <title>Niyantron - World of Softwares</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --ink: #0b1220;
@@ -40,16 +41,26 @@
             top: 0;
             z-index: 30;
         }
-        .brand-mark {
+        .brand-lockup {
             align-items: center;
-            background: linear-gradient(135deg, var(--blue), var(--cyan));
-            border-radius: 10px;
-            color: #fff;
             display: inline-flex;
-            font-weight: 900;
-            height: 34px;
-            justify-content: center;
-            width: 34px;
+            gap: .72rem;
+            min-width: max-content;
+        }
+        .brand-symbol {
+            display: block;
+            filter: brightness(1.28) saturate(1.14) drop-shadow(0 5px 12px rgba(26,116,255,.22));
+            height: 50px;
+            object-fit: contain;
+            width: 50px;
+        }
+        .brand-wordmark {
+            color: #fff;
+            font-family: "Sora", Inter, system-ui, sans-serif;
+            font-size: 1.18rem;
+            font-weight: 700;
+            letter-spacing: -.035em;
+            line-height: 1;
         }
         .site-nav a { color: var(--text); }
         .site-nav .nav-links a { color: #cbd8ea; }
@@ -324,6 +335,8 @@
         }
         @media (max-width: 767.98px) {
             .site-nav .nav-links { display: none !important; }
+            .brand-symbol { height: 40px; width: 40px; }
+            .brand-wordmark { font-size: 1.02rem; }
             .hero-content { padding: 7rem 0 3rem; }
             h1 { font-size: 40px; }
             h2 { font-size: 30px; }
@@ -338,8 +351,9 @@
 <body>
     <nav class="site-nav">
         <div class="container py-3 d-flex align-items-center justify-content-between">
-            <a href="/" class="d-flex align-items-center gap-2 text-decoration-none">
-                <span class="brand-mark">N</span><strong>Niyantron</strong>
+            <a href="/" class="brand-lockup text-decoration-none" aria-label="Niyantron home">
+                <img class="brand-symbol" src="{{ asset('brand/niyantron-symbol-gradient.png') }}" alt="" width="50" height="50">
+                <span class="brand-wordmark">Niyantron</span>
             </a>
             <div class="nav-links d-flex align-items-center gap-4 small fw-bold">
                 <a href="#products" class="text-decoration-none">Software Worlds</a>
