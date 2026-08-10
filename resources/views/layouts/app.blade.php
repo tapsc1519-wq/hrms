@@ -1119,6 +1119,7 @@
     @stack('styles')
 </head>
 <body>
+@include('public.partials.brand-experience')
 
 <!-- ─────────────── SIDEBAR ─────────────── -->
 <div id="sidebar">
