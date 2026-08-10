@@ -9,6 +9,12 @@
         $siteSubtitle = \App\Models\Setting::get('site_subtitle', 'Asset Management');
         $siteLogo     = \App\Models\Setting::get('site_logo');
         $siteFavicon  = \App\Models\Setting::get('site_favicon');
+        $layoutUser = auth()->user();
+        $layoutOrganization = $layoutUser?->organization;
+        $isOrganizationWorkspace = $layoutOrganization && !$layoutUser?->isSuperAdmin();
+        $workspaceTitle = $isOrganizationWorkspace ? $layoutOrganization->name : $siteTitle;
+        $workspaceSubtitle = $isOrganizationWorkspace ? 'OpsBridge Workspace' : $siteSubtitle;
+        $workspaceLogo = $isOrganizationWorkspace ? $layoutOrganization->logo : $siteLogo;
     @endphp
     <title>@yield('title', 'Dashboard') — {{ $siteTitle }}</title>
     @if($siteFavicon)
@@ -144,6 +150,28 @@
         text-transform: uppercase;
         letter-spacing: 1.2px;
         font-weight: 500;
+    }
+    .sidebar-powered-by {
+        align-items: center;
+        background: rgba(0,0,0,.12);
+        border-top: 1px solid rgba(255,255,255,.06);
+        color: #64748b;
+        display: flex;
+        flex-shrink: 0;
+        font-size: .62rem;
+        gap: .45rem;
+        justify-content: center;
+        padding: .55rem .8rem;
+        text-decoration: none;
+    }
+    .sidebar-powered-by:hover { color: #94a3b8; }
+    .sidebar-powered-by img {
+        background: #fff;
+        border-radius: 3px;
+        display: block;
+        height: 19px;
+        object-fit: contain;
+        width: auto;
     }
 
     /* Nav scroll area */
@@ -1096,17 +1124,21 @@
 <div id="sidebar">
     <!-- Brand -->
     <div class="sidebar-brand">
-        <div class="sidebar-brand-icon" style="{{ $siteLogo ? 'background:transparent;padding:2px;' : '' }}">
-            @if($siteLogo)
-                <img src="{{ Storage::url($siteLogo) }}"
+        <div class="sidebar-brand-icon" style="{{ $workspaceLogo ? 'background:#fff;padding:2px;' : '' }}">
+            @if($workspaceLogo)
+                <img src="{{ Storage::url($workspaceLogo) }}"
                      style="width:100%;height:100%;object-fit:contain;border-radius:8px">
             @else
-                <i class="bi bi-cpu-fill"></i>
+                @if($isOrganizationWorkspace)
+                    <span>{{ strtoupper(substr($workspaceTitle, 0, 2)) }}</span>
+                @else
+                    <i class="bi bi-cpu-fill"></i>
+                @endif
             @endif
         </div>
         <div class="sidebar-brand-text">
-            <h5>{{ $siteTitle }}</h5>
-            <span>{{ $siteSubtitle }}</span>
+            <h5>{{ $workspaceTitle }}</h5>
+            <span>{{ $workspaceSubtitle }}</span>
         </div>
     </div>
 
@@ -1950,6 +1982,13 @@
             @endif
         @endif
     </nav>
+
+    @if($isOrganizationWorkspace)
+        <a class="sidebar-powered-by" href="https://niyantron.com" target="_blank" rel="noopener" aria-label="Powered by Niyantron">
+            <span>Powered by</span>
+            <img src="{{ asset('brand/niyantron-logo-full.jpg') }}" alt="Niyantron" width="88" height="19">
+        </a>
+    @endif
 
     <!-- Footer user info -->
     <div class="sidebar-footer">
