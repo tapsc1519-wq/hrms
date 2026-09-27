@@ -10,6 +10,7 @@ use App\Models\AttendanceSession;
 use App\Models\EmployeeProfile;
 use App\Support\AttendanceCalculator;
 use App\Support\AttendanceDayResolver;
+use App\Support\AttendanceGeofence;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,7 @@ class AttendanceController extends Controller
 {
     public function index()
     {
-        $employee = EmployeeProfile::where('user_id', auth()->id())->with('shift')->first();
+        $employee = EmployeeProfile::where('user_id', auth()->id())->with(['shift', 'location'])->first();
 
         if (!$employee) {
             $today = null;
@@ -40,7 +41,7 @@ class AttendanceController extends Controller
 
     public function signIn(Request $request)
     {
-        $employee = EmployeeProfile::where('user_id', auth()->id())->with('shift')->first();
+        $employee = EmployeeProfile::where('user_id', auth()->id())->with(['shift', 'location'])->first();
         if (!$employee) {
             return back()->with('error', 'Your staff account is not linked to an employee profile. Please contact HR/Admin.');
         }
@@ -48,8 +49,9 @@ class AttendanceController extends Controller
         $now = now();
         $metrics = AttendanceCalculator::calculate($employee->shift, today(), $now, null);
         $day = AttendanceDayResolver::resolve($employee, today());
+        $geofence = AttendanceGeofence::evaluate($request, $employee, 'sign_in');
 
-        return DB::transaction(function () use ($employee, $now, $metrics, $day, $request) {
+        return DB::transaction(function () use ($employee, $now, $metrics, $day, $request, $geofence) {
             $record = AttendanceRecord::firstOrCreate([
                 'organization_id' => $employee->organization_id,
                 'user_id' => auth()->id(),
@@ -77,6 +79,7 @@ class AttendanceController extends Controller
                 'user_id' => auth()->id(),
                 'sign_in_at' => $now,
                 'sign_in_ip' => $request->ip(),
+                ...$geofence,
             ]);
 
             $this->refreshRecordFromSessions($record->fresh(['employee.shift', 'shift', 'sessions']));
@@ -87,7 +90,7 @@ class AttendanceController extends Controller
 
     public function signOut(Request $request)
     {
-        $record = AttendanceRecord::where('user_id', auth()->id())->whereDate('attendance_date', today())->with(['employee.shift', 'shift', 'sessions'])->first();
+        $record = AttendanceRecord::where('user_id', auth()->id())->whereDate('attendance_date', today())->with(['employee.shift', 'employee.location', 'shift', 'sessions'])->first();
 
         if (!$record) {
             return back()->with('error', 'Please sign in before signing out.');
@@ -99,10 +102,12 @@ class AttendanceController extends Controller
         }
 
         $now = now();
+        $geofence = AttendanceGeofence::evaluate($request, $record->employee, 'sign_out');
         $activeSession->update([
             'sign_out_at' => $now,
             'sign_out_ip' => $request->ip(),
             'work_minutes' => max(0, $activeSession->sign_in_at->diffInMinutes($now)),
+            ...$geofence,
         ]);
 
         $this->refreshRecordFromSessions($record->fresh(['employee.shift', 'shift', 'sessions']));

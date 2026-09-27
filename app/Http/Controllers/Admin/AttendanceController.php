@@ -19,7 +19,7 @@ class AttendanceController extends Controller
     public function index(Request $request)
     {
         $query = AttendanceRecord::where('organization_id', $this->orgId())
-            ->with(['user.department', 'employee.shift', 'shift', 'holiday']);
+            ->with(['user.department', 'employee.shift', 'employee.location', 'shift', 'holiday', 'sessions.workLocation']);
 
         if ($request->filled('date')) {
             $query->whereDate('attendance_date', $request->date);

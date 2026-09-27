@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Facility;
 use App\Models\Location;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 
 class FacilityController extends Controller
@@ -103,14 +104,7 @@ class FacilityController extends Controller
     {
         abort_if($facility->organization_id !== $this->orgId(), 403);
 
-        $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'building'    => 'nullable|string|max:100',
-            'floor'       => 'nullable|string|max:50',
-            'room'        => 'nullable|string|max:100',
-            'description' => 'nullable|string',
-            'status'      => 'required|in:active,inactive',
-        ]);
+        $validated = $this->validateLocation($request);
 
         $validated['facility_id']    = $facility->id;
         $validated['organization_id'] = $this->orgId();
@@ -126,14 +120,7 @@ class FacilityController extends Controller
         abort_if($facility->organization_id !== $this->orgId(), 403);
         abort_if($location->facility_id !== $facility->id, 403);
 
-        $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'building'    => 'nullable|string|max:100',
-            'floor'       => 'nullable|string|max:50',
-            'room'        => 'nullable|string|max:100',
-            'description' => 'nullable|string',
-            'status'      => 'required|in:active,inactive',
-        ]);
+        $validated = $this->validateLocation($request);
 
         $location->update($validated);
 
@@ -150,5 +137,29 @@ class FacilityController extends Controller
 
         return redirect()->route('admin.facilities.show', $facility)
             ->with('success', 'Work location removed.');
+    }
+
+    private function validateLocation(Request $request): array
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'building' => ['nullable', 'string', 'max:100'],
+            'floor' => ['nullable', 'string', 'max:50'],
+            'room' => ['nullable', 'string', 'max:100'],
+            'description' => ['nullable', 'string'],
+            'status' => ['required', Rule::in(['active', 'inactive'])],
+            'geofence_mode' => ['required', Rule::in(['disabled', 'warning', 'strict'])],
+            'latitude' => ['nullable', 'required_unless:geofence_mode,disabled', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'required_unless:geofence_mode,disabled', 'numeric', 'between:-180,180'],
+            'geofence_radius_metres' => ['required', 'integer', 'between:20,5000'],
+            'maximum_gps_accuracy_metres' => ['required', 'integer', 'between:10,1000'],
+            'require_location_on_sign_in' => ['nullable', 'boolean'],
+            'require_location_on_sign_out' => ['nullable', 'boolean'],
+        ]);
+
+        $validated['require_location_on_sign_in'] = $request->boolean('require_location_on_sign_in');
+        $validated['require_location_on_sign_out'] = $request->boolean('require_location_on_sign_out');
+
+        return $validated;
     }
 }

@@ -47,6 +47,7 @@
                     <th>Sign Out</th>
                     <th>Duration</th>
                     <th>Shift Metrics</th>
+                    <th>Geo-fence</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -77,13 +78,32 @@
                             @endif
                         </td>
                         <td>
+                            @php
+                                $firstSession = $record->sessions->sortBy('sign_in_at')->first();
+                                $lastSession = $record->sessions->sortByDesc('sign_in_at')->first();
+                                $geoStatuses = collect([
+                                    $firstSession?->sign_in_geofence_status,
+                                    $lastSession?->sign_out_geofence_status,
+                                ])->filter(fn($status) => $status && $status !== 'disabled');
+                                $hasException = $geoStatuses->contains(fn($status) => in_array($status, ['outside', 'inaccurate', 'unavailable'], true));
+                            @endphp
+                            @if($geoStatuses->isEmpty())
+                                <span class="text-muted small">Not enabled</span>
+                            @else
+                                <span class="badge bg-{{ $hasException ? 'warning text-dark' : 'success' }}">
+                                    <i class="bi bi-geo-alt me-1"></i>{{ $hasException ? 'Exception' : 'Verified' }}
+                                </span>
+                                <div class="text-muted small mt-1">{{ $record->employee?->location?->name ?? 'Work location' }}</div>
+                            @endif
+                        </td>
+                        <td>
                             <span class="badge bg-{{ $record->status === 'present' ? 'success' : ($record->status === 'half_day' ? 'warning' : 'danger') }}">
                                 {{ ucwords(str_replace('_', ' ', $record->status)) }}
                             </span>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="text-center text-muted py-4">No attendance records found.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-4">No attendance records found.</td></tr>
                 @endforelse
             </tbody>
         </table>

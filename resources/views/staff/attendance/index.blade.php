@@ -62,13 +62,17 @@
                     <div class="text-muted small">You can sign in again after signing out. Each pair is saved as a separate work session.</div>
                 </div>
                 <div class="d-flex gap-2">
-                    <form method="POST" action="{{ route('staff.attendance.sign-in') }}">
+                    <form method="POST" action="{{ route('staff.attendance.sign-in') }}" class="js-attendance-geofence"
+                          data-geofence-mode="{{ $employee->location?->require_location_on_sign_in ? $employee->location?->geofence_mode : 'disabled' }}"
+                          data-location-name="{{ $employee->location?->name }}">
                         @csrf
                         <button class="btn btn-success" @disabled($isSignedIn)>
                             <i class="bi bi-box-arrow-in-right me-1"></i> {{ $sessionCount > 0 ? 'Sign In Again' : 'Sign In' }}
                         </button>
                     </form>
-                    <form method="POST" action="{{ route('staff.attendance.sign-out') }}">
+                    <form method="POST" action="{{ route('staff.attendance.sign-out') }}" class="js-attendance-geofence"
+                          data-geofence-mode="{{ $employee->location?->require_location_on_sign_out ? $employee->location?->geofence_mode : 'disabled' }}"
+                          data-location-name="{{ $employee->location?->name }}">
                         @csrf
                         @method('PATCH')
                         <button class="btn btn-danger" @disabled(!$isSignedIn)>
@@ -99,6 +103,7 @@
                         <th>Sign In</th>
                         <th>Sign Out</th>
                         <th>Duration</th>
+                        <th>Geo-fence</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -109,6 +114,15 @@
                             <td>{{ $session->sign_in_at?->format('h:i A') }}</td>
                             <td>{{ $session->sign_out_at?->format('h:i A') ?? '--' }}</td>
                             <td>{{ $session->sign_out_at ? $session->duration : 'Running' }}</td>
+                            <td>
+                                @php
+                                    $geoStatus = $session->sign_out_at ? $session->sign_out_geofence_status : $session->sign_in_geofence_status;
+                                    $geoDistance = $session->sign_out_at ? $session->sign_out_distance_metres : $session->sign_in_distance_metres;
+                                    $geoClass = match($geoStatus) { 'inside' => 'success', 'outside', 'inaccurate' => 'warning text-dark', 'unavailable' => 'danger', default => 'light text-dark border' };
+                                @endphp
+                                <span class="badge bg-{{ $geoClass }}">{{ ucfirst($geoStatus ?: 'disabled') }}</span>
+                                @if($geoDistance !== null)<div class="text-muted small mt-1">{{ $geoDistance }}m from office</div>@endif
+                            </td>
                             <td>
                                 <span class="badge bg-{{ $session->sign_out_at ? 'success' : 'primary' }}">
                                     {{ $session->sign_out_at ? 'Completed' : 'Active' }}

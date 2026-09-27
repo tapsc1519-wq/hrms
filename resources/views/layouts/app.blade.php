@@ -2740,6 +2740,67 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function() {
 })();
 </script>
 
+<script>
+(function () {
+    function hidden(form, name, value) {
+        var input = form.querySelector('input[name="' + name + '"]');
+        if (!input) {
+            input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            form.appendChild(input);
+        }
+        input.value = value;
+    }
+
+    document.addEventListener('submit', function (event) {
+        var form = event.target.closest('.js-attendance-geofence');
+        if (!form || form.dataset.locationCaptured === 'true') return;
+
+        var mode = form.dataset.geofenceMode || 'disabled';
+        if (mode === 'disabled') return;
+
+        event.preventDefault();
+        var button = form.querySelector('button[type="submit"], button:not([type])');
+        var original = button ? button.innerHTML : '';
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying location';
+        }
+
+        function submitWithoutCoordinates(message) {
+            if (mode === 'strict') {
+                alert(message);
+                if (button) { button.disabled = false; button.innerHTML = original; }
+                return;
+            }
+            form.dataset.locationCaptured = 'true';
+            form.submit();
+        }
+
+        if (!window.isSecureContext || !navigator.geolocation) {
+            submitWithoutCoordinates('Location access requires HTTPS and a supported browser.');
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(function (position) {
+            hidden(form, 'latitude', position.coords.latitude);
+            hidden(form, 'longitude', position.coords.longitude);
+            hidden(form, 'accuracy', position.coords.accuracy || '');
+            form.dataset.locationCaptured = 'true';
+            form.submit();
+        }, function (error) {
+            var locationName = form.dataset.locationName ? ' for ' + form.dataset.locationName : '';
+            submitWithoutCoordinates((error.message || 'Unable to detect your location') + locationName + '. Enable location permission and retry.');
+        }, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+        });
+    });
+})();
+</script>
+
 @stack('scripts')
 </body>
 </html>

@@ -85,6 +85,7 @@
                         <tr>
                             <th>Name</th>
                             <th>Building / Floor / Room</th>
+                            <th>Attendance Fence</th>
                             <th>Status</th>
                             <th class="text-end">Actions</th>
                         </tr>
@@ -95,6 +96,15 @@
                             <td class="fw-semibold">{{ $loc->name }}</td>
                             <td class="text-muted small">
                                 {{ collect([$loc->building, $loc->floor, $loc->room])->filter()->implode(' · ') ?: '—' }}
+                            </td>
+                            <td>
+                                @if($loc->geofence_mode === 'disabled')
+                                    <span class="badge bg-light text-dark border">Disabled</span>
+                                @else
+                                    <span class="badge bg-{{ $loc->geofence_mode === 'strict' ? 'success' : 'warning text-dark' }}">
+                                        {{ ucfirst($loc->geofence_mode) }} · {{ $loc->geofence_radius_metres }}m
+                                    </span>
+                                @endif
                             </td>
                             <td>
                                 <span class="badge bg-{{ $loc->status === 'active' ? 'success' : 'secondary' }}">
@@ -128,7 +138,7 @@
 
 {{-- ── ADD Work Location Modal ─────────────────────────────────────────── --}}
 <div class="modal fade" id="addLocationModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form action="{{ route('admin.facilities.locations.store', $facility) }}" method="POST">
                 @csrf
@@ -151,7 +161,7 @@
 {{-- ── EDIT Work Location Modals (one per location) ────────────────────── --}}
 @foreach($facility->locations as $loc)
 <div class="modal fade" id="editLocationModal{{ $loc->id }}" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form action="{{ route('admin.facilities.locations.update', [$facility, $loc]) }}" method="POST">
                 @csrf @method('PATCH')
@@ -182,4 +192,30 @@
 </script>
 @endpush
 @endif
+@push('scripts')
+<script>
+document.addEventListener('click', function (event) {
+    var button = event.target.closest('.js-use-current-location');
+    if (!button) return;
+    var form = button.closest('form');
+    if (!navigator.geolocation) {
+        alert('Location is not supported by this browser.');
+        return;
+    }
+    var original = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Locating';
+    navigator.geolocation.getCurrentPosition(function (position) {
+        form.querySelector('.js-latitude').value = position.coords.latitude.toFixed(7);
+        form.querySelector('.js-longitude').value = position.coords.longitude.toFixed(7);
+        button.innerHTML = '<i class="bi bi-check-lg me-1"></i>Location Captured';
+        button.disabled = false;
+    }, function (error) {
+        alert(error.message || 'Unable to detect current location.');
+        button.innerHTML = original;
+        button.disabled = false;
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+});
+</script>
+@endpush
 @endsection

@@ -401,14 +401,18 @@
                     </div>
 
                     @if(!$signedIn)
-                        <form method="POST" action="{{ route('staff.attendance.sign-in') }}">
+                        <form method="POST" action="{{ route('staff.attendance.sign-in') }}" class="js-attendance-geofence"
+                              data-geofence-mode="{{ $employee?->location?->require_location_on_sign_in ? $employee?->location?->geofence_mode : 'disabled' }}"
+                              data-location-name="{{ $employee?->location?->name }}">
                             @csrf
                             <button class="btn btn-primary attendance-action-btn">
                                 <i class="bi bi-box-arrow-in-right me-2"></i>{{ $sessionCount > 0 ? 'Sign In Again' : 'Sign In' }}
                             </button>
                         </form>
                     @else
-                        <form method="POST" action="{{ route('staff.attendance.sign-out') }}">
+                        <form method="POST" action="{{ route('staff.attendance.sign-out') }}" class="js-attendance-geofence"
+                              data-geofence-mode="{{ $employee?->location?->require_location_on_sign_out ? $employee?->location?->geofence_mode : 'disabled' }}"
+                              data-location-name="{{ $employee?->location?->name }}">
                             @csrf
                             @method('PATCH')
                             <button class="btn btn-danger attendance-action-btn">

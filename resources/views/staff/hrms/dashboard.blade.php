@@ -64,7 +64,9 @@
                     <div class="alert alert-info border-0">
                         You have not signed in today.
                     </div>
-                    <form method="POST" action="{{ route('staff.attendance.sign-in') }}">
+                    <form method="POST" action="{{ route('staff.attendance.sign-in') }}" class="js-attendance-geofence"
+                          data-geofence-mode="{{ $employee->location?->require_location_on_sign_in ? $employee->location?->geofence_mode : 'disabled' }}"
+                          data-location-name="{{ $employee->location?->name }}">
                         @csrf
                         <button class="btn btn-primary w-100">
                             <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
@@ -74,7 +76,9 @@
                     <div class="alert alert-success border-0">
                         Signed in at <strong>{{ $today->sign_in_at?->format('h:i A') }}</strong>.
                     </div>
-                    <form method="POST" action="{{ route('staff.attendance.sign-out') }}">
+                    <form method="POST" action="{{ route('staff.attendance.sign-out') }}" class="js-attendance-geofence"
+                          data-geofence-mode="{{ $employee->location?->require_location_on_sign_out ? $employee->location?->geofence_mode : 'disabled' }}"
+                          data-location-name="{{ $employee->location?->name }}">
                         @csrf
                         @method('PATCH')
                         <button class="btn btn-warning w-100">
