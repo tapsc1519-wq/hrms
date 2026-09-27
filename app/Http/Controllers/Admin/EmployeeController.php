@@ -49,7 +49,7 @@ class EmployeeController extends Controller
         $employees = $query->latest()->paginate(20)->withQueryString();
         $departments = Department::where('organization_id', $this->orgId())->orderBy('name')->get();
         $pendingProfiles = User::where('organization_id', $this->orgId())
-            ->whereIn('role', ['admin', 'staff'])
+            ->where('role', 'staff')
             ->whereDoesntHave('employeeProfile')
             ->count();
 

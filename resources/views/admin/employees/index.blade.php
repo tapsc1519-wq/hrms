@@ -39,7 +39,7 @@
                 <div>
                     <div class="stat-label">Pending</div>
                     <div class="stat-number">{{ $pendingProfiles }}</div>
-                    <div class="stat-sub">Users without HR profile</div>
+                    <div class="stat-sub">Staff awaiting HR profile</div>
                 </div>
                 <div class="stat-icon"><i class="bi bi-person-plus"></i></div>
             </div>

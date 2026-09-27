@@ -263,42 +263,6 @@
     }
     .sidebar-group-body .sidebar-link { margin-block: .05rem; }
 
-    /* Sidebar user footer */
-    .sidebar-footer {
-        flex-shrink: 0;
-        padding: .85rem 1rem;
-        border-top: 1px solid rgba(255,255,255,.06);
-        background: rgba(0,0,0,.15);
-        display: flex;
-        align-items: center;
-        gap: .7rem;
-    }
-    .sidebar-footer-avatar {
-        width: 34px; height: 34px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-        color: #fff;
-        display: flex; align-items: center; justify-content: center;
-        font-size: .8rem;
-        font-weight: 700;
-        flex-shrink: 0;
-    }
-    .sidebar-footer-name {
-        font-size: .8rem;
-        font-weight: 600;
-        color: #e2e8f0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .sidebar-footer-role {
-        font-size: .68rem;
-        color: #64748b;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
     /* ═══════════════════════════════════════════════
        MAIN LAYOUT
     ═══════════════════════════════════════════════ */
@@ -1990,24 +1954,6 @@
             <img src="{{ asset('brand/niyantron-logo-transparent.png') }}" alt="Niyantron" width="60" height="13">
         </a>
     @endif
-
-    <!-- Footer user info -->
-    <div class="sidebar-footer">
-        <div class="sidebar-footer-avatar">
-            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-        </div>
-        <div style="min-width:0;flex:1">
-            <div class="sidebar-footer-name">{{ auth()->user()->name }}</div>
-            <div class="sidebar-footer-role">{{ ucwords(str_replace('_',' ', auth()->user()->role)) }}</div>
-        </div>
-        <form action="{{ route('logout') }}" method="POST" class="flex-shrink-0">
-            @csrf
-            <button type="submit" class="topbar-icon-btn" title="Logout"
-                    style="border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.06);color:#64748b">
-                <i class="bi bi-box-arrow-right"></i>
-            </button>
-        </form>
-    </div>
 </div>
 
 <!-- ─────────────── MAIN ─────────────── -->
